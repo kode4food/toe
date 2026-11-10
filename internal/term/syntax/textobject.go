@@ -10,8 +10,8 @@ var textObjectNames = map[rune]string{
 	'e': "entry",
 }
 
-// FindTextObjectArgs identifies the textobject to find: the kind selected by
-// Char at Cursor, taken inner (Inside) or whole
+// FindTextObjectArgs identifies the textobject to find: the kind selected by Char at Cursor, taken
+// inner (Inside) or whole
 type FindTextObjectArgs struct {
 	Text   string
 	Lang   string
@@ -20,8 +20,8 @@ type FindTextObjectArgs struct {
 	Inside bool
 }
 
-// FindTextObject finds the innermost textobject at Cursor for Lang. Inside
-// returns the node's inner content (delimiters stripped) vs its full range
+// FindTextObject finds the innermost textobject at Cursor for Lang. Inside returns the node's inner
+// content (delimiters stripped) vs its full range
 func FindTextObject(args FindTextObjectArgs) (Range, bool) {
 	name, ok := textObjectNames[args.Char]
 	if !ok {

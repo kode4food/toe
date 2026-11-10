@@ -1,7 +1,7 @@
 // Package test is the shared black-box test harness for the default command
 // modules: it builds an editor with all defaults registered and runs commands
-// resolved from the keymaps, so each module's tests can live beside the module
-// while exercising the fully assembled registry
+// resolved from the keymaps, so each module's tests can live beside the module while exercising the
+// fully assembled registry
 package test
 
 import (
@@ -20,8 +20,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Env builds an editor with all default commands registered, seeded with text.
-// Commands resolved from the keymaps operate on the returned editor
+// Env builds an editor with all default commands registered, seeded with text. Commands resolved
+// from the keymaps operate on the returned editor
 func Env(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	t.Helper()
 	km := command.NewKeymaps()
@@ -36,8 +36,8 @@ func Env(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	return e, km
 }
 
-// EnvWithRegistry builds the same env as Env but also returns the registry so
-// tests can call ApplyTOML to exercise section Apply funcs
+// EnvWithRegistry builds the same env as Env but also returns the registry so tests can call
+// ApplyTOML to exercise section Apply funcs
 func EnvWithRegistry(t *testing.T, text string) (
 	*view.Editor, *command.Keymaps, *command.Registry,
 ) {
@@ -71,11 +71,9 @@ func TwoBufferEnv(t *testing.T) (*view.Editor, *command.Keymaps) {
 	return e, km
 }
 
-// RunCmd resolves a command by name and runs it against the editor. The default
-// command wrappers ignore the Args, so nil is passed
-func RunCmd(
-	t *testing.T, km *command.Keymaps, e *view.Editor, name string,
-) command.Result {
+// RunCmd resolves a command by name and runs it against the editor. The default command wrappers
+// ignore the Args, so nil is passed
+func RunCmd(t *testing.T, km *command.Keymaps, e *view.Editor, name string) command.Result {
 	t.Helper()
 	cmd := km.ResolveCommand(name)
 	assert.NotNil(t, cmd)
@@ -85,8 +83,8 @@ func RunCmd(
 	return resultText(cmd.Run(e, nil))
 }
 
-// RunCmdArgs resolves a command and runs it with positional args parsed from
-// input against the command's own signature
+// RunCmdArgs resolves a command and runs it with positional args parsed from input against the
+// command's own signature
 func RunCmdArgs(
 	t *testing.T, km *command.Keymaps, e *view.Editor, name, input string,
 ) command.Result {

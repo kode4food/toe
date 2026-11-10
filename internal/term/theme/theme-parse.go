@@ -106,9 +106,7 @@ func decodePalette(value any) (palette, []string) {
 		}
 		c, err := parseRawColor(s)
 		if err != nil {
-			return p, []string{
-				fmt.Sprintf("invalid palette color %q: %v", name, err),
-			}
+			return p, []string{fmt.Sprintf("invalid palette color %q: %v", name, err)}
 		}
 		next[name] = c
 	}

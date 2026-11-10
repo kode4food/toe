@@ -11,8 +11,8 @@ import (
 )
 
 type (
-	// Editor holds the full state of the editor session: all open documents,
-	// the view layout tree, and shared editor state
+	// Editor holds the full state of the editor session: all open documents, the view layout tree,
+	// and shared editor state
 	Editor struct {
 		documents documentState
 		panes     paneState
@@ -66,12 +66,11 @@ type (
 		statusMu sync.Mutex
 	}
 
-	// PaneRestorer rebuilds a leaf pane of a given session kind from its
-	// persisted state
+	// PaneRestorer rebuilds a leaf pane of a given session kind from its persisted state
 	PaneRestorer func(*Editor, *PaneSession) (Pane, error)
 
-	// BaseOptionsLoader resolves the option values in effect once config and
-	// init files have been applied
+	// BaseOptionsLoader resolves the option values in effect once config and init files have been
+	// applied
 	BaseOptionsLoader func() map[string]string
 
 	// PaneSession exposes module-owned state for a restored pane
@@ -89,11 +88,9 @@ var (
 	ErrEmptyDirStack     = errors.New("directory stack is empty")
 	ErrConfigUnavailable = errors.New("config path unavailable")
 	ErrUnsavedChanges    = errors.New("unsaved changes")
-	ErrFileChangedOnDisk = errors.New(
-		"file modified by an external process, use :w! to overwrite",
-	)
-	ErrFileReadOnly = errors.New("path is read only")
-	ErrCannotSplit  = errors.New("pane is too small to split")
+	ErrFileChangedOnDisk = errors.New("file modified by an external process, use :w! to overwrite")
+	ErrFileReadOnly      = errors.New("path is read only")
+	ErrCannotSplit       = errors.New("pane is too small to split")
 )
 
 // NewEditor creates an empty editor with one scratch document and view
@@ -163,14 +160,13 @@ func (e *Editor) Options() *Options {
 	return &e.opts
 }
 
-// SetBaseOptions registers the loader that resolves the option values a saved
-// session is compared against, so a session carries only what changed since
+// SetBaseOptions registers the loader that resolves the option values a saved session is compared
+// against, so a session carries only what changed since
 func (e *Editor) SetBaseOptions(fn BaseOptionsLoader) {
 	e.baseOpts = fn
 }
 
-// BaseOptions resolves the base option values, returning nil when no loader
-// is registered
+// BaseOptions resolves the base option values, returning nil when no loader is registered
 func (e *Editor) BaseOptions() map[string]string {
 	if e.baseOpts == nil {
 		return nil
@@ -178,14 +174,14 @@ func (e *Editor) BaseOptions() map[string]string {
 	return e.baseOpts()
 }
 
-// SetConfigReload registers the function called by ReloadConfig to reset
-// module section state and re-apply the merged TOML config
+// SetConfigReload registers the function called by ReloadConfig to reset module section state and
+// re-apply the merged TOML config
 func (e *Editor) SetConfigReload(fn func() error) {
 	e.configReload = fn
 }
 
-// ReloadConfig reloads the live editor config and resets module section state.
-// Falls back to loading user config only when no reload function is registered
+// ReloadConfig reloads the live editor config and resets module section state. Falls back to
+// loading user config only when no reload function is registered
 func (e *Editor) ReloadConfig() error {
 	if e.configReload == nil {
 		return ErrConfigUnavailable
@@ -196,8 +192,8 @@ func (e *Editor) ReloadConfig() error {
 	return err
 }
 
-// Languages returns the registry that documents and editing actions
-// resolve language definitions through
+// Languages returns the registry that documents and editing actions resolve language definitions
+// through
 func (e *Editor) Languages() *language.Registry {
 	return e.languages
 }
@@ -213,8 +209,8 @@ func (e *Editor) Document(did DocumentId) *Document {
 	return e.documents.byID[did]
 }
 
-// DeleteDocument removes a document without closing its views. Affected views
-// will report no focused document
+// DeleteDocument removes a document without closing its views. Affected views will report no
+// focused document
 func (e *Editor) DeleteDocument(did DocumentId) {
 	delete(e.documents.byID, did)
 	e.panes.tree.Range(func(p Pane) bool {
@@ -298,8 +294,8 @@ func (e *Editor) SetClipboard(c Clipboard) {
 	e.registers.clipboard = c
 }
 
-// ViewHeight returns the editor-wide content area height, which spans every
-// pane. Per-pane rows come from View.ContentHeight
+// ViewHeight returns the editor-wide content area height, which spans every pane. Per-pane rows
+// come from View.ContentHeight
 func (e *Editor) ViewHeight() int {
 	return e.panes.contentHeight
 }
@@ -390,8 +386,8 @@ func (e *Editor) CloseAllOtherViews() {
 	}
 }
 
-// SetStatusMsg queues a status message for display. Producers may be off the
-// UI goroutine, so the queue holds every message until the UI drains it
+// SetStatusMsg queues a status message for display. Producers may be off the UI goroutine, so the
+// queue holds every message until the UI drains it
 func (e *Editor) SetStatusMsg(msg string) {
 	e.messages.statusMu.Lock()
 	e.messages.status = append(e.messages.status, msg)

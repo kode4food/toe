@@ -54,9 +54,7 @@ func newSignatureHelpComponent(
 }
 
 // HandleEvent cycles overloads and dismisses the popup
-func (s *signatureHelpComponent) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (s *signatureHelpComponent) HandleEvent(cx *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	key, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return ignored(), nil
@@ -80,16 +78,12 @@ func (s *signatureHelpComponent) HandleEvent(
 }
 
 // Cursor leaves the cursor to the layer below
-func (s *signatureHelpComponent) Cursor(
-	*Context, geom.Size,
-) (tea.Cursor, bool) {
+func (s *signatureHelpComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
 // Layout places the popup near the cursor, inside the frame
-func (s *signatureHelpComponent) Layout(
-	cx *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (s *signatureHelpComponent) Layout(cx *Context, screen geom.Size) (geom.Area, bool) {
 	if len(s.help.Signatures) == 0 || !s.valid() {
 		return geom.Area{}, false
 	}
@@ -119,9 +113,7 @@ func (s *signatureHelpComponent) Layout(
 }
 
 // PaintBuffer draws the signature popup with the active parameter marked
-func (s *signatureHelpComponent) PaintBuffer(
-	cx *Context, pl geom.Area,
-) *tui.Buffer {
+func (s *signatureHelpComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return s.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		s.paint(buf, pl)
 	})
@@ -197,9 +189,7 @@ func (s *signatureHelpComponent) moveBy(n int) {
 	s.cursor = (s.cursor + n + len(s.help.Signatures)) % len(s.help.Signatures)
 }
 
-func (s *signatureHelpComponent) refresh(
-	cx *Context, comp *Compositor,
-) tea.Cmd {
+func (s *signatureHelpComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	if !s.valid() {
 		removeSignatureHelpLayer(comp)
 		return nil
@@ -229,9 +219,7 @@ func (s *signatureHelpComponent) refresh(
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
-	pushSignatureHelpLayer(
-		comp, newSignatureHelpComponent(s.editor, s.call, help),
-	)
+	pushSignatureHelpLayer(comp, newSignatureHelpComponent(s.editor, s.call, help))
 	return nil
 }
 
@@ -252,8 +240,7 @@ func (s *signatureHelpComponent) indexText() string {
 }
 
 func (s *signatureHelpComponent) renderSignature(
-	buf *tui.Buffer, area geom.Area,
-	sig view.SignatureInformation,
+	buf *tui.Buffer, area geom.Area, sig view.SignatureInformation,
 ) {
 	cx := s.context
 	label := runewidth.Truncate(sig.Label, area.Width, "")

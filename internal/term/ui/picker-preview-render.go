@@ -10,8 +10,8 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	highlight := args.highlight
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	// syntax spans have stripped backgrounds, so patch popup bg onto every
-	// row rather than letting the terminal default show through
+	// syntax spans have stripped backgrounds, so patch popup bg onto every row rather than letting
+	// the terminal default show through
 	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 
@@ -154,9 +154,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	})
 }
 
-func previewDiffMarker(
-	kind diffGutterKind, styles *styles,
-) (string, tui.Style) {
+func previewDiffMarker(kind diffGutterKind, styles *styles) (string, tui.Style) {
 	switch kind {
 	case diffGutterAdded:
 		return diffGutterBar, styles.diffAdded

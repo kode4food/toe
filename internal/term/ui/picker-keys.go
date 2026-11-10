@@ -9,9 +9,7 @@ import (
 
 type dismissFunc func() (EventResult, tea.Cmd)
 
-func (p *PickerComponent) handleKey(
-	cx *Context, msg tea.KeyPressMsg,
-) (EventResult, tea.Cmd) {
+func (p *PickerComponent) handleKey(cx *Context, msg tea.KeyPressMsg) (EventResult, tea.Cmd) {
 	k := FromTeaKey(msg)
 	ps := p.state
 	p.markDirty()
@@ -112,11 +110,9 @@ func (p *PickerComponent) navigateItem(
 	}), nil, true
 }
 
-// an overlay the source hands back asks a question before it acts, so the rows
-// are left alone until its own answer arrives
-func (p *PickerComponent) sourceKey(
-	k command.KeyEvent,
-) (EventResult, tea.Cmd, bool) {
+// an overlay the source hands back asks a question before it acts, so the rows are left alone until
+// its own answer arrives
+func (p *PickerComponent) sourceKey(k command.KeyEvent) (EventResult, tea.Cmd, bool) {
 	ps := p.state
 	src, ok := ps.source.(PickerKeySource)
 	if !ok {

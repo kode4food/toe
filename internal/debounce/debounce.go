@@ -6,8 +6,7 @@ import (
 	"time"
 )
 
-// Keyed runs the last function given for a key once that key has gone quiet
-// for the delay
+// Keyed runs the last function given for a key once that key has gone quiet for the delay
 type Keyed[K comparable] struct {
 	mu      sync.Mutex
 	delay   time.Duration

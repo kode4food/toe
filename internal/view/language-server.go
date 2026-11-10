@@ -48,9 +48,8 @@ type (
 		ActiveEnd   int
 	}
 
-	// Location is a normalized language-server target location, holding the
-	// server's own positions so listing never reads the files. ResolveRange
-	// converts them against a document at jump time
+	// Location is a normalized language-server target location, holding the server's own positions
+	// so listing never reads the files. ResolveRange converts them against a document at jump time
 	Location struct {
 		Path     string
 		From     ServerPosition
@@ -58,15 +57,14 @@ type (
 		Encoding PositionEncoding
 	}
 
-	// ServerPosition is a zero-based line and in-line character offset, the
-	// character counted in the server's PositionEncoding
+	// ServerPosition is a zero-based line and in-line character offset, the character counted in
+	// the server's PositionEncoding
 	ServerPosition struct {
 		Line      int
 		Character int
 	}
 
-	// PositionEncoding names the units a language server counts a line's
-	// characters in
+	// PositionEncoding names the units a language server counts a line's characters in
 	PositionEncoding int
 
 	// Symbol is a normalized language-server document or workspace symbol
@@ -160,8 +158,8 @@ type (
 		NewPath string
 	}
 
-	// FileOperationController handles user-initiated filesystem operations
-	// for language-server clients interested in workspace file operations
+	// FileOperationController handles user-initiated filesystem operations for language-server
+	// clients interested in workspace file operations
 	FileOperationController interface {
 		WillCreateFile(path string, dir bool) error
 		DidCreateFile(path string, dir bool) error
@@ -172,8 +170,7 @@ type (
 	}
 )
 
-// Position encodings a language server may count line characters in. UTF-16 is
-// the protocol default
+// Position encodings a language server may count line characters in. UTF-16 is the protocol default
 const (
 	PositionEncodingUTF16 PositionEncoding = iota
 	PositionEncodingUTF8
@@ -181,25 +178,24 @@ const (
 )
 
 var (
-	// ErrNoLanguageServer reports that no language server is configured for a
-	// document's language
+	// ErrNoLanguageServer reports that no language server is configured for a document's language
 	ErrNoLanguageServer = errors.New("LSP not defined for document")
 
-	// ErrUnknownLanguageServer reports that a named language server was not
-	// found among the document's configured servers
+	// ErrUnknownLanguageServer reports that a named language server was not found among the
+	// document's configured servers
 	ErrUnknownLanguageServer = errors.New("unknown language server")
 
-	// ErrWorkspaceCommand reports that a requested workspace command is not
-	// offered by any configured language server
+	// ErrWorkspaceCommand reports that a requested workspace command is not offered by any
+	// configured language server
 	ErrWorkspaceCommand = errors.New("workspace command unavailable")
 
-	// ErrFormatSelection reports that range formatting cannot be performed for
-	// the current selection
+	// ErrFormatSelection reports that range formatting cannot be performed for the current
+	// selection
 	ErrFormatSelection = errors.New("format selection unsupported")
 )
 
-// ResolveRange converts the location's server positions into a character range
-// in text, reversed so the cursor lands on the start of the target
+// ResolveRange converts the location's server positions into a character range in text, reversed so
+// the cursor lands on the start of the target
 func (l Location) ResolveRange(text core.Rope) (core.Range, bool) {
 	from, ok := l.From.Resolve(text, l.Encoding)
 	if !ok {
@@ -213,9 +209,7 @@ func (l Location) ResolveRange(text core.Rope) (core.Range, bool) {
 }
 
 // Resolve converts a server position into a character offset in text
-func (p ServerPosition) Resolve(
-	text core.Rope, encoding PositionEncoding,
-) (int, bool) {
+func (p ServerPosition) Resolve(text core.Rope, encoding PositionEncoding) (int, bool) {
 	lineStart, err := text.LineToChar(p.Line)
 	if err != nil {
 		return 0, false

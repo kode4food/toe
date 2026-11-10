@@ -17,8 +17,8 @@ var (
 	defaultOutdents = []string{"else", "elseif", "end"}
 )
 
-// IndentForNewlineArgs carries the document position and style used to compute
-// indentation for a new line
+// IndentForNewlineArgs carries the document position and style used to compute indentation for a
+// new line
 type IndentForNewlineArgs struct {
 	Text  core.Rope
 	Lang  string
@@ -78,9 +78,7 @@ func linePrefix(src string, text core.Rope, at core.LinePos) string {
 	return string(runes[start:pos])
 }
 
-func lastCodeChar(
-	src string, text core.Rope, at core.LinePos,
-) (rune, int, bool) {
+func lastCodeChar(src string, text core.Rope, at core.LinePos) (rune, int, bool) {
 	start, err := text.LineToChar(at.Line)
 	if err != nil {
 		return 0, 0, false

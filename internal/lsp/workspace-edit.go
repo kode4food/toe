@@ -23,15 +23,11 @@ var (
 	ErrWorkspaceEditUnsupported = errors.New("workspace edit unsupported")
 	ErrWorkspaceEditURI         = errors.New("workspace edit URI unsupported")
 	ErrWorkspaceEditRange       = errors.New("workspace edit range invalid")
-	ErrWorkspaceEditFile        = errors.New(
-		"workspace edit file operation failed",
-	)
+	ErrWorkspaceEditFile        = errors.New("workspace edit file operation failed")
 )
 
 // ApplyWorkspaceEdit applies a server-provided workspace edit
-func (s *Session) ApplyWorkspaceEdit(
-	server string, edit protocol.WorkspaceEdit,
-) error {
+func (s *Session) ApplyWorkspaceEdit(server string, edit protocol.WorkspaceEdit) error {
 	if client := s.servers.client(server); client != nil {
 		return s.applyWorkspaceEdit(edit, client.OffsetEncoding())
 	}
@@ -55,9 +51,7 @@ func (s *Session) applyWorkspaceChanges(
 		return cmp.Compare(a.String(), b.String())
 	})
 	for _, u := range uris {
-		docEdit, err := s.workspaceDocumentEdit(
-			u, changes[u], enc,
-		)
+		docEdit, err := s.workspaceDocumentEdit(u, changes[u], enc)
 		if err != nil {
 			return err
 		}
@@ -94,9 +88,7 @@ func (s *Session) applyDocumentChanges(
 				return err
 			}
 		default:
-			return fmt.Errorf(
-				"%w: document change", ErrWorkspaceEditUnsupported,
-			)
+			return fmt.Errorf("%w: document change", ErrWorkspaceEditUnsupported)
 		}
 	}
 	return nil
@@ -179,8 +171,7 @@ func workspaceEditPath(u uri.URI) (string, error) {
 }
 
 func textEditsToChanges(
-	doc *view.Document, edits []protocol.TextEdit,
-	enc protocol.PositionEncodingKind,
+	doc *view.Document, edits []protocol.TextEdit, enc protocol.PositionEncodingKind,
 ) ([]core.Change, error) {
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {

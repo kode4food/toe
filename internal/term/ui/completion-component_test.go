@@ -39,21 +39,15 @@ type completionController struct {
 	triggerEmpty        bool
 }
 
-func (c *completionController) RestartLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
+func (c *completionController) RestartLanguageServers(*view.Document, []string) ([]string, error) {
 	return nil, nil
 }
 
-func (c *completionController) StopLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
+func (c *completionController) StopLanguageServers(*view.Document, []string) ([]string, error) {
 	return nil, nil
 }
 
-func (c *completionController) ExecuteWorkspaceCommand(
-	*view.Document, string, []string,
-) error {
+func (c *completionController) ExecuteWorkspaceCommand(*view.Document, string, []string) error {
 	return nil
 }
 
@@ -175,15 +169,11 @@ func (c *completionController) TriggerSignatureHelp(
 	return c.SignatureHelp(doc, viewID)
 }
 
-func (c *completionController) GotoDeclaration(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *completionController) GotoDeclaration(*view.Document, view.Id) ([]view.Location, error) {
 	return nil, nil
 }
 
-func (c *completionController) GotoDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *completionController) GotoDefinition(*view.Document, view.Id) ([]view.Location, error) {
 	return nil, nil
 }
 
@@ -199,33 +189,23 @@ func (c *completionController) GotoImplementation(
 	return nil, nil
 }
 
-func (c *completionController) GotoReference(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *completionController) GotoReference(*view.Document, view.Id) ([]view.Location, error) {
 	return nil, nil
 }
 
-func (c *completionController) RenameSymbolPrefill(
-	*view.Document, view.Id,
-) (string, error) {
+func (c *completionController) RenameSymbolPrefill(*view.Document, view.Id) (string, error) {
 	return "", nil
 }
 
-func (c *completionController) RenameSymbol(
-	*view.Document, view.Id, string,
-) error {
+func (c *completionController) RenameSymbol(*view.Document, view.Id, string) error {
 	return nil
 }
 
-func (c *completionController) CodeActions(
-	*view.Document, view.Id,
-) ([]view.CodeAction, error) {
+func (c *completionController) CodeActions(*view.Document, view.Id) ([]view.CodeAction, error) {
 	return nil, nil
 }
 
-func (c *completionController) ApplyCodeAction(
-	*view.Document, view.Id, view.CodeAction,
-) error {
+func (c *completionController) ApplyCodeAction(*view.Document, view.Id, view.CodeAction) error {
 	return nil
 }
 
@@ -235,9 +215,7 @@ func (c *completionController) DocumentHighlights(
 	return nil, nil
 }
 
-func (c *completionController) DocumentLinks(
-	*view.Document,
-) ([]view.DocumentLink, error) {
+func (c *completionController) DocumentLinks(*view.Document) ([]view.DocumentLink, error) {
 	return nil, nil
 }
 
@@ -255,15 +233,11 @@ func (c *completionController) FormatSelection(*view.Document, view.Id) error {
 	return nil
 }
 
-func (c *completionController) DocumentSymbols(
-	*view.Document,
-) ([]view.Symbol, error) {
+func (c *completionController) DocumentSymbols(*view.Document) ([]view.Symbol, error) {
 	return nil, nil
 }
 
-func (c *completionController) WorkspaceSymbols(
-	*view.Document, string,
-) ([]view.Symbol, error) {
+func (c *completionController) WorkspaceSymbols(*view.Document, string) ([]view.Symbol, error) {
 	return nil, nil
 }
 
@@ -401,12 +375,10 @@ func TestCompletionComponent(t *testing.T) {
 		line := rawLineContaining(t, viewContent(m), "Println")
 		fg := fgCols(line)
 		plain := stripANSI(line)
-		start := utf8.RuneCountInString(
-			plain[:strings.Index(plain, "Println")],
-		)
+		start := utf8.RuneCountInString(plain[:strings.Index(plain, "Println")])
 
-		// the 'Pr' that activated auto-completion is part of the word, so it
-		// must be highlighted like any other matched prefix, not left base
+		// the 'Pr' that activated auto-completion is part of the word, so it must be highlighted
+		// like any other matched prefix, not left base
 		matchFg := fg[start]
 		assert.NotEqual(t, "", matchFg)
 		assert.Equal(t, matchFg, fg[start+1], "activation letters highlighted")
@@ -1120,9 +1092,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotNil(t, v)
 
 		assert.NotContains(t, out, "Println")
-		assert.Equal(t,
-			3, doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()),
-		)
+		assert.Equal(t, 3, doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()))
 	})
 
 	t.Run("inside click selects without accepting", func(t *testing.T) {
@@ -1556,9 +1526,7 @@ func TestAutoCompletion(t *testing.T) {
 	})
 }
 
-func autoCompletionModel(
-	t *testing.T, opts ui.CompletionOptions,
-) (ui.Model, *view.Editor) {
+func autoCompletionModel(t *testing.T, opts ui.CompletionOptions) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := editorWithText(t, "")
 	e.SetMode(view.ModeInsert)
@@ -1636,9 +1604,7 @@ func rawCompletionLine(t *testing.T, m ui.Model, text string) string {
 	return ""
 }
 
-func completionTextPoint(
-	t *testing.T, m ui.Model, text string,
-) geom.Point {
+func completionTextPoint(t *testing.T, m ui.Model, text string) geom.Point {
 	t.Helper()
 	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {

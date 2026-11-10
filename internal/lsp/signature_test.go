@@ -112,9 +112,7 @@ func TestSignatureHelpVariants(t *testing.T) {
 
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.session")
-		writeSignatureVariantLanguages(
-			t, exe, testServerSignatureHelpActiveEnv,
-		)
+		writeSignatureVariantLanguages(t, exe, testServerSignatureHelpActiveEnv)
 		assert.NoError(t, os.WriteFile(path, []byte("Println(a,\n"), 0o644))
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(path)
@@ -178,9 +176,7 @@ func TestSignatureHelpVariants(t *testing.T) {
 
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.session")
-		writeSignatureVariantLanguages(
-			t, exe, testServerSignatureMissingLabelEnv,
-		)
+		writeSignatureVariantLanguages(t, exe, testServerSignatureMissingLabelEnv)
 		assert.NoError(t, os.WriteFile(path, []byte("Println(\n"), 0o644))
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(path)
@@ -251,9 +247,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -276,9 +270,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -300,8 +292,6 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }

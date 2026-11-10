@@ -13,12 +13,7 @@ import (
 func TestThemeNames(t *testing.T) {
 	names := loader.ThemeNames()
 
-	assert.Equal(t, []string{
-		"frappe",
-		"latte",
-		"macchiato",
-		"mocha",
-	}, names)
+	assert.Equal(t, []string{"frappe", "latte", "macchiato", "mocha"}, names)
 }
 
 func TestEmbeddedThemes(t *testing.T) {

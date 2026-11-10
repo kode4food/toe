@@ -30,48 +30,34 @@ func TestRegistry(t *testing.T) {
 	t.Run("keeps config until invalidated", func(t *testing.T) {
 		path := writeCachedLangs(t)
 		registry := new(language.Registry)
-		assert.Equal(t,
-			[]string{"#"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"#"}, registry.Get("cached").CommentTokens)
 
 		rewriteLangs(t, path, cachedLangsSlash)
-		assert.Equal(t,
-			[]string{"#"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"#"}, registry.Get("cached").CommentTokens)
 
 		registry.Invalidate()
-		assert.Equal(t,
-			[]string{"//"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"//"}, registry.Get("cached").CommentTokens)
 	})
 
 	t.Run("loaded file change reloads", func(t *testing.T) {
 		path := writeCachedLangs(t)
 		registry := new(language.Registry)
-		assert.Equal(t,
-			[]string{"#"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"#"}, registry.Get("cached").CommentTokens)
 
 		rewriteLangs(t, path, cachedLangsSlash)
 		registry.FileChanged(path)
-		assert.Equal(t,
-			[]string{"//"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"//"}, registry.Get("cached").CommentTokens)
 	})
 
 	t.Run("unrelated file change keeps", func(t *testing.T) {
 		path := writeCachedLangs(t)
 		registry := new(language.Registry)
-		assert.Equal(t,
-			[]string{"#"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"#"}, registry.Get("cached").CommentTokens)
 
 		rewriteLangs(t, path, cachedLangsSlash)
 		other := filepath.Join(t.TempDir(), "languages.toml")
 		registry.FileChanged(other)
-		assert.Equal(t,
-			[]string{"#"}, registry.Get("cached").CommentTokens,
-		)
+		assert.Equal(t, []string{"#"}, registry.Get("cached").CommentTokens)
 	})
 
 	t.Run("detects from cached config", func(t *testing.T) {

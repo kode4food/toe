@@ -72,8 +72,8 @@ func (p *Picker) scoreItems(
 }
 
 func (p *Picker) narrowMatches() {
-	// a longer query matches a subset of what its prefix matched, so the
-	// rows already filtered out cannot come back
+	// a longer query matches a subset of what its prefix matched, so the rows already filtered out
+	// cannot come back
 	src, ok := p.source.(StaticPickerSource)
 	if !ok {
 		return
@@ -122,9 +122,7 @@ func (p *Picker) sectionFor(group int) *PickerItem {
 	return nil
 }
 
-func (p *Picker) scoreItem(
-	match PickerMatcher, item *PickerItem, index int,
-) (pickerMatch, bool) {
+func (p *Picker) scoreItem(match PickerMatcher, item *PickerItem, index int) (pickerMatch, bool) {
 	key := pickerScoreKey{
 		query: p.list.query,
 		text:  item.matchText(p.source.MatchColumn()),
@@ -308,8 +306,8 @@ func (p *Picker) sectionTop(cursor int) int {
 }
 
 func canCacheQuery(query string) bool {
-	// `%` and `\` route parts of the query to other columns, so the match
-	// column's text no longer decides the score
+	// `%` and `\` route parts of the query to other columns, so the match column's text no longer
+	// decides the score
 	return !strings.ContainsAny(query, `%\`)
 }
 
@@ -324,9 +322,7 @@ func canNarrowQuery(args canNarrowQueryArgs) bool {
 	return prev != "" && strings.HasPrefix(next, prev) && canCacheQuery(next)
 }
 
-func unscoredItems(
-	items []*PickerItem, startIndex int, out []pickerMatch,
-) []pickerMatch {
+func unscoredItems(items []*PickerItem, startIndex int, out []pickerMatch) []pickerMatch {
 	for i, item := range items {
 		out = append(out, pickerMatch{item: item, itemIndex: startIndex + i})
 	}

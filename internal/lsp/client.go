@@ -46,8 +46,8 @@ type (
 
 const maxStderrTail = 4096
 
-// ClientNew is the initial state, ClientInitialized means the handshake is
-// complete, and ClientShutdown means closed
+// ClientNew is the initial state, ClientInitialized means the handshake is complete, and
+// ClientShutdown means closed
 const (
 	ClientNew ClientState = iota
 	ClientInitialized
@@ -61,9 +61,7 @@ func NewClient(
 	if handler == nil {
 		handler = protocol.UnimplementedClient{}
 	}
-	ctx, conn, server := protocol.NewClient(
-		ctx, handler, jsonrpc2.NewHeaderStream(rwc),
-	)
+	ctx, conn, server := protocol.NewClient(ctx, handler, jsonrpc2.NewHeaderStream(rwc))
 	return ctx, &Client{
 		conn:   conn,
 		server: server,
@@ -110,9 +108,7 @@ func (c *Client) SupportsFeature(feature Feature) bool {
 }
 
 // ExecuteCommand executes a workspace command on the server
-func (c *Client) ExecuteCommand(
-	ctx context.Context, params *protocol.ExecuteCommandParams,
-) error {
+func (c *Client) ExecuteCommand(ctx context.Context, params *protocol.ExecuteCommandParams) error {
 	ctx, cancel := c.requestContext(ctx)
 	defer cancel()
 	_, err := c.server.ExecuteCommand(ctx, params)
@@ -176,9 +172,7 @@ func (c *Client) Close() error {
 	return err
 }
 
-func (c *Client) requestContext(
-	ctx context.Context,
-) (context.Context, context.CancelFunc) {
+func (c *Client) requestContext(ctx context.Context) (context.Context, context.CancelFunc) {
 	c.mu.RLock()
 	timeout := c.timeout
 	c.mu.RUnlock()
@@ -194,9 +188,7 @@ func (c *Client) processExitStatus() (bool, string, error) {
 	return c.processExited, c.stderrText(), c.processErr
 }
 
-func (c *Client) processExitedAfter(
-	timeout time.Duration,
-) (bool, string, error) {
+func (c *Client) processExitedAfter(timeout time.Duration) (bool, string, error) {
 	done := c.processDone
 	if done == nil {
 		return c.processExitStatus()

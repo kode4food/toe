@@ -6,9 +6,7 @@ import (
 	"github.com/kode4food/toe/internal/term/highlight"
 )
 
-func (sc *Cache) langCacheFor(
-	lang string, language *sitter.Language,
-) *langEntry {
+func (sc *Cache) langCacheFor(lang string, language *sitter.Language) *langEntry {
 	sc.mu.RLock()
 	if e, ok := sc.langCache[lang]; ok {
 		sc.mu.RUnlock()
@@ -133,9 +131,7 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 	return spans
 }
 
-func injectionLanguage(
-	q *sitter.Query, names []string, m *sitter.QueryMatch, src []byte,
-) string {
+func injectionLanguage(q *sitter.Query, names []string, m *sitter.QueryMatch, src []byte) string {
 	for _, p := range q.PropertySettings(m.PatternIndex) {
 		if p.Key == "injection.language" && p.Value != nil {
 			return *p.Value

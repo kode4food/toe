@@ -58,9 +58,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(model.SearchAction(true)),
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/')),
-					),
+					view.ModeAny: kit.Or(kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/'))),
 				},
 			},
 			{
@@ -69,9 +67,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(model.SearchAction(false)),
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?')),
-					),
+					view.ModeAny: kit.Or(kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?'))),
 				},
 			},
 			{
@@ -81,9 +77,7 @@ func SearchModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
-					),
+					view.ModeAny: kit.Or(kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))),
 				},
 			},
 			{
@@ -93,9 +87,7 @@ func SearchModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
-					),
+					view.ModeAny: kit.Or(kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))),
 				},
 			},
 			{
@@ -126,9 +118,7 @@ func SearchModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
-					),
+					view.ModeAny: kit.Or(kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))),
 				},
 			},
 			{
@@ -138,9 +128,7 @@ func SearchModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys: map[view.Mode]command.KeyBinding{
-					view.ModeAny: kit.Or(
-						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
-					),
+					view.ModeAny: kit.Or(kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))),
 				},
 			},
 		},
@@ -167,12 +155,8 @@ func SearchModule(model ui.Model) command.Module {
 			Reset:  func() { *cfg = searchSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.SearchSmartCase = kit.BoolOr(
-					cfg.Editor.Search.SmartCase, true,
-				)
-				opts.SearchWrapAround = kit.BoolOr(
-					cfg.Editor.Search.WrapAround, true,
-				)
+				opts.SearchSmartCase = kit.BoolOr(cfg.Editor.Search.SmartCase, true)
+				opts.SearchWrapAround = kit.BoolOr(cfg.Editor.Search.WrapAround, true)
 			},
 		},
 	}

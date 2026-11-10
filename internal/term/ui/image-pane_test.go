@@ -51,9 +51,7 @@ func TestImagePane(t *testing.T) {
 		e.ReplacePane(e.Tree().Focus(), pane)
 		id := e.Tree().Focus()
 
-		other, err := ui.NewImagePane(
-			e, writeRenderImage(t, t.TempDir(), 8, 8, nil),
-		)
+		other, err := ui.NewImagePane(e, writeRenderImage(t, t.TempDir(), 8, 8, nil))
 		assert.NoError(t, err)
 		e.DisplacePane(id, other)
 		assert.Nil(t, pane.Image())
@@ -65,9 +63,7 @@ func TestImagePane(t *testing.T) {
 
 	t.Run("mouse zooms in and out", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		pane, err := ui.NewImagePane(
-			e, writeRenderImage(t, t.TempDir(), 20, 10, nil),
-		)
+		pane, err := ui.NewImagePane(e, writeRenderImage(t, t.TempDir(), 20, 10, nil))
 		assert.NoError(t, err)
 		e.ReplacePane(e.Tree().Focus(), pane)
 		m := renderedModel(e)

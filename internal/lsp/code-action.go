@@ -45,15 +45,12 @@ var codeActionRefactorSubcategory = map[string]int{
 
 // CodeActions requests code actions and commands for a selection
 func (c *Client) CodeActions(
-	ctx context.Context, doc DocumentSnapshot, r core.Range,
-	diags []protocol.Diagnostic,
+	ctx context.Context, doc DocumentSnapshot, r core.Range, diags []protocol.Diagnostic,
 ) ([]protocol.CommandOrCodeAction, bool, error) {
 	if !c.SupportsFeature(FeatureCodeAction) {
 		return nil, false, nil
 	}
-	lspRange, err := lspRange(
-		core.NewRope(doc.Text), r, c.OffsetEncoding(),
-	)
+	lspRange, err := lspRange(core.NewRope(doc.Text), r, c.OffsetEncoding())
 	if err != nil {
 		return nil, false, err
 	}
@@ -75,9 +72,7 @@ func (c *Client) CodeActions(
 }
 
 // CodeActions returns code actions and commands for the current selection
-func (s *Session) CodeActions(
-	doc *view.Document, viewID view.Id,
-) ([]view.CodeAction, error) {
+func (s *Session) CodeActions(doc *view.Document, viewID view.Id) ([]view.CodeAction, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return nil, nil
@@ -119,9 +114,7 @@ func (s *Session) CodeActions(
 }
 
 // ApplyCodeAction applies a selected code action or command
-func (s *Session) ApplyCodeAction(
-	_ *view.Document, _ view.Id, item view.CodeAction,
-) error {
+func (s *Session) ApplyCodeAction(_ *view.Document, _ view.Id, item view.CodeAction) error {
 	c, ok := s.codeAction(item.ID)
 	if !ok {
 		return ErrCodeActionUnavailable
@@ -135,16 +128,12 @@ func (s *Session) ApplyCodeAction(
 			return err
 		}
 		if resolved.Edit != nil {
-			if err := s.applyWorkspaceEdit(
-				*resolved.Edit, c.client.OffsetEncoding(),
-			); err != nil {
+			if err := s.applyWorkspaceEdit(*resolved.Edit, c.client.OffsetEncoding()); err != nil {
 				return err
 			}
 		}
 		if resolved.Command.Command != "" {
-			return c.client.ExecuteCommand(
-				s.ctx, commandParams(resolved.Command),
-			)
+			return c.client.ExecuteCommand(s.ctx, commandParams(resolved.Command))
 		}
 	}
 	return nil
@@ -200,9 +189,7 @@ func (s *Session) codeAction(id string) (codeActionCandidate, bool) {
 	return c, ok
 }
 
-func enabledCodeActions(
-	items []protocol.CommandOrCodeAction,
-) []protocol.CommandOrCodeAction {
+func enabledCodeActions(items []protocol.CommandOrCodeAction) []protocol.CommandOrCodeAction {
 	out := make([]protocol.CommandOrCodeAction, 0, len(items))
 	for _, item := range items {
 		if action, ok := item.(*protocol.CodeAction); ok &&
@@ -216,9 +203,7 @@ func enabledCodeActions(
 }
 
 func compareCodeActionItems(a, b protocol.CommandOrCodeAction) int {
-	if order := cmp.Compare(
-		codeActionCategory(a), codeActionCategory(b),
-	); order != 0 {
+	if order := cmp.Compare(codeActionCategory(a), codeActionCategory(b)); order != 0 {
 		return order
 	}
 	if order := compareBoolDesc(
@@ -344,9 +329,7 @@ func protocolDiagnostic(
 	return out, true
 }
 
-func protocolDiagnosticSeverity(
-	severity view.DiagnosticSeverity,
-) protocol.DiagnosticSeverity {
+func protocolDiagnosticSeverity(severity view.DiagnosticSeverity) protocol.DiagnosticSeverity {
 	if severity <= 0 || int(severity) >= len(protocolDiagnosticSeverities) {
 		return protocol.DiagnosticSeverityHint
 	}

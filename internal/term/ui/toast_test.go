@@ -63,9 +63,7 @@ func TestToasts(t *testing.T) {
 
 		m = m.ExecTypable("say")
 
-		lines := strings.Split(
-			strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n",
-		)
+		lines := strings.Split(strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n")
 		// two rows below the popup, the statusline among them
 		bottom := len(lines) - 1
 		for _, line := range lines[bottom-1:] {
@@ -212,8 +210,7 @@ func TestToasts(t *testing.T) {
 		e.SetStatusMsg("second")
 		m = resize(m, 80, 24)
 		_ = m.View()
-		// animation on only once the popup rests, so no tick loop is needed
-		// to see it in place
+		// animation on only once the popup rests, so no tick loop is needed to see it in place
 		m.SetAnimation(true)
 		fresh := foregrounds(rawToastRow(m, "first"))
 		assert.NotEmpty(t, fresh)
@@ -234,9 +231,7 @@ func TestToastLogTailing(t *testing.T) {
 		m = m.ExecTypable("say")
 
 		assert.Empty(t, toastRow(m, "Messages"))
-		assert.Contains(t,
-			e.MessagesDocument().Text().String(), "hello there",
-		)
+		assert.Contains(t, e.MessagesDocument().Text().String(), "hello there")
 	})
 
 	t.Run("toasts when an overlay hides the log", func(t *testing.T) {
@@ -247,9 +242,7 @@ func TestToastLogTailing(t *testing.T) {
 		m = m.ExecTypable("say")
 
 		assert.NotEmpty(t, toastRow(m, "Messages"))
-		assert.Equal(t,
-			2, strings.Count(stripANSI(viewContent(m)), "hello there"),
-		)
+		assert.Equal(t, 2, strings.Count(stripANSI(viewContent(m)), "hello there"))
 	})
 
 	t.Run("click over an overlay dismisses", func(t *testing.T) {
@@ -321,8 +314,7 @@ func toastModel(t *testing.T) ui.Model {
 	return settled(resize(ui.New(e, km), 80, 24))
 }
 
-// settled turns animation off, so a toast renders at its resting place
-// without waiting out the rise
+// settled turns animation off, so a toast renders at its resting place without waiting out the rise
 func settled(m ui.Model) ui.Model {
 	m.SetAnimation(false)
 	return m
@@ -350,8 +342,7 @@ func tailingToastModel(t *testing.T) (ui.Model, *view.Editor) {
 	}))
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "buffer_picker", m.PickerAction(bufferPicker),
-		[]command.KeyEvent{char('p')},
+		km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 	)
 	e.ShowDocument(e.MessagesDocument().ID())
 	m = settled(resize(m, 80, 24))

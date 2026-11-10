@@ -48,7 +48,5 @@ func (c *completionComponent) selectedKey() completionItemKey {
 }
 
 func (c *completionComponent) syncList() {
-	c.list.resize(
-		len(c.items), visibleRows(c.listBounds, completionMaxRows),
-	)
+	c.list.resize(len(c.items), visibleRows(c.listBounds, completionMaxRows))
 }

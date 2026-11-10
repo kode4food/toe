@@ -37,8 +37,8 @@ func GotoLastChange(e *view.Editor) {
 	gotoEdgeChange(e, true)
 }
 
-// ResetDiffChange reverts every diff hunk that intersects the selection back to
-// the version-control base text. It returns how many hunks were reset
+// ResetDiffChange reverts every diff hunk that intersects the selection back to the version-control
+// base text. It returns how many hunks were reset
 func ResetDiffChange(e *view.Editor) (int, error) {
 	v := e.FocusedView()
 	if v == nil {
@@ -64,8 +64,7 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 		return 0, err
 	}
 
-	// hunks trail the newest keystrokes (debounced background worker), so
-	// indices are clamped below
+	// hunks trail the newest keystrokes (debounced background worker), so indices are clamped below
 	baseLines := strings.SplitAfter(base, "\n")
 	var changes []core.Change
 	for _, h := range hunks {

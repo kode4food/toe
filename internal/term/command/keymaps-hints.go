@@ -2,17 +2,16 @@ package command
 
 import "github.com/kode4food/toe/internal/view"
 
-// LabelNode names the node reached by each alternative in prefix, so a shared
-// menu (e.g. the Space and Ctrl-\ leaders) is labeled everywhere it is reached
+// LabelNode names the node reached by each alternative in prefix, so a shared menu (e.g. the Space
+// and Ctrl-\ leaders) is labeled everywhere it is reached
 func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 	for _, seq := range prefix {
 		k.declare(mode, seq).label = name
 	}
 }
 
-// PendingHints returns the title and (key, label) pairs offered after seq in
-// mode, from the node's children or its hint provider. A binding unusable
-// with the count typed is omitted
+// PendingHints returns the title and (key, label) pairs offered after seq in mode, from the node's
+// children or its hint provider. A binding unusable with the count typed is omitted
 func (k *Keymaps) PendingHints(
 	e *view.Editor, mode view.Mode, seq []KeyEvent, counting bool,
 ) (string, []KeyHint) {

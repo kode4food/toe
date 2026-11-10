@@ -148,19 +148,15 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
-	format := doc.TextFormatForConfig(
-		max(editorW-gutterW, 0), cx.Editor.Options(),
-	)
+	format := doc.TextFormatForConfig(max(editorW-gutterW, 0), cx.Editor.Options())
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
 		vf = &core.VisualMoveFormat{
-			ViewportWidth:   format.ViewportWidth,
-			TabWidth:        format.TabWidth,
-			MaxWrap:         format.MaxWrap,
-			MaxIndentRetain: format.MaxIndentRetain,
-			WrapIndicatorWidth: runewidth.StringWidth(
-				format.WrapIndicatorPrefix(),
-			),
+			ViewportWidth:      format.ViewportWidth,
+			TabWidth:           format.TabWidth,
+			MaxWrap:            format.MaxWrap,
+			MaxIndentRetain:    format.MaxIndentRetain,
+			WrapIndicatorWidth: runewidth.StringWidth(format.WrapIndicatorPrefix()),
 		}
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -267,10 +263,7 @@ func (r *renderPass) beginPaneRedraw(target *paneRedrawTarget) bool {
 		return false
 	}
 	if !target.redrawAll || !target.focused {
-		clearPaneRect(
-			target.buf, target.pane.Area(), target.yOffset,
-			target.background,
-		)
+		clearPaneRect(target.buf, target.pane.Area(), target.yOffset, target.background)
 	}
 	return true
 }

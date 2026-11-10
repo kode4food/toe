@@ -34,7 +34,9 @@ const (
 	bufferPickerModifiedAscii = "*"
 )
 
-var ErrInvalidPickerStart = errors.New("invalid picker start position")
+var (
+	ErrInvalidPickerStart = errors.New("invalid picker start position")
+)
 
 // NewBufferPicker returns a picker over the open buffers
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
@@ -109,9 +111,7 @@ func (b *bufferPickerSource) Load() ui.PickerLoad {
 }
 
 // Accept switches the focused pane to the chosen buffer
-func (b *bufferPickerSource) Accept(
-	item *ui.PickerItem, action ui.PickerAcceptAction,
-) {
+func (b *bufferPickerSource) Accept(item *ui.PickerItem, action ui.PickerAcceptAction) {
 	id := item.Location.Target.ID
 	if id == view.InvalidDocumentId {
 		return

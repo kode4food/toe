@@ -44,8 +44,7 @@ func Indent(e *view.Editor) {
 		}
 		ins := indent
 		if !style.IsTabs() {
-			// Find the column of the first non-whitespace char and
-			// align to the next indent stop
+			// Find the column of the first non-whitespace char and align to the next indent stop
 			firstNonWS := 0
 			for _, ch := range lineRope.String() {
 				if ch != ' ' && ch != '\t' {
@@ -125,9 +124,7 @@ func Unindent(e *view.Editor) {
 	applyWithSelMap(e, text, sel, changes)
 }
 
-func applyWithSelMap(
-	e *view.Editor, text core.Rope, sel core.Selection, changes []core.Change,
-) {
+func applyWithSelMap(e *view.Editor, text core.Rope, sel core.Selection, changes []core.Change) {
 	if len(changes) == 0 {
 		return
 	}

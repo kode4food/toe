@@ -53,9 +53,7 @@ func (s *pickerColumnSizing) measure(p *Picker, cols []string) {
 			width := runewidth.StringWidth(m.item.Columns[i])
 			if p.editor.Options().NerdFonts &&
 				i == pickerFileIconColumn(p, m.item) {
-				width = max(
-					width, runewidth.StringWidth(pickerDefaultFileIcon.glyph),
-				)
+				width = max(width, runewidth.StringWidth(pickerDefaultFileIcon.glyph))
 			}
 			s.maximum[i] = max(s.maximum[i], width)
 			measured = append(measured, width)

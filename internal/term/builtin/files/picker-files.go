@@ -52,8 +52,7 @@ func NewFilePicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, newFilePickerSource(e, root))
 }
 
-// NewFilePickerInCWD opens a file picker rooted at the current working
-// directory
+// NewFilePickerInCWD opens a file picker rooted at the current working directory
 func NewFilePickerInCWD(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, newFilePickerSource(e, e.Cwd()))
 }
@@ -81,8 +80,8 @@ func (f *filePickerSource) Load() ui.PickerLoad {
 	return startFilePickerFeed(f.dir, pickerListRows(f.Editor))
 }
 
-// ItemsForPath returns the row for a regular file at path, empty when the walk
-// excludes it. Symlinks resolve on a full reload
+// ItemsForPath returns the row for a regular file at path, empty when the walk excludes it.
+// Symlinks resolve on a full reload
 func (f *filePickerSource) ItemsForPath(path string) []*ui.PickerItem {
 	root := resolvePickerWalkRoot(f.dir)
 	if !pathWithinRoot(rootedPath{path: path, root: root}) {
@@ -121,9 +120,7 @@ func (f *filePickerSource) ItemsForPath(path string) []*ui.PickerItem {
 }
 
 // Accept opens the chosen file
-func (f *filePickerSource) Accept(
-	item *ui.PickerItem, action ui.PickerAcceptAction,
-) {
+func (f *filePickerSource) Accept(item *ui.PickerItem, action ui.PickerAcceptAction) {
 	ui.GotoPath(f.Editor, item.Location.Target.Path, nil, action)
 }
 
@@ -274,9 +271,7 @@ func walkPickerFiles(root string, done <-chan struct{}, visit pickerVisitor) {
 	w.walkDir(root)
 }
 
-func pickerFollowEntry(
-	at rootedPath, entry os.DirEntry,
-) (pickerFollow, error) {
+func pickerFollowEntry(at rootedPath, entry os.DirEntry) (pickerFollow, error) {
 	info, err := os.Stat(at.path)
 	if err != nil {
 		return pickerFollow{}, err

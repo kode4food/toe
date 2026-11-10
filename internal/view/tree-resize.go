@@ -12,9 +12,8 @@ type resizeParent struct {
 	branch    Id
 }
 
-// ResizeFocused pushes a border of the focused pane's split by delta cells in
-// dir, falling back to its other border if it has none on that side. False if
-// no ancestor splits along that axis
+// ResizeFocused pushes a border of the focused pane's split by delta cells in dir, falling back to
+// its other border if it has none on that side. False if no ancestor splits along that axis
 func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 	if delta <= 0 || t.IsEmpty() {
 		return false
@@ -68,17 +67,15 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 	return true
 }
 
-// GrowFocusedWidth widens the focused pane by moving the nearest vertical
-// split, constrained by the minimum width of its sibling
+// GrowFocusedWidth widens the focused pane by moving the nearest vertical split, constrained by the
+// minimum width of its sibling
 func (t *Tree) GrowFocusedWidth(delta int) bool {
 	return t.growFocused(LayoutVertical, delta)
 }
 
-// MoveSeparator adjusts the split between children[childIdx] and
-// children[childIdx+1] in containerID, in tree coordinates
-func (t *Tree) MoveSeparator(
-	containerID Id, childIdx int, layout Layout, newPos int,
-) {
+// MoveSeparator adjusts the split between children[childIdx] and children[childIdx+1] in
+// containerID, in tree coordinates
+func (t *Tree) MoveSeparator(containerID Id, childIdx int, layout Layout, newPos int) {
 	t.Unmaximize()
 	t.moveSeparatorAt(containerID, childIdx, layout, newPos)
 }
@@ -131,9 +128,7 @@ func (t *Tree) takeFromSiblings(args takeFromSiblingsArgs) float64 {
 		}
 	}
 	slices.SortStableFunc(order, func(a, b int) int {
-		return cmp.Compare(
-			t.nodes[c.children[a]].focusSeq, t.nodes[c.children[b]].focusSeq,
-		)
+		return cmp.Compare(t.nodes[c.children[a]].focusSeq, t.nodes[c.children[b]].focusSeq)
 	})
 	var got float64
 	for _, i := range order {
@@ -193,9 +188,7 @@ func (t *Tree) areaOf(id Id) geom.Area {
 	return n.container.area
 }
 
-func (t *Tree) moveSeparatorAt(
-	containerID Id, childIdx int, layout Layout, newPos int,
-) {
+func (t *Tree) moveSeparatorAt(containerID Id, childIdx int, layout Layout, newPos int) {
 	n := t.nodes[containerID]
 	if n == nil || n.container == nil || n.container.layout != layout {
 		return

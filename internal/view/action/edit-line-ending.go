@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// SetLineEnding changes the document line-ending style and rewrites existing
-// line endings in the focused buffer to match
+// SetLineEnding changes the document line-ending style and rewrites existing line endings in the
+// focused buffer to match
 func SetLineEnding(e *view.Editor, le core.LineEnding) error {
 	if e.FocusedView() == nil {
 		return view.ErrNoView

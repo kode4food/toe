@@ -80,8 +80,7 @@ var (
 	}
 )
 
-// NewChangedFilePicker lists workspace files the version-control system reports
-// as changed
+// NewChangedFilePicker lists workspace files the version-control system reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
 		Editor:      e,
@@ -132,8 +131,8 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 	return PickerLoad{Feed: feed, Stop: stop}
 }
 
-// Items returns the whole row set at once; unlike Load it must not warm hunks,
-// since a file-watch burst would re-diff every row and peg the CPU
+// Items returns the whole row set at once; unlike Load it must not warm hunks, since a file-watch
+// burst would re-diff every row and peg the CPU
 func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	scan, ok := c.scan()
 	if !ok || scan.err != nil {
@@ -143,18 +142,12 @@ func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 }
 
 // Accept opens the chosen file
-func (c *changedFilePickerSource) Accept(
-	item *PickerItem, action PickerAcceptAction,
-) {
-	GotoPath(
-		c.Editor, item.Location.Target.Path,
-		GotoLines(item.TargetLines()), action,
-	)
+func (c *changedFilePickerSource) Accept(item *PickerItem, action PickerAcceptAction) {
+	GotoPath(c.Editor, item.Location.Target.Path, GotoLines(item.TargetLines()), action)
 }
 
-// HandleKey stages the selected file with ctrl+a, ignores an untracked one with
-// ctrl+g, and reverts a row with ctrl+r, which unstages a staged row and
-// discards the changes of an unstaged one
+// HandleKey stages the selected file with ctrl+a, ignores an untracked one with ctrl+g, and reverts
+// a row with ctrl+r, which unstages a staged row and discards the changes of an unstaged one
 func (c *changedFilePickerSource) HandleKey(
 	item *PickerItem, k command.KeyEvent,
 ) (BufferOverlayComponent, bool) {
@@ -182,11 +175,9 @@ func (c *changedFilePickerSource) HandleKey(
 	return nil, true
 }
 
-// hunks read version control per row, so they are computed off the UI thread
-// rather than on the selecting keystroke, until a newer generation supersedes
-func (c *changedFilePickerSource) warmHunks(
-	items []*PickerItem, gen uint64,
-) {
+// hunks read version control per row, so they are computed off the UI thread rather than on the
+// selecting keystroke, until a newer generation supersedes
+func (c *changedFilePickerSource) warmHunks(items []*PickerItem, gen uint64) {
 	for _, item := range items {
 		if c.warmGen.Load() != gen {
 			return
@@ -204,9 +195,7 @@ func (c *changedFileScan) rows() []*PickerItem {
 	return out
 }
 
-func (c *changedFileScan) item(
-	slab *PickerItemSlab, fc view.FileChange,
-) *PickerItem {
+func (c *changedFileScan) item(slab *PickerItemSlab, fc view.FileChange) *PickerItem {
 	display := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    fc.Path,
 		BaseDir: c.cwd,
@@ -246,8 +235,8 @@ func (c *changedFileScan) item(
 	return &item
 }
 
-// providers report symlink-resolved paths, so the workspace root resolves the
-// same way and names relativize cleanly
+// providers report symlink-resolved paths, so the workspace root resolves the same way and names
+// relativize cleanly
 func (c *changedFilePickerSource) scan() (*changedFileScan, bool) {
 	e := c.Editor
 	vc := e.VersionControl()
@@ -332,9 +321,7 @@ func changedFileSections() []*PickerItem {
 	}
 }
 
-func changedFileHunks(
-	vc view.VersionControl, fc view.FileChange,
-) []view.DiffHunk {
+func changedFileHunks(vc view.VersionControl, fc view.FileChange) []view.DiffHunk {
 	switch fc.Kind {
 	case view.FileChangeUntracked, view.FileChangeAdded,
 		view.FileChangeDeleted:

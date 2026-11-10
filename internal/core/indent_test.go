@@ -89,18 +89,14 @@ func TestIndentWidth(t *testing.T) {
 
 func TestAutoDetect(t *testing.T) {
 	t.Run("detects tab indentation", func(t *testing.T) {
-		doc := core.NewRope(
-			"func foo() {\n\tbar()\n\tbaz()\n\t\tqux()\n}",
-		)
+		doc := core.NewRope("func foo() {\n\tbar()\n\tbaz()\n\t\tqux()\n}")
 		style, ok := core.AutoDetect(doc)
 		assert.True(t, ok)
 		assert.True(t, style.IsTabs())
 	})
 
 	t.Run("detects four-space indentation", func(t *testing.T) {
-		doc := core.NewRope(
-			"func foo() {\n    bar()\n    baz()\n        qux()\n}",
-		)
+		doc := core.NewRope("func foo() {\n    bar()\n    baz()\n        qux()\n}")
 		style, ok := core.AutoDetect(doc)
 		assert.True(t, ok)
 		assert.False(t, style.IsTabs())
@@ -108,9 +104,7 @@ func TestAutoDetect(t *testing.T) {
 	})
 
 	t.Run("detects two-space indentation", func(t *testing.T) {
-		doc := core.NewRope(
-			"func foo() {\n  bar()\n  baz()\n    qux()\n}",
-		)
+		doc := core.NewRope("func foo() {\n  bar()\n  baz()\n    qux()\n}")
 		style, ok := core.AutoDetect(doc)
 		assert.True(t, ok)
 		assert.False(t, style.IsTabs())
@@ -143,9 +137,7 @@ func TestAutoDetect(t *testing.T) {
 	})
 
 	t.Run("returns false for ambiguous indent", func(t *testing.T) {
-		doc := core.NewRope(
-			"x\n  a\n    b\n      c\ny\n   a\n      b\n         c\n",
-		)
+		doc := core.NewRope("x\n  a\n    b\n      c\ny\n   a\n      b\n         c\n")
 		_, ok := core.AutoDetect(doc)
 		assert.False(t, ok)
 	})

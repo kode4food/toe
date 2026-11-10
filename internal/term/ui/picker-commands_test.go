@@ -129,8 +129,7 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		},
 	})
 	bindNormalTestAction(
-		km, "open_palette", m.PickerAction(m.CommandPalettePicker),
-		[]command.KeyEvent{char('p')},
+		km, "open_palette", m.PickerAction(m.CommandPalettePicker), []command.KeyEvent{char('p')},
 	)
 	m = resize(m, 100, 30)
 	return sendKey(m, 'p'), e

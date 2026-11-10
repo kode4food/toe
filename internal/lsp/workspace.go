@@ -51,8 +51,7 @@ func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 	}
 }
 
-// RootFound reports whether any required root pattern matches a
-// directory entry
+// RootFound reports whether any required root pattern matches a directory entry
 func RootFound(root string, patterns []string) (bool, error) {
 	if len(patterns) == 0 {
 		return true, nil

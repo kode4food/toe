@@ -682,10 +682,7 @@ func TestIncrementNonNumber(t *testing.T) {
 func TestInsertTabDuplicateCursors(t *testing.T) {
 	t.Run("same-position cursors insert tab once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(1),
-			core.PointRange(1),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(1)}, 0)
 
 		action.InsertTab(e)
 
@@ -698,10 +695,7 @@ func TestInsertTabDuplicateCursors(t *testing.T) {
 func TestPasteRegisterAtCursorDuplicate(t *testing.T) {
 	t.Run("same-position cursors paste once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ac")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(1),
-			core.PointRange(1),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(1)}, 0)
 		e.Registers().Write('x', []string{"b"})
 
 		action.PasteRegisterAtCursor(e, 'x')
@@ -779,7 +773,6 @@ func writeTextLangConfigBuf(t *testing.T, commentToken string) {
 	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
 		"comment-token = \"" + commentToken + "\"\n"
 	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
+		os.WriteFile(filepath.Join(configDir, "languages.toml"), []byte(content), 0o644),
 	)
 }

@@ -28,9 +28,7 @@ const (
 	binaryTargetGroups   = 2
 )
 
-func (r *renderPass) renderBinaryPane(
-	buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool,
-) {
+func (r *renderPass) renderBinaryPane(buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool) {
 	a := pane.Area()
 	content := geom.Area{
 		X:      a.X,
@@ -67,9 +65,7 @@ func (r *renderPass) renderBinaryPane(
 	r.renderBinaryStatus(buf, pane, y0, focused)
 }
 
-func (r *renderPass) renderBinaryStatus(
-	buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool,
-) {
+func (r *renderPass) renderBinaryStatus(buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool) {
 	cx := r.context
 	a := pane.Area()
 	th := cx.Theme()
@@ -123,10 +119,7 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 		x += width
 		remaining -= width
 	}
-	write(
-		fmt.Sprintf("%0*x  ", args.offsetWidth, args.offset),
-		args.styles.location,
-	)
+	write(fmt.Sprintf("%0*x  ", args.offsetWidth, args.offset), args.styles.location)
 	var hex strings.Builder
 	for i := range args.bytesPerRow {
 		if i > 0 && i%binaryGroupBytes == 0 {
@@ -176,9 +169,7 @@ type binaryBytesPerRowArgs struct {
 }
 
 func binaryBytesPerRow(args binaryBytesPerRowArgs) int {
-	groups := max(
-		(args.width-args.offsetWidth-binaryRowPadding)/binaryGroupWidth, 1,
-	)
+	groups := max((args.width-args.offsetWidth-binaryRowPadding)/binaryGroupWidth, 1)
 	return groups * binaryGroupBytes
 }
 

@@ -102,39 +102,27 @@ func (c *Client) GotoReference(
 }
 
 // GotoDeclaration returns declaration locations for the symbol at the cursor
-func (s *Session) GotoDeclaration(
-	doc *view.Document, viewID view.Id,
-) ([]view.Location, error) {
+func (s *Session) GotoDeclaration(doc *view.Document, viewID view.Id) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoDeclaration)
 }
 
 // GotoDefinition returns definition locations for the symbol at the cursor
-func (s *Session) GotoDefinition(
-	doc *view.Document, viewID view.Id,
-) ([]view.Location, error) {
+func (s *Session) GotoDefinition(doc *view.Document, viewID view.Id) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoDefinition)
 }
 
-// GotoTypeDefinition returns type definition locations for the symbol at the
-// cursor
-func (s *Session) GotoTypeDefinition(
-	doc *view.Document, viewID view.Id,
-) ([]view.Location, error) {
+// GotoTypeDefinition returns type definition locations for the symbol at the cursor
+func (s *Session) GotoTypeDefinition(doc *view.Document, viewID view.Id) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoTypeDefinition)
 }
 
-// GotoImplementation returns implementation locations for the symbol at the
-// cursor
-func (s *Session) GotoImplementation(
-	doc *view.Document, viewID view.Id,
-) ([]view.Location, error) {
+// GotoImplementation returns implementation locations for the symbol at the cursor
+func (s *Session) GotoImplementation(doc *view.Document, viewID view.Id) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoImplementation)
 }
 
 // GotoReference returns all reference locations for the symbol at the cursor
-func (s *Session) GotoReference(
-	doc *view.Document, viewID view.Id,
-) ([]view.Location, error) {
+func (s *Session) GotoReference(doc *view.Document, viewID view.Id) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoReference)
 }
 
@@ -146,9 +134,7 @@ type locationRequestArgs struct {
 	serverCall locationServerFn
 }
 
-func (c *Client) gotoLocationRequest(
-	args locationRequestArgs,
-) ([]protocol.Location, bool, error) {
+func (c *Client) gotoLocationRequest(args locationRequestArgs) ([]protocol.Location, bool, error) {
 	if !c.SupportsFeature(args.feature) {
 		return nil, false, nil
 	}
@@ -226,9 +212,7 @@ func (s *Session) locations(
 	return out, err
 }
 
-func (s *Session) viewLocations(
-	client *Client, locations []protocol.Location,
-) []view.Location {
+func (s *Session) viewLocations(client *Client, locations []protocol.Location) []view.Location {
 	out := make([]view.Location, 0, len(locations))
 	for _, loc := range locations {
 		if target, ok := s.viewLocation(client, loc); ok {
@@ -238,9 +222,7 @@ func (s *Session) viewLocations(
 	return out
 }
 
-func (s *Session) viewLocation(
-	client *Client, loc protocol.Location,
-) (view.Location, bool) {
+func (s *Session) viewLocation(client *Client, loc protocol.Location) (view.Location, bool) {
 	if !loc.URI.IsFile() {
 		return view.Location{}, false
 	}

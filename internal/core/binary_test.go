@@ -64,9 +64,7 @@ func TestLooksBinary(t *testing.T) {
 		},
 		{
 			name: "utf-8 source code",
-			data: []byte(
-				"package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n",
-			),
+			data: []byte("package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n"),
 		},
 		{
 			name: "utf-8 with BOM",
@@ -104,9 +102,7 @@ func TestLooksBinary(t *testing.T) {
 		},
 		{
 			name: "utf-32le out-of-range code point",
-			data: append(
-				[]byte{0xFF, 0xFE, 0x00, 0x00}, 0x00, 0x00, 0x11, 0x00,
-			),
+			data: append([]byte{0xFF, 0xFE, 0x00, 0x00}, 0x00, 0x00, 0x11, 0x00),
 			want: true,
 		},
 		{
@@ -135,17 +131,11 @@ func TestLooksBinary(t *testing.T) {
 		},
 		{
 			name: "NUL past sample window",
-			data: append(
-				bytes.Repeat([]byte("a"), 2*core.BinarySampleSize),
-				0x00,
-			),
+			data: append(bytes.Repeat([]byte("a"), 2*core.BinarySampleSize), 0x00),
 		},
 		{
 			name: "NUL inside sample window",
-			data: append(
-				bytes.Repeat([]byte("a"), core.BinarySampleSize/2),
-				0x00,
-			),
+			data: append(bytes.Repeat([]byte("a"), core.BinarySampleSize/2), 0x00),
 			want: true,
 		},
 	}

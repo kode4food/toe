@@ -85,9 +85,7 @@ func bufferPicker(e *view.Editor) *ui.Picker {
 }
 
 func bufferDirExplorer(e *view.Editor) *ui.Picker {
-	return files.NewFocusedPaneDirExplorer(
-		e, files.DefaultFileExplorerOptions(),
-	)
+	return files.NewFocusedPaneDirExplorer(e, files.DefaultFileExplorerOptions())
 }
 
 func writeLanguageConfig(t *testing.T, root, lang string, enabled bool) {
@@ -98,9 +96,7 @@ func writeLanguageConfig(t *testing.T, root, lang string, enabled bool) {
 	text := "[[language]]\n" +
 		"name = \"" + lang + "\"\n" +
 		fmt.Sprintf("soft-wrap.enable = %t\n", enabled)
-	err = os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	)
+	err = os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644)
 	assert.NoError(t, err)
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
@@ -220,8 +216,7 @@ func bindTestAction(args bindTestActionArgs) {
 }
 
 func bindNormalTestAction(
-	km *command.Keymaps, name string, fn command.Action,
-	seqs ...[]command.KeyEvent,
+	km *command.Keymaps, name string, fn command.Action, seqs ...[]command.KeyEvent,
 ) {
 	bindTestAction(bindTestActionArgs{
 		km:   km,
@@ -236,8 +231,7 @@ func bindNormalTestAction(
 }
 
 func bindNormalTestKeyAction(
-	km *command.Keymaps, name string, fn command.KeyAction,
-	seqs ...[]command.KeyEvent,
+	km *command.Keymaps, name string, fn command.KeyAction, seqs ...[]command.KeyEvent,
 ) {
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: view.ModeNormal, name: name, fn: fn, seqs: seqs,
@@ -272,8 +266,8 @@ func (feedPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 func (feedPickerSource) SkipPreview() {}
 
 func feedPickerModel(t testing.TB, paths []string) ui.Model {
-	// the picker is bound to 'p' but not yet opened, so callers can time
-	// the open and its feed themselves
+	// the picker is bound to 'p' but not yet opened, so callers can time the open and its feed
+	// themselves
 	t.Helper()
 	src := feedPickerSource{
 		Ident: "feed",

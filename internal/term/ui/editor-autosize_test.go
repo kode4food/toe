@@ -140,8 +140,8 @@ func TestAutoSizeScrolled(t *testing.T) {
 	assert.True(t, ok)
 	e.Tree().MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 75)
 
-	// the target is where the ruler sits at offset zero, so scrolling right
-	// does not shrink it even though the ruler is already painted
+	// the target is where the ruler sits at offset zero, so scrolling right does not shrink it even
+	// though the ruler is already painted
 	v := e.AllViews()[0]
 	off := v.Offset()
 	off.HorizontalOffset = 15

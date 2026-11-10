@@ -49,9 +49,7 @@ func TestImageRender(t *testing.T) {
 
 	content := viewContent(m)
 
-	assert.True(t,
-		strings.ContainsRune(content, tui.PlaceholderRune),
-	)
+	assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
 	// status shows IMG and image dimensions, not text-oriented fields
 	out := stripANSI(content)
 	assert.Contains(t, out, "IMG")
@@ -74,9 +72,7 @@ func TestImageRender(t *testing.T) {
 	for _, match := range matches {
 		assert.Equal(t, matches[0][1], match[1])
 	}
-	fg := fmt.Sprintf(
-		"\x1b[38;2;%d;%d;%dm", id>>16, id>>8&0xFF, id&0xFF,
-	)
+	fg := fmt.Sprintf("\x1b[38;2;%d;%d;%dm", id>>16, id>>8&0xFF, id&0xFF)
 	assert.Contains(t, content, fg)
 }
 
@@ -112,9 +108,7 @@ func TestImageDim(t *testing.T) {
 		assert.NotEmpty(t, matches)
 		id, err := strconv.ParseUint(matches[0][1], 10, 32)
 		assert.NoError(t, err)
-		fg := fmt.Sprintf(
-			"\x1b[38;2;%d;%d;%dm", id>>16, id>>8&0xFF, id&0xFF,
-		)
+		fg := fmt.Sprintf("\x1b[38;2;%d;%d;%dm", id>>16, id>>8&0xFF, id&0xFF)
 		// fg still carries the untouched image-id encoding
 		assert.Contains(t, content, fg)
 		// mocha's ui.background bg (#1e1e2e -> 30,30,46) darkened 50%
@@ -139,9 +133,7 @@ func TestImageLoading(t *testing.T) {
 }
 
 func TestImageUnsupported(t *testing.T) {
-	for _, k := range []string{
-		"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
-	} {
+	for _, k := range []string{"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM"} {
 		t.Setenv(k, "")
 	}
 	root := t.TempDir()
@@ -421,9 +413,8 @@ func TestImagePanRestore(t *testing.T) {
 	assert.Equal(t, want, restoredPane.Pan())
 }
 
-// A render at a smaller bound (a shrunk window, or a layout transient during
-// restore) must not rewrite the stored pan: only a zoom converges it, so the
-// offset survives a resize round-trip
+// A render at a smaller bound (a shrunk window, or a layout transient during restore) must not
+// rewrite the stored pan: only a zoom converges it, so the offset survives a resize round-trip
 func TestImagePanSurvivesResize(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
@@ -461,9 +452,8 @@ func TestImagePanSurvivesResize(t *testing.T) {
 	assert.Equal(t, want, pane.Pan())
 }
 
-// Zooming out shrinks the overflow, so the pan converges to center. Once
-// fitted there is no pan left, and zooming back in starts from center, not
-// the old offset
+// Zooming out shrinks the overflow, so the pan converges to center. Once fitted there is no pan
+// left, and zooming back in starts from center, not the old offset
 func TestImagePanForgottenOnZoomOut(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
@@ -610,9 +600,7 @@ func TestImagePickerPreview(t *testing.T) {
 	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
-	assert.True(t,
-		strings.ContainsRune(viewContent(m), tui.PlaceholderRune),
-	)
+	assert.True(t, strings.ContainsRune(viewContent(m), tui.PlaceholderRune))
 }
 
 func TestImagePickerPreviewResize(t *testing.T) {
@@ -735,9 +723,7 @@ func TestImageZoomKeepsReadyPlacement(t *testing.T) {
 	content := viewContent(m)
 
 	assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
-	assert.NotContains(t,
-		stripANSI(content), i18n.Text(i18n.StatusImageLoading),
-	)
+	assert.NotContains(t, stripANSI(content), i18n.Text(i18n.StatusImageLoading))
 }
 
 func TestImageZoomPending(t *testing.T) {
@@ -831,9 +817,7 @@ func writeDistinctImage(t testing.TB, dir string, i int) {
 	assert.NoError(t, os.WriteFile(path, buf.Bytes(), 0o644))
 }
 
-func writeRenderImage(
-	t testing.TB, dir string, w, h int, c color.Color,
-) string {
+func writeRenderImage(t testing.TB, dir string, w, h int, c color.Color) string {
 	t.Helper()
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	if c != nil {

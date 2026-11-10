@@ -8,9 +8,7 @@ type sessionRestore struct {
 	docIndex map[DocumentId]*Document
 }
 
-func (e *Editor) restoreSessionRoot(
-	t *Tree, root Id, sn *sessNode, rs *sessionRestore,
-) error {
+func (e *Editor) restoreSessionRoot(t *Tree, root Id, sn *sessNode, rs *sessionRestore) error {
 	if sn.Kind == SessionKindView || sn.Kind == SessionKindImage ||
 		sn.Kind == SessionKindTerminal || sn.Kind == SessionKindBinary {
 		id, err := e.restoreSessionNode(t, root, sn, rs)
@@ -187,9 +185,7 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	return v
 }
 
-func (e *Editor) restoreDisplacedPane(
-	t *Tree, parent Id, sn *sessNode, rs *sessionRestore,
-) Pane {
+func (e *Editor) restoreDisplacedPane(t *Tree, parent Id, sn *sessNode, rs *sessionRestore) Pane {
 	if sn == nil {
 		return nil
 	}

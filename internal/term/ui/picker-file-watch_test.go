@@ -142,9 +142,7 @@ func TestPickerReopen(t *testing.T) {
 		m = sendKeyAndFeed(m, 'g')
 		m = sendSpecial(m, tea.KeyEscape)
 
-		testutil.WriteFile(t,
-			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "untracked.txt"), []byte("new\n"))
 		m = sendKeyAndFeed(m, 'g')
 		assert.Contains(t, stripANSI(viewContent(m)), "untracked.txt")
 	})
@@ -157,14 +155,10 @@ func TestPickerReopen(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		middle := strings.Repeat("line\n", pickerReopenMiddleLines)
 		base := "line\n" + middle + "line\n"
-		path := testutil.GitCommitFile(t,
-			repo, "changed.txt", []byte(base),
-		)
+		path := testutil.GitCommitFile(t, repo, "changed.txt", []byte(base))
 		first := "first\n" + middle + "line\n"
 		testutil.WriteFile(t, path, []byte(first))
-		other := testutil.GitCommitFile(t,
-			repo, "alpha.txt", []byte("one\n"),
-		)
+		other := testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
 		testutil.WriteFile(t, other, []byte("two\n"))
 
 		e := view.NewEditor(repo)
@@ -197,17 +191,15 @@ func TestPickerReopen(t *testing.T) {
 			),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-		)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(changes)))
 		m = sendKey(m, 'g')
 		assert.Contains(t, selectedPickerLine(m), "changed.txt")
 		assert.Contains(t, stripANSI(viewContent(m)), "+ second")
 	})
 }
 
-// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so every
-// combination of the three is pinned as the picker renders it
+// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so every combination of the
+// three is pinned as the picker renders it
 func TestChangedFileRows(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: shells out to git")
@@ -280,9 +272,7 @@ func TestChangedFileRows(t *testing.T) {
 					)},
 				)
 				assert.NoError(t, err)
-				assert.NoError(t,
-					e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-				)
+				assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(changes)))
 			}
 
 			m = sendKeyAndFeed(m, 'g')
@@ -394,9 +384,7 @@ func TestPickerFileWatch(t *testing.T) {
 		var body strings.Builder
 		for i := range fileWatchBurstWrites {
 			_, _ = fmt.Fprintf(&body, "line %d\n", i)
-			assert.NoError(t,
-				os.WriteFile(alpha, []byte(body.String()), 0o644),
-			)
+			assert.NoError(t, os.WriteFile(alpha, []byte(body.String()), 0o644))
 			time.Sleep(fileWatchBurstPause)
 		}
 		last := fmt.Sprintf("line %d", fileWatchBurstWrites-1)
@@ -432,9 +420,7 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("toggle preserves interest", func(t *testing.T) {
 		tmp := resolvedTempDir(t)
 		alpha := filepath.Join(tmp, "alpha.go")
-		assert.NoError(t,
-			os.WriteFile(alpha, []byte("package alpha\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(alpha, []byte("package alpha\n"), 0o644))
 
 		e := view.NewEditor(tmp)
 		km := command.NewKeymaps()
@@ -456,9 +442,7 @@ func TestPickerFileWatch(t *testing.T) {
 			m2, _ = m.Update(tea.FocusMsg{})
 			m = m2.(ui.Model)
 			path := filepath.Join(tmp, name)
-			assert.NoError(t,
-				os.WriteFile(path, []byte("package added\n"), 0o644),
-			)
+			assert.NoError(t, os.WriteFile(path, []byte("package added\n"), 0o644))
 			pump.until(t, name)
 		}
 	})
@@ -466,9 +450,7 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("shared document stays watched", func(t *testing.T) {
 		tmp := resolvedTempDir(t)
 		path := filepath.Join(tmp, "shared.go")
-		assert.NoError(t,
-			os.WriteFile(path, []byte("package before\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(path, []byte("package before\n"), 0o644))
 
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
@@ -487,9 +469,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m2, _ := m.Update(tea.FocusMsg{})
 		m = m2.(ui.Model)
 
-		assert.NoError(t,
-			os.WriteFile(path, []byte("package after\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(path, []byte("package after\n"), 0o644))
 		newWatchPump(m).until(t, "package after")
 	})
 
@@ -530,9 +510,7 @@ func TestPickerFileWatch(t *testing.T) {
 		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "untracked.txt")
 
-		testutil.WriteFile(t,
-			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "untracked.txt"), []byte("new\n"))
 		newWatchPump(m).until(t, "untracked.txt")
 	})
 
@@ -563,9 +541,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NotContains(t, stripANSI(viewContent(m)), "untracked.txt")
 		m = sendSpecial(m, tea.KeyEscape)
 
-		testutil.WriteFile(t,
-			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "untracked.txt"), []byte("new\n"))
 		m = drainFileWatch(t, m)
 		m = sendKey(m, 'g')
 		assert.Contains(t, stripANSI(viewContent(m)), "untracked.txt")
@@ -579,18 +555,14 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.GitCommitFile(t, repo, "charlie.txt", []byte("one\n"))
 		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), []byte("two\n"))
 		testutil.WriteFile(t, filepath.Join(repo, "beta.txt"), []byte("two\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "charlie.txt"), []byte("two\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "charlie.txt"), []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
 		m = sendSpecial(m, tea.KeyDown)
 		before := selectedPickerLine(m)
 		assert.Contains(t, before, "beta.txt")
 
-		testutil.WriteFile(t,
-			filepath.Join(repo, "aardvark.txt"), []byte("new\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "aardvark.txt"), []byte("new\n"))
 		m = newWatchPump(m).until(t, "aardvark.txt")
 
 		assert.Contains(t, selectedPickerLine(m), "beta.txt")
@@ -623,8 +595,7 @@ func TestPickerFileWatch(t *testing.T) {
 		e.Options().FileWatch = false
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(ui.NewChangedFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		t.Cleanup(m.Close)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		assert.NotContains(t, stripANSI(viewContent(m)), "Staged Changes")
@@ -642,9 +613,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t, path, []byte("three\n"))
 
 		m := changedFilePicker(t, repo)
-		assert.Equal(t,
-			2, strings.Count(stripANSI(viewContent(m)), "both.txt"),
-		)
+		assert.Equal(t, 2, strings.Count(stripANSI(viewContent(m)), "both.txt"))
 
 		testutil.WriteFile(t, path, []byte("four\n"))
 		m = drainFileWatch(t, m)
@@ -691,9 +660,7 @@ func TestPickerFileWatch(t *testing.T) {
 			)},
 		)
 		assert.NoError(t, err)
-		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-		)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(changes)))
 
 		assert.NotEmpty(t, waitGutterHunks(t, e, doc))
 		m = sendKeyAndFeed(m, 'g')
@@ -729,9 +696,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
 		for _, name := range []string{"alpha.txt", "beta.txt", "gamma.txt"} {
-			testutil.GitCommitFile(t,
-				repo, testutil.GitName(name), []byte("one\n"),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte("one\n"))
 			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
 		}
 
@@ -749,9 +714,7 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("diff preview updates live", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			repo, "a.txt", []byte("one\nkeep\nend\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\nkeep\nend\n"))
 		testutil.WriteFile(t, path, []byte("two\nkeep\nend\n"))
 
 		m := changedFilePicker(t, repo)
@@ -805,8 +768,8 @@ func TestPickerFileWatch(t *testing.T) {
 
 		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, "beta.txt")
-		// FSEvents can emit one spurious root-dir event right after a fresh
-		// recursive watch registers, forcing one harmless fallback reload
+		// FSEvents can emit one spurious root-dir event right after a fresh recursive watch
+		// registers, forcing one harmless fallback reload
 		assert.LessOrEqual(t, src.loadCalls, 2)
 	})
 }
@@ -909,16 +872,12 @@ func drainCmdWithTimeout(m ui.Model, cmd tea.Cmd, d time.Duration) ui.Model {
 	return m
 }
 
-func waitGutterHunks(
-	t *testing.T, e *view.Editor, doc *view.Document,
-) []view.DiffHunk {
+func waitGutterHunks(t *testing.T, e *view.Editor, doc *view.Document) []view.DiffHunk {
 	t.Helper()
 	return waitGutter(t, e, doc, func(n int) bool { return n > 0 })
 }
 
-func waitGutterCleared(
-	t *testing.T, e *view.Editor, doc *view.Document,
-) []view.DiffHunk {
+func waitGutterCleared(t *testing.T, e *view.Editor, doc *view.Document) []view.DiffHunk {
 	t.Helper()
 	return waitGutter(t, e, doc, func(n int) bool { return n == 0 })
 }
@@ -975,8 +934,8 @@ func TestChangedFilesRefresh(t *testing.T) {
 	})
 }
 
-// settledGitShowLines waits until the shim's log stops growing, so a warm
-// pass still in flight isn't mistaken for having finished
+// settledGitShowLines waits until the shim's log stops growing, so a warm pass still in flight
+// isn't mistaken for having finished
 func settledGitShowLines(t *testing.T, logFile string) []string {
 	t.Helper()
 	deadline := time.Now().Add(fileWatchTestTimeout)
@@ -998,8 +957,8 @@ func settledGitShowLines(t *testing.T, logFile string) []string {
 	return nil
 }
 
-// installGitShowLog puts a git shim ahead of the real binary on PATH that
-// logs each "git show" invocation's arguments to logFile before delegating
+// installGitShowLog puts a git shim ahead of the real binary on PATH that logs each "git show"
+// invocation's arguments to logFile before delegating
 func installGitShowLog(t *testing.T, logFile string) {
 	t.Helper()
 	realGit, err := exec.LookPath("git")
@@ -1010,9 +969,7 @@ func installGitShowLog(t *testing.T, logFile string) {
 		"  echo \"$@\" >> \"$TOE_TEST_GIT_SHOW_LOG\"\n" +
 		"fi\n" +
 		"exec \"$TOE_TEST_REAL_GIT\" \"$@\"\n"
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(shimDir, "git"), []byte(script), 0o755,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(shimDir, "git"), []byte(script), 0o755))
 	t.Setenv("TOE_TEST_REAL_GIT", realGit)
 	t.Setenv("TOE_TEST_GIT_SHOW_LOG", logFile)
 	t.Setenv("PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))

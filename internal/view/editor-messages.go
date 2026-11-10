@@ -2,9 +2,9 @@ package view
 
 import "github.com/kode4food/toe/internal/core"
 
-// MessagesDocument returns the editor's message log, creating it on first use.
-// It is the only way to reach the log: an editor has exactly one, and it is
-// registered like any other buffer so the buffer picker lists it
+// MessagesDocument returns the editor's message log, creating it on first use. It is the only way
+// to reach the log: an editor has exactly one, and it is registered like any other buffer so the
+// buffer picker lists it
 func (e *Editor) MessagesDocument() *Document {
 	if doc, ok := e.documents.byID[e.documents.messagesID]; ok {
 		return doc
@@ -15,8 +15,8 @@ func (e *Editor) MessagesDocument() *Document {
 	return doc
 }
 
-// AppendMessage records a message in the log document. The append bypasses the
-// read-only flag that keeps the user from editing the log
+// AppendMessage records a message in the log document. The append bypasses the read-only flag that
+// keeps the user from editing the log
 func (e *Editor) AppendMessage(msg string) {
 	if msg == "" {
 		return

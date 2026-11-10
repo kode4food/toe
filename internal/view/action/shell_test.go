@@ -209,9 +209,7 @@ func TestShellEdgeSelections(t *testing.T) {
 	t.Run("append output skips duplicate position", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		testutil.SetSelection(
-			t, e,
-			[]core.Range{{Anchor: 0, Head: 1}, core.PointRange(1)},
-			0,
+			t, e, []core.Range{{Anchor: 0, Head: 1}, core.PointRange(1)}, 0,
 		)
 
 		err := action.ShellAppendOutput(e, "printf x")
@@ -392,9 +390,7 @@ func TestShell(t *testing.T) {
 
 		e := testutil.EditorWithText(t, "ab")
 		testutil.SetSelection(
-			t, e,
-			[]core.Range{{Anchor: 0, Head: 1}, core.PointRange(0)},
-			0,
+			t, e, []core.Range{{Anchor: 0, Head: 1}, core.PointRange(0)}, 0,
 		)
 
 		err := action.ReadFile(e, path)

@@ -108,8 +108,7 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.Equal(t, tui.UnderlineCurl, style.UnderlineStyle())
-		assert.Equal(t, tui.ColorRGB(0xff, 0x00, 0x00),
-			style.UnderlineColor())
+		assert.Equal(t, tui.ColorRGB(0xff, 0x00, 0x00), style.UnderlineColor())
 	})
 
 	t.Run("underline color implies line", func(t *testing.T) {
@@ -125,8 +124,7 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.Equal(t, tui.UnderlineLine, style.UnderlineStyle())
-		assert.Equal(t, tui.ColorRGB(0xff, 0xaa, 0x00),
-			style.UnderlineColor())
+		assert.Equal(t, tui.ColorRGB(0xff, 0xaa, 0x00), style.UnderlineColor())
 	})
 
 	t.Run("invalid underline warns", func(t *testing.T) {

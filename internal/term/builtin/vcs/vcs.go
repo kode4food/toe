@@ -34,11 +34,9 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actChangedFilePicker,
 				DocString: "Open changed file picker",
-				Run: kit.Runner(model.PickerAction(
-					ui.NewChangedFilePicker,
-				)),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('g'),
+				Run:       kit.Runner(model.PickerAction(ui.NewChangedFilePicker)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('g'),
 			},
 			{
 				Name:      actGotoNextChange,

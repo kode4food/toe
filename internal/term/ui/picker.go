@@ -72,8 +72,8 @@ type (
 		wantSet    bool
 	}
 
-	// SnapshotPickerSource returns its whole row set synchronously, so a
-	// refresh can replace the list without a visible rebuild
+	// SnapshotPickerSource returns its whole row set synchronously, so a refresh can replace the
+	// list without a visible rebuild
 	SnapshotPickerSource interface {
 		PickerSource
 		Items() ([]*PickerItem, bool)
@@ -85,9 +85,8 @@ type (
 	// StopFunc cancels an in-progress feed or search
 	StopFunc func()
 
-	// PickerLoad is what a source returns from Load: the rows known up front,
-	// an optional channel of rows discovered asynchronously, and the cancel for
-	// that feed
+	// PickerLoad is what a source returns from Load: the rows known up front, an optional channel
+	// of rows discovered asynchronously, and the cancel for that feed
 	PickerLoad struct {
 		Items []*PickerItem
 		Feed  <-chan *PickerItem
@@ -108,8 +107,8 @@ type (
 		Accept(*PickerItem, PickerAcceptAction)
 	}
 
-	// PickerStateKeyer distinguishes different starting points for one picker
-	// type. An empty key disables state restoration for that source
+	// PickerStateKeyer distinguishes different starting points for one picker type. An empty key
+	// disables state restoration for that source
 	PickerStateKeyer interface {
 		PickerStateKey() string
 	}
@@ -119,18 +118,17 @@ type (
 		SkipPreview()
 	}
 
-	// PickerSorter supplies the order a source's items sort in, nil for the
-	// default content order
+	// PickerSorter supplies the order a source's items sort in, nil for the default content order
 	PickerSorter interface {
 		ItemOrder() func(a, b *PickerItem) int
 	}
 
-	// FileBackedPickerSource is a picker whose rows are workspace files, each
-	// reconciled one changed path at a time
+	// FileBackedPickerSource is a picker whose rows are workspace files, each reconciled one
+	// changed path at a time
 	FileBackedPickerSource interface {
 		PickerSource
-		// ItemsForPath returns the current rows for path, empty when the source
-		// no longer contains it
+		// ItemsForPath returns the current rows for path, empty when the source no longer contains
+		// it
 		ItemsForPath(path string) []*PickerItem
 	}
 
@@ -146,27 +144,24 @@ type (
 		Search(query string)
 	}
 
-	// PickerKeySource extends PickerSource with source-specific bindings,
-	// consulted after the picker's own keys and before a typable key extends
-	// the query
+	// PickerKeySource extends PickerSource with source-specific bindings, consulted after the
+	// picker's own keys and before a typable key extends the query
 	PickerKeySource interface {
 		PickerSource
-		// HandleKey acts on a key, reporting whether it did. Any overlay it
-		// returns is pushed above the picker, such as a confirmation
+		// HandleKey acts on a key, reporting whether it did. Any overlay it returns is pushed above
+		// the picker, such as a confirmation
 		HandleKey(*PickerItem, command.KeyEvent) (BufferOverlayComponent, bool)
 	}
 
-	// NavigablePickerSource extends PickerSource for pickers that can drill
-	// into sub-pickers. Navigate returns a PickerFunc to replace the current
-	// picker, or nil to fall through to Accept
+	// NavigablePickerSource extends PickerSource for pickers that can drill into sub-pickers.
+	// Navigate returns a PickerFunc to replace the current picker, or nil to fall through to Accept
 	NavigablePickerSource interface {
 		PickerSource
 		Navigate(*PickerItem) PickerFunc
 	}
 
-	// PickerItem is a single row shown in the picker list. A Section row labels
-	// the group its Group ordinal names. It never matches a query and the
-	// cursor skips it
+	// PickerItem is a single row shown in the picker list. A Section row labels the group its Group
+	// ordinal names. It never matches a query and the cursor skips it
 	PickerItem struct {
 		Display     string
 		Columns     []string
@@ -200,21 +195,20 @@ type (
 		Lines  *core.Span
 	}
 
-	// PickerTarget identifies a document by path or in-memory ID. Variant
-	// separates two rows naming the same document, as the changed-file picker's
-	// staged and unstaged rows do
+	// PickerTarget identifies a document by path or in-memory ID. Variant separates two rows naming
+	// the same document, as the changed-file picker's staged and unstaged rows do
 	PickerTarget struct {
 		Path    string
 		ID      view.DocumentId
 		Variant int
 	}
 
-	// PickerAcceptAction is what accepting an item does with the pane it
-	// opens into, such as replacing it or splitting
+	// PickerAcceptAction is what accepting an item does with the pane it opens into, such as
+	// replacing it or splitting
 	PickerAcceptAction int
 
-	// MatchResult is a source's verdict on one item: its rank against the
-	// query, and the rune offsets to highlight in the matched column
+	// MatchResult is a source's verdict on one item: its rank against the query, and the rune
+	// offsets to highlight in the matched column
 	MatchResult struct {
 		Score   int
 		Indices []int
@@ -269,9 +263,8 @@ const (
 	PickerAcceptVerticalSplit
 )
 
-// NewPicker constructs a Picker for the given source, triggering Load
-// immediately. The returned feedCmd (if any) must be dispatched by the caller
-// after mounting the component
+// NewPicker constructs a Picker for the given source, triggering Load immediately. The returned
+// feedCmd (if any) must be dispatched by the caller after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		editor: e,
@@ -295,8 +288,8 @@ func (p *PickerItem) DiffHunks() []view.DiffHunk {
 	return p.hunks()
 }
 
-// TargetLines returns the line range the item opens at, taken from its first
-// diff hunk when the source supplies hunks instead
+// TargetLines returns the line range the item opens at, taken from its first diff hunk when the
+// source supplies hunks instead
 func (p *PickerItem) TargetLines() *core.Span {
 	if p.Location.Lines == nil && p.hunks != nil {
 		p.Location.Lines = firstChangeLines(p.DiffHunks())
@@ -426,8 +419,8 @@ func (p *Picker) loadItems() tea.Cmd {
 
 func (p *Picker) reload() tea.Cmd {
 	p.load.cancel()
-	// a reload landing mid-refill would otherwise capture whatever row the
-	// half-filled list is sitting on, losing the row the user chose
+	// a reload landing mid-refill would otherwise capture whatever row the half-filled list is
+	// sitting on, losing the row the user chose
 	if !p.load.wantSet {
 		target := p.selectedTarget()
 		p.load.wantTarget = target.PickerTarget
@@ -485,8 +478,8 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 		return p.refreshItemsCmd()
 	}
 	for path := range pending {
-		// a directory event carries coalesced changes with unknown members, and
-		// Git state changes can regroup or remove rows
+		// a directory event carries coalesced changes with unknown members, and Git state changes
+		// can regroup or remove rows
 		if isGitStatePath(path) {
 			p.clearPreviewCache()
 			p.refreshItems(true)
@@ -541,8 +534,8 @@ func (p *Picker) replaceItems(items []*PickerItem, keepFile bool) {
 	p.rematchPreservingSelection(target)
 }
 
-// a path holds as many rows as the source reports for it, so the whole set is
-// replaced at once rather than matched up row by row
+// a path holds as many rows as the source reports for it, so the whole set is replaced at once
+// rather than matched up row by row
 func (p *Picker) reconcilePath(path string, items []*PickerItem) {
 	atPath := itemsAtPath(path)
 	if len(items) == 0 && !slices.ContainsFunc(p.list.items, atPath) {
@@ -755,9 +748,7 @@ func (p *Picker) clearPreviewCache() {
 }
 
 // OpenPath opens a text document, image pane, or binary dump at path
-func OpenPath(
-	e *view.Editor, path string, action PickerAcceptAction,
-) (*view.View, bool, error) {
+func OpenPath(e *view.Editor, path string, action PickerAcceptAction) (*view.View, bool, error) {
 	if path == "" {
 		return nil, false, view.ErrDocumentNoPath
 	}
@@ -784,14 +775,14 @@ func OpenPath(
 	return nil, true, nil
 }
 
-// SortPickerItems sorts items by content, falling back to display text, the
-// default ordering for static picker sources
+// SortPickerItems sorts items by content, falling back to display text, the default ordering for
+// static picker sources
 func SortPickerItems(items []*PickerItem) {
 	slices.SortStableFunc(items, comparePickerItems)
 }
 
-// PickerNamePath renders a path name-first, trailing the directory holding it,
-// and returns the rune offset where that directory begins
+// PickerNamePath renders a path name-first, trailing the directory holding it, and returns the rune
+// offset where that directory begins
 func PickerNamePath(rel string) (string, int) {
 	dir := filepath.Dir(rel)
 	if dir == "" || dir == "." {
@@ -807,8 +798,8 @@ type PickerTrailingPathArgs struct {
 	Path string
 }
 
-// PickerTrailingPath trails a path behind a row's own text, and returns the
-// rune offset where that path begins
+// PickerTrailingPath trails a path behind a row's own text, and returns the rune offset where that
+// path begins
 func PickerTrailingPath(args PickerTrailingPathArgs) (string, int) {
 	if args.Text == "" {
 		return args.Path, 0
@@ -827,9 +818,7 @@ func pickerSortText(item *PickerItem) string {
 	return item.Display
 }
 
-func alignAcceptedSelection(
-	e *view.Editor, v *view.View, doc *view.Document,
-) {
+func alignAcceptedSelection(e *view.Editor, v *view.View, doc *view.Document) {
 	text := doc.Text()
 	primary := doc.SelectionFor(v.ID()).Primary()
 	from := primary.From()
@@ -870,9 +859,7 @@ func alignAcceptedSelection(
 	v.SetOffset(offset)
 }
 
-func acceptPickerPane(
-	e *view.Editor, pane view.Pane, action PickerAcceptAction,
-) bool {
+func acceptPickerPane(e *view.Editor, pane view.Pane, action PickerAcceptAction) bool {
 	switch action {
 	case PickerAcceptHorizontalSplit:
 		if !e.SplitPane(pane, view.LayoutHorizontal) {

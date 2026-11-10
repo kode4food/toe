@@ -161,10 +161,7 @@ comment-token = "//"
 		v := e.FocusedView()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, "\n\nhello", doc.Text().String())
-		assert.Equal(t, []core.Range{
-			core.PointRange(0),
-			core.PointRange(1),
-		}, sel.Ranges())
+		assert.Equal(t, []core.Range{core.PointRange(0), core.PointRange(1)}, sel.Ranges())
 	})
 }
 

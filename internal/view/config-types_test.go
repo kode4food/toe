@@ -42,8 +42,7 @@ func TestGutter(t *testing.T) {
 			Present: true,
 			Layout:  []view.GutterType{view.GutterTypeLineNumbers},
 		}
-		assert.Equal(t,
-			[]view.GutterType{view.GutterTypeLineNumbers}, g.GutterLayout())
+		assert.Equal(t, []view.GutterType{view.GutterTypeLineNumbers}, g.GutterLayout())
 	})
 
 	t.Run("HasGutterType true for present type", func(t *testing.T) {
@@ -61,8 +60,7 @@ func TestGutter(t *testing.T) {
 
 	t.Run("default min width when nil", func(t *testing.T) {
 		g := view.Gutter{}
-		assert.Equal(t,
-			view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth())
+		assert.Equal(t, view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth())
 	})
 
 	t.Run("LineNumberMinWidth returns custom value", func(t *testing.T) {
@@ -140,9 +138,7 @@ func TestGutter(t *testing.T) {
 			"line-numbers": map[string]any{"min-width": "bad"},
 		})
 		assert.NoError(t, err)
-		assert.Equal(t,
-			view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth(),
-		)
+		assert.Equal(t, view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth())
 	})
 
 	t.Run("bad string in map layout", func(t *testing.T) {
@@ -296,10 +292,7 @@ func TestStatusLineEdges(t *testing.T) {
 	})
 
 	t.Run("names cover every shape", func(t *testing.T) {
-		assert.Equal(t,
-			[]string{"arrow", "round", "slant", "line"},
-			view.StatusLineEdgeNames(),
-		)
+		assert.Equal(t, []string{"arrow", "round", "slant", "line"}, view.StatusLineEdgeNames())
 	})
 }
 

@@ -113,9 +113,7 @@ func (d *diagnosticPickerSource) Load() ui.PickerLoad {
 }
 
 // Accept jumps to the chosen diagnostic
-func (d *diagnosticPickerSource) Accept(
-	item *ui.PickerItem, action ui.PickerAcceptAction,
-) {
+func (d *diagnosticPickerSource) Accept(item *ui.PickerItem, action ui.PickerAcceptAction) {
 	payload, ok := item.Payload.(diagnosticPickerPayload)
 	if !ok {
 		return
@@ -128,8 +126,7 @@ func (d *diagnosticPickerSource) Accept(
 }
 
 func (d *diagnosticPickerSource) item(
-	slab *ui.PickerItemSlab, e *view.Editor, doc *view.Document,
-	diag view.Diagnostic,
+	slab *ui.PickerItemSlab, e *view.Editor, doc *view.Document, diag view.Diagnostic,
 ) *ui.PickerItem {
 	name := doc.RelativeName(e.Cwd())
 	line, lines := diagnosticLineRange(doc.Text(), diag)
@@ -144,10 +141,8 @@ func (d *diagnosticPickerSource) item(
 		})
 	}
 	return slab.Add(ui.PickerItem{
-		Group: diagnosticSeverityGroup(diag.Severity),
-		Columns: []string{
-			diagnosticSeverityIcon(diag.Severity, e.Options().NerdFonts), lbl,
-		},
+		Group:       diagnosticSeverityGroup(diag.Severity),
+		Columns:     []string{diagnosticSeverityIcon(diag.Severity, e.Options().NerdFonts), lbl},
 		StyleScopes: []string{diagnosticSeverityScope(diag.Severity), ""},
 		SecFrom:     sec,
 		Content:     msg,
@@ -159,9 +154,7 @@ func (d *diagnosticPickerSource) item(
 	})
 }
 
-func diagnosticPickerDocuments(
-	e *view.Editor, workspace bool,
-) []*view.Document {
+func diagnosticPickerDocuments(e *view.Editor, workspace bool) []*view.Document {
 	if workspace {
 		docs := e.AllDocuments()
 		slices.SortStableFunc(docs, func(a, b *view.Document) int {
@@ -175,9 +168,7 @@ func diagnosticPickerDocuments(
 	return nil
 }
 
-func diagnosticLineRange(
-	text core.Rope, diag view.Diagnostic,
-) (int, *core.Span) {
+func diagnosticLineRange(text core.Rope, diag view.Diagnostic) (int, *core.Span) {
 	from, err := text.CharToLine(diag.Range.From)
 	if err != nil {
 		return 0, nil

@@ -25,9 +25,9 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-// App is one editor process: the paths resolved from the command line, the
-// editor and its command registry, and the services attached to them. Build it
-// with New, bring it up with Start, take it down with Stop
+// App is one editor process: the paths resolved from the command line, the editor and its command
+// registry, and the services attached to them. Build it with New, bring it up with Start, take it
+// down with Stop
 type App struct {
 	ConfigPath string
 	Root       string
@@ -44,12 +44,12 @@ type App struct {
 	vcs      *vcs.Session
 }
 
-var ErrDirectoryArgument = errors.New(
-	"expected a path to file, but found a directory",
+var (
+	ErrDirectoryArgument = errors.New("expected a path to file, but found a directory")
 )
 
-// New resolves the command line into the workspace root, the config path, and
-// the files to open. It touches no editor state. Call Start for that
+// New resolves the command line into the workspace root, the config path, and the files to open. It
+// touches no editor state. Call Start for that
 func New(args []string, cwd string) (*App, error) {
 	a := &App{}
 	args = a.parseConfigFlag(args)
@@ -59,8 +59,7 @@ func New(args []string, cwd string) (*App, error) {
 	return a, nil
 }
 
-// Run starts the editor, or writes the health report when --health is the only
-// argument
+// Run starts the editor, or writes the health report when --health is the only argument
 func Run(args []string, out io.Writer) error {
 	if len(args) == 1 && args[0] == "--health" {
 		return health.Run(out)
@@ -81,9 +80,8 @@ func Run(args []string, out io.Writer) error {
 	return errors.Join(err, a.Stop())
 }
 
-// Start brings the app up in order: editor and commands, named files, config
-// and init files, the base options those establish, a saved session, then the
-// attached services and the model
+// Start brings the app up in order: editor and commands, named files, config and init files, the
+// base options those establish, a saved session, then the attached services and the model
 func (a *App) Start(ctx context.Context) error {
 	if err := a.initEditor(); err != nil {
 		return err
@@ -144,8 +142,8 @@ func (a *App) parseConfigFlag(args []string) []string {
 	return out
 }
 
-// resolvePaths populates Root, ShowPicker, and Files from args. A leading
-// directory argument becomes the root, and opens the file picker there
+// resolvePaths populates Root, ShowPicker, and Files from args. A leading directory argument
+// becomes the root, and opens the file picker there
 func (a *App) resolvePaths(args []string, cwd string) error {
 	a.Root = cwd
 	a.Files = args
@@ -187,9 +185,7 @@ func (a *App) initEditor() error {
 		return err
 	}
 	a.Reg = reg
-	a.Editor.SetClipboard(
-		action.NewOSC52Clipboard(action.NewSystemClipboard()),
-	)
+	a.Editor.SetClipboard(action.NewOSC52Clipboard(action.NewSystemClipboard()))
 	a.Editor.SetBaseOptions(a.baseOptions)
 	a.Editor.SetConfigReload(a.reloadConfig)
 	return a.Editor.Chdir(a.Root)
@@ -199,8 +195,8 @@ func (a *App) openFiles() error {
 	for _, path := range a.Files {
 		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
 			return fmt.Errorf(
-				"%w: %q (to open a directory pass it as first argument)",
-				ErrDirectoryArgument, path,
+				"%w: %q (to open a directory pass it as first argument)", ErrDirectoryArgument,
+				path,
 			)
 		}
 		_, _, err := ui.OpenPath(a.Editor, path, ui.PickerAcceptReplace)
@@ -229,8 +225,8 @@ func (a *App) applyConfigFiles() error {
 	return a.Reg.ApplyTOML(a.Editor, raw)
 }
 
-// resolveBaseOptions re-reads the option values a saved session is compared
-// against, so a session records only what changed after startup
+// resolveBaseOptions re-reads the option values a saved session is compared against, so a session
+// records only what changed after startup
 func (a *App) resolveBaseOptions() error {
 	values, err := a.Reg.OptionValues(a.Editor)
 	if err != nil {
@@ -292,18 +288,14 @@ func (a *App) saveSession() error {
 
 func (a *App) configureModel() {
 	if a.ShowPicker {
-		a.Model = a.Model.WithInitialPicker(
-			files.NewFilePickerInDir(a.Root),
-		)
+		a.Model = a.Model.WithInitialPicker(files.NewFilePickerInDir(a.Root))
 	}
 	_, workspaceFallback := loader.FindWorkspace(a.Root)
 	if a.Editor.Options().Insecure ||
 		workspaceFallback || a.WorkspaceTrusted() {
 		return
 	}
-	a.Model = a.Model.WithStartupMessage(
-		i18n.Text(i18n.ErrorWorkspaceUntrustedHint),
-	)
+	a.Model = a.Model.WithStartupMessage(i18n.Text(i18n.ErrorWorkspaceUntrustedHint))
 }
 
 func (a *App) isSessionEnabled() bool {

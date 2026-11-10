@@ -137,10 +137,7 @@ func TestFindNthPairsPos(t *testing.T) {
 func TestGetSurroundPos(t *testing.T) {
 	t.Run("finds positions for each range", func(t *testing.T) {
 		doc := core.NewRope("(some) (chars)\n(newline)")
-		sel, err := core.NewSelection([]core.Range{
-			core.PointRange(2),
-			core.PointRange(9),
-		}, 0)
+		sel, err := core.NewSelection([]core.Range{core.PointRange(2), core.PointRange(9)}, 0)
 		assert.NoError(t, err)
 		positions, err := core.GetSurroundPosFor(doc, sel, '(', 1)
 		assert.NoError(t, err)
@@ -149,10 +146,7 @@ func TestGetSurroundPos(t *testing.T) {
 
 	t.Run("shared positions return CursorOverlap", func(t *testing.T) {
 		doc := core.NewRope("[some]")
-		sel, err := core.NewSelection([]core.Range{
-			core.PointRange(2),
-			core.PointRange(3),
-		}, 0)
+		sel, err := core.NewSelection([]core.Range{core.PointRange(2), core.PointRange(3)}, 0)
 		assert.NoError(t, err)
 		_, err = core.GetSurroundPosFor(doc, sel, '[', 1)
 		assert.True(t, errors.Is(err, core.ErrSurroundCursorOverlap))

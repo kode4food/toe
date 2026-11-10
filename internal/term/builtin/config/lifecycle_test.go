@@ -14,8 +14,7 @@ import (
 func TestLifecycleQuit(t *testing.T) {
 	t.Run("quit on clean doc signals quit", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal)
+		assert.Equal(t, command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal)
 	})
 
 	t.Run("quit warns on any dirty doc", func(t *testing.T) {
@@ -27,8 +26,7 @@ func TestLifecycleQuit(t *testing.T) {
 
 	t.Run("quit! always signals quit", func(t *testing.T) {
 		e, km := test.Env(t, "x")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit!").Signal)
+		assert.Equal(t, command.SignalQuit, test.RunCmd(t, km, e, "quit!").Signal)
 	})
 
 	t.Run("quit! resolves in pane modes", func(t *testing.T) {

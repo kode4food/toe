@@ -7,8 +7,8 @@ import (
 )
 
 type (
-	// Separator describes the position and extent of the gap between two
-	// adjacent split panes in a container
+	// Separator describes the position and extent of the gap between two adjacent split panes in a
+	// container
 	Separator struct {
 		Layout Layout
 		geom.Area
@@ -17,9 +17,8 @@ type (
 	sepVisitor func(cID Id, childIdx int, sep Separator) bool
 )
 
-// WalkSeparators calls fn for each separator between adjacent panes. Vertical
-// seps have W=1 and span the container height. Horizontal seps have H=1 and
-// span the container width
+// WalkSeparators calls fn for each separator between adjacent panes. Vertical seps have W=1 and
+// span the container height. Horizontal seps have H=1 and span the container width
 func (t *Tree) WalkSeparators(fn func(Separator)) {
 	if !t.IsEmpty() && !t.Maximized() {
 		t.walkSep(t.root, fn)
@@ -33,8 +32,8 @@ type SeparatorAtRes struct {
 	Layout      Layout
 }
 
-// SeparatorAt returns the container ID, left-child index, and layout of the
-// separator hit by the click at tree column x, tree row y (bufferline excluded)
+// SeparatorAt returns the container ID, left-child index, and layout of the separator hit by the
+// click at tree column x, tree row y (bufferline excluded)
 func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
 	if t.IsEmpty() || t.Maximized() {
 		return SeparatorAtRes{}, false

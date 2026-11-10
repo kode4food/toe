@@ -25,8 +25,8 @@ func largeGoSource(funcs int) string {
 	return b.String()
 }
 
-// BenchmarkRenderLargeFileSteady renders a large highlighted file without
-// edits, the per-frame cost paid on every mouse-scroll tick
+// BenchmarkRenderLargeFileSteady renders a large highlighted file without edits, the per-frame cost
+// paid on every mouse-scroll tick
 func BenchmarkRenderLargeFileSteady(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "big.go")
@@ -48,8 +48,8 @@ func BenchmarkRenderLargeFileSteady(b *testing.B) {
 	}
 }
 
-// BenchmarkRenderLargeFileScrollbar renders the same file with the scrollbar
-// on and search highlights active, the worst case for mark collection
+// BenchmarkRenderLargeFileScrollbar renders the same file with the scrollbar on and search
+// highlights active, the worst case for mark collection
 func BenchmarkRenderLargeFileScrollbar(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "big.go")

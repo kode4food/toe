@@ -1,8 +1,8 @@
 package geom
 
 type (
-	// Size is a pixel or cell extent, named so a call site never has to guess
-	// the order a bare (int, int) would leave ambiguous
+	// Size is a pixel or cell extent, named so a call site never has to guess the order a bare
+	// (int, int) would leave ambiguous
 	Size struct {
 		Width, Height int
 	}
@@ -39,8 +39,8 @@ func (s Size) Contains(p Point) bool {
 	return p.X >= 0 && p.Y >= 0 && p.X < s.Width && p.Y < s.Height
 }
 
-// Clamp returns p pinned to the last valid cell of the Size, i.e. into the
-// range [0, Width-1] x [0, Height-1]
+// Clamp returns p pinned to the last valid cell of the Size, i.e. into the range [0, Width-1] x [0,
+// Height-1]
 func (s Size) Clamp(p Point) Point {
 	return Point{
 		X: min(max(p.X, 0), max(s.Width-1, 0)),
@@ -79,8 +79,8 @@ func (a Area) Intersects(b Area) bool {
 		a.Y < b.Y+b.Height && b.Y < a.Y+a.Height
 }
 
-// Center returns the origin Point that centers inner within a, clamped so the
-// origin never precedes a's own origin when inner is larger
+// Center returns the origin Point that centers inner within a, clamped so the origin never precedes
+// a's own origin when inner is larger
 func (a Area) Center(inner Size) Point {
 	return Point{
 		X: a.X + max(a.Width-inner.Width, 0)/2,
@@ -88,8 +88,8 @@ func (a Area) Center(inner Size) Point {
 	}
 }
 
-// Inset returns a shrunk toward its center by by.Width on the left and right
-// and by.Height on the top and bottom, with the Size clamped to zero
+// Inset returns a shrunk toward its center by by.Width on the left and right and by.Height on the
+// top and bottom, with the Size clamped to zero
 func (a Area) Inset(by Size) Area {
 	return Area{
 		X:      a.X + by.Width,

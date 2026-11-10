@@ -125,11 +125,9 @@ func LspModule(model ui.Model) command.Module {
 			{
 				Name:      actWorkspaceSymbol,
 				DocString: "Open workspace symbol picker",
-				Run: kit.Runner(
-					model.WorkspaceSymbolPickerAction,
-				),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('S'),
+				Run:       kit.Runner(model.WorkspaceSymbolPickerAction),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('S'),
 			},
 			{
 				Name: actLSPRestart,
@@ -192,9 +190,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 			return command.Result{Error: errLSPUndefined}
 		}
 		if args == nil || args.IsEmpty() {
-			return kit.Runner(model.PickerAction(
-				ui.LSPWorkspaceCommandPicker,
-			))(e, args)
+			return kit.Runner(model.PickerAction(ui.LSPWorkspaceCommandPicker))(e, args)
 		}
 		name, _ := args.First()
 		err := ctl.ExecuteWorkspaceCommand(doc, name, lspCommandArgs(args))
@@ -205,9 +201,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 	}
 }
 
-func lspCommandContext(
-	e *view.Editor,
-) (*view.Document, view.LanguageServerController, bool) {
+func lspCommandContext(e *view.Editor) (*view.Document, view.LanguageServerController, bool) {
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return nil, nil, false
@@ -233,9 +227,7 @@ func lspNamesMessage(action string, names []string) string {
 	if len(names) == 0 {
 		return "no language servers " + action
 	}
-	return fmt.Sprintf(
-		"language servers %s: %s", action, strings.Join(names, ", "),
-	)
+	return fmt.Sprintf("language servers %s: %s", action, strings.Join(names, ", "))
 }
 
 func positionals(args *command.Args) []string {
@@ -259,9 +251,7 @@ func lspServerSig() command.Signature {
 	return sig
 }
 
-func lspServerCompleter(
-	e *view.Editor, args *command.Args, input string,
-) []command.Completion {
+func lspServerCompleter(e *view.Editor, args *command.Args, input string) []command.Completion {
 	doc, ctl, ok := lspCommandContext(e)
 	if !ok {
 		return nil

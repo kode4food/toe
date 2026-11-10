@@ -8,8 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/loader"
 )
 
-// Save saves the focused document to disk. Unless force is set, it refuses
-// an unsafe overwrite (changed on disk, or read-only)
+// Save saves the focused document to disk. Unless force is set, it refuses an unsafe overwrite
+// (changed on disk, or read-only)
 func (e *Editor) Save(force bool) error {
 	doc := e.FocusedDocument()
 	if doc == nil {
@@ -34,8 +34,7 @@ func (e *Editor) Save(force bool) error {
 	return nil
 }
 
-// NewDocument creates a new empty scratch document and makes it the focused
-// view
+// NewDocument creates a new empty scratch document and makes it the focused view
 func (e *Editor) NewDocument() *View {
 	doc := e.newDocument()
 	doc.SetDisplayName(e.nextScratchName())
@@ -59,8 +58,8 @@ func (e *Editor) NewDocument() *View {
 	return nv
 }
 
-// SaveAll saves all modified documents. Unless force is set, it refuses an
-// unsafe overwrite (changed on disk, or read-only)
+// SaveAll saves all modified documents. Unless force is set, it refuses an unsafe overwrite
+// (changed on disk, or read-only)
 func (e *Editor) SaveAll(force bool) []error {
 	var errs []error
 	for _, doc := range e.documents.byID {
@@ -88,8 +87,7 @@ func (e *Editor) SaveAll(force bool) []error {
 	return errs
 }
 
-// MoveFocusedFile renames the focused document's backing file and updates the
-// document path
+// MoveFocusedFile renames the focused document's backing file and updates the document path
 func (e *Editor) MoveFocusedFile(path string, force bool) error {
 	doc := e.FocusedDocument()
 	if doc == nil {
@@ -147,8 +145,8 @@ func (e *Editor) Reload() error {
 	return ErrNoDocument
 }
 
-// ReloadDocument reloads the document from disk, announcing the change so
-// diff state and other observers follow it
+// ReloadDocument reloads the document from disk, announcing the change so diff state and other
+// observers follow it
 func (e *Editor) ReloadDocument(doc *Document) error {
 	before := doc.Text()
 	rev := doc.Revision()
@@ -211,8 +209,7 @@ func (e *Editor) DirStack() []string {
 	return cp
 }
 
-// DocumentByPath returns the open document backed by path, matching through
-// directory symlinks
+// DocumentByPath returns the open document backed by path, matching through directory symlinks
 func (e *Editor) DocumentByPath(path string) (*Document, bool) {
 	base := filepath.Base(path)
 	target := ""
@@ -235,8 +232,8 @@ func (e *Editor) DocumentByPath(path string) (*Document, bool) {
 	return nil, false
 }
 
-// OpenFile replaces the focused view's document with the given file, reusing an
-// existing document if it is already open
+// OpenFile replaces the focused view's document with the given file, reusing an existing document
+// if it is already open
 func (e *Editor) OpenFile(path string) (*View, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -269,9 +266,8 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 	return nil, ErrNoView
 }
 
-// SwitchBuffer replaces the focused view's document with an already-open
-// document by ID. Returns false if the document does not exist or there is no
-// focused view
+// SwitchBuffer replaces the focused view's document with an already-open document by ID. Returns
+// false if the document does not exist or there is no focused view
 func (e *Editor) SwitchBuffer(did DocumentId) bool {
 	if _, ok := e.documents.byID[did]; !ok {
 		return false
@@ -346,8 +342,8 @@ func (e *Editor) fileOperationController() (FileOperationController, bool) {
 	return ops, ok
 }
 
-// nextScratchName names a scratch buffer after the lowest number not already
-// taken, so closing one frees its name for the next
+// nextScratchName names a scratch buffer after the lowest number not already taken, so closing one
+// frees its name for the next
 func (e *Editor) nextScratchName() string {
 	taken := map[string]bool{}
 	for _, d := range e.documents.byID {

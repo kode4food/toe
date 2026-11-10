@@ -15,9 +15,7 @@ func detectClipboardProvider() clipboardProvider {
 	powershell, _ := lookPath("powershell")
 	return clipboardProvider{
 		name: "windows",
-		read: []string{
-			powershell, "-NoProfile", "-Command", "Get-Clipboard -Raw",
-		},
+		read: []string{powershell, "-NoProfile", "-Command", "Get-Clipboard -Raw"},
 		write: []string{
 			powershell, "-NoProfile", "-Command",
 			"Set-Clipboard -Value ([Console]::In.ReadToEnd())",

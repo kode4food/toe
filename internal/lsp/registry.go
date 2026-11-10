@@ -43,9 +43,7 @@ type RegistryStartArgs struct {
 }
 
 // Start launches a named server and returns the resulting client
-func (r *Registry) Start(
-	ctx context.Context, args RegistryStartArgs,
-) (*Client, error) {
+func (r *Registry) Start(ctx context.Context, args RegistryStartArgs) (*Client, error) {
 	cfg, ok := r.Server(args.Name)
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrServerNotFound, args.Name)

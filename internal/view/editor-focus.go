@@ -44,9 +44,7 @@ func (e *Editor) FocusPrevView() {
 
 // FocusDirection moves focus to the nearest split in the given direction
 func (e *Editor) FocusDirection(dir Direction) {
-	if id, ok := e.panes.tree.FindSplitInDirection(
-		e.panes.tree.Focus(), dir,
-	); ok {
+	if id, ok := e.panes.tree.FindSplitInDirection(e.panes.tree.Focus(), dir); ok {
 		e.recordLeavingDoc()
 		e.panes.tree.SetFocus(id)
 		e.markDocAccessed()
@@ -63,8 +61,8 @@ func (e *Editor) Transpose() {
 	e.panes.tree.Transpose()
 }
 
-// ResizeFocusedSplit pushes the border on the given side of the focused split
-// by delta cells, screen-direction style (see [Tree.ResizeFocused])
+// ResizeFocusedSplit pushes the border on the given side of the focused split by delta cells,
+// screen-direction style (see [Tree.ResizeFocused])
 func (e *Editor) ResizeFocusedSplit(dir Direction, delta int) {
 	e.panes.tree.ResizeFocused(dir, delta)
 }

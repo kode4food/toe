@@ -24,9 +24,7 @@ func (p *pickerRender) writePromptRow(area geom.Area) geom.Point {
 	ps := p.component.state
 	buf := p.buffer
 	th := p.theme
-	count := fmt.Sprintf(
-		"%d/%d", ps.matchedCount(), len(ps.list.items),
-	)
+	count := fmt.Sprintf("%d/%d", ps.matchedCount(), len(ps.list.items))
 	cl := runewidth.StringWidth(count)
 
 	queryArea := max(area.Width-2*overlayPadX-1-cl, 0)
@@ -69,9 +67,7 @@ func (p *pickerRender) writeHeader(area geom.Area) {
 	widths := p.widths
 	bgTUI := pickerHeaderStyle(p.context)
 	underlineColor := p.theme.Get("ui.text.inactive").FgColor()
-	colTUI := bgTUI.
-		UlStyle(tui.UnderlineLine).
-		UlColor(underlineColor)
+	colTUI := bgTUI.UlStyle(tui.UnderlineLine).UlColor(underlineColor)
 	buf.FillRange(area.Point, area.Width, bgTUI)
 	cur := area.X + pickerMarkerW
 	for i, col := range cols {
@@ -91,15 +87,11 @@ func (p *pickerRender) writeSection(at geom.Point, m pickerMatch) {
 	buf := p.buffer
 	base := p.section
 	buf.FillRange(at, p.width, base)
-	label := runewidth.Truncate(
-		m.item.Display, max(p.width-overlayPadX-1, 0), "",
-	)
+	label := runewidth.Truncate(m.item.Display, max(p.width-overlayPadX-1, 0), "")
 	buf.SetString(geom.Point{X: at.X + overlayPadX, Y: at.Y}, label, base)
 }
 
-func (p *pickerRender) writeItem(
-	at geom.Point, m pickerMatch, selected bool,
-) {
+func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 	ps := p.component.state
 	buf := p.buffer
 	if m.item.Section {
@@ -121,8 +113,8 @@ func (p *pickerRender) writeItem(
 	buf.FillRange(at, p.width, base)
 	buf.SetString(at, marker, base)
 
-	// Reserve 1 trailing cell for the right margin (matching the original
-	// base.Width(w) right-padding that kept the highlight flush to the border)
+	// Reserve 1 trailing cell for the right margin (matching the original base.Width(w)
+	// right-padding that kept the highlight flush to the border)
 	cellW := max(p.width-pickerMarkerW-1, 0)
 	cx2 := at.X + pickerMarkerW
 	cols := p.columns
@@ -192,9 +184,7 @@ func (p *pickerRender) writeItem(
 	}
 }
 
-func (p *pickerRender) secondary(
-	base tui.Style, item *PickerItem,
-) (tui.Style, int) {
+func (p *pickerRender) secondary(base tui.Style, item *PickerItem) (tui.Style, int) {
 	if item.SecFrom <= 0 {
 		return base, 0
 	}
@@ -205,9 +195,7 @@ func (p *pickerRender) secondary(
 	return base.Fg(fg), item.SecFrom
 }
 
-func (p *pickerRender) columnBase(
-	base tui.Style, scopes []string, i int,
-) tui.Style {
+func (p *pickerRender) columnBase(base tui.Style, scopes []string, i int) tui.Style {
 	if i >= len(scopes) || scopes[i] == "" {
 		return base
 	}
@@ -241,12 +229,8 @@ func pickerEmptyHint(ps *Picker) string {
 func pickerOverlaySize(cx *Context, screen geom.Size, id string) geom.Size {
 	opts := cx.picker.layout
 	return geom.Size{
-		Width: scaleExtent(
-			screen.Width, opts.widthScale(id, defaultPickerScale),
-		),
-		Height: scaleExtent(
-			pickerAvailHeight(screen), opts.heightScale(id, defaultPickerScale),
-		),
+		Width:  scaleExtent(screen.Width, opts.widthScale(id, defaultPickerScale)),
+		Height: scaleExtent(pickerAvailHeight(screen), opts.heightScale(id, defaultPickerScale)),
 	}
 }
 

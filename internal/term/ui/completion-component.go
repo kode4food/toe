@@ -12,8 +12,8 @@ import (
 )
 
 type (
-	// CompletionOptions controls the completion popup that appears while
-	// typing, without an explicit completion keypress
+	// CompletionOptions controls the completion popup that appears while typing, without an
+	// explicit completion keypress
 	CompletionOptions struct {
 		Auto       bool `toml:"auto"`
 		Delay      int  `toml:"delay"`
@@ -82,8 +82,8 @@ const (
 )
 
 const (
-	// DefaultCompletionDelay is the idle time before an automatic request,
-	// long enough that a fast typist does not queue one per keystroke
+	// DefaultCompletionDelay is the idle time before an automatic request, long enough that a fast
+	// typist does not queue one per keystroke
 	DefaultCompletionDelay = 250
 
 	// DefaultCompletionTriggerLen is the automatic completion threshold
@@ -107,9 +107,7 @@ func DefaultCompletionOptions() CompletionOptions {
 }
 
 // HandleEvent drives selection, filtering, and acceptance
-func (c *completionComponent) HandleEvent(
-	_ *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (c *completionComponent) HandleEvent(_ *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case completionRefreshMsg:
 		return c.handleRefreshMsg(msg)
@@ -130,9 +128,7 @@ func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 }
 
 // Layout places the list near the cursor, inside the frame
-func (c *completionComponent) Layout(
-	_ *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (c *completionComponent) Layout(_ *Context, screen geom.Size) (geom.Area, bool) {
 	if !c.valid() || len(c.items) == 0 {
 		return geom.Area{}, false
 	}
@@ -146,18 +142,14 @@ func (c *completionComponent) Layout(
 }
 
 // PaintBuffer draws the completion list and its documentation
-func (c *completionComponent) PaintBuffer(
-	cx *Context, pl geom.Area,
-) *tui.Buffer {
+func (c *completionComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return c.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		c.paint(buf, pl)
 	})
 }
 
 func (c *completionComponent) lookupAction(k command.KeyEvent) (string, bool) {
-	lookup, ok := c.context.Keymaps.Lookup(
-		view.ModeCompletion, []command.KeyEvent{k},
-	)
+	lookup, ok := c.context.Keymaps.Lookup(view.ModeCompletion, []command.KeyEvent{k})
 	return lookup.Name, ok
 }
 
@@ -265,9 +257,7 @@ func (c *completionComponent) valid() bool {
 	return pos >= c.anchor.pos
 }
 
-func (c *completionComponent) handleKeyPress(
-	msg tea.KeyPressMsg,
-) (EventResult, tea.Cmd) {
+func (c *completionComponent) handleKeyPress(msg tea.KeyPressMsg) (EventResult, tea.Cmd) {
 	cx := c.context
 	k := FromTeaKey(msg)
 	if name, ok := c.lookupAction(k); ok {
@@ -280,9 +270,7 @@ func (c *completionComponent) handleKeyPress(
 	return ignoredWith(popLayer), nil
 }
 
-func (c *completionComponent) handleMouseClick(
-	msg tea.MouseClickMsg,
-) EventResult {
+func (c *completionComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 	at := geom.Point{X: msg.X, Y: msg.Y}
 	list := listScroll{scroll: c.list.scroll, count: len(c.items)}
 	if idx, ok := list.indexAt(c.listBounds, at); ok {
@@ -291,9 +279,7 @@ func (c *completionComponent) handleMouseClick(
 	return consumed()
 }
 
-func (c *completionComponent) handleMouseWheel(
-	msg tea.MouseWheelMsg,
-) EventResult {
+func (c *completionComponent) handleMouseWheel(msg tea.MouseWheelMsg) EventResult {
 	if !c.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}

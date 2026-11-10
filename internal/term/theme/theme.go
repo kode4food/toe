@@ -10,8 +10,8 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-// Theme maps highlight and UI scope names to the styles that render them,
-// falling back to parent scopes when an exact name is absent
+// Theme maps highlight and UI scope names to the styles that render them, falling back to parent
+// scopes when an exact name is absent
 type Theme struct {
 	name          string
 	styles        map[string]tui.Style
@@ -27,8 +27,8 @@ var (
 	ErrInvalidTheme     = errors.New("invalid theme")
 )
 
-// Decode builds a theme from raw TOML, returning warnings for entries it could
-// not parse rather than failing
+// Decode builds a theme from raw TOML, returning warnings for entries it could not parse rather
+// than failing
 func Decode(data map[string]any) (*Theme, []string) {
 	pal, warnings := decodePalette(data["palette"])
 	styles := map[string]tui.Style{}
@@ -89,8 +89,8 @@ func (t *Theme) Name() string {
 	return t.name
 }
 
-// Dimmed returns a copy of the theme with every style darkened by pct,
-// for rendering unfocused panes
+// Dimmed returns a copy of the theme with every style darkened by pct, for rendering unfocused
+// panes
 func (t *Theme) Dimmed(pct int) *Theme {
 	if pct >= 100 {
 		return t
@@ -104,8 +104,8 @@ func (t *Theme) Dimmed(pct int) *Theme {
 	return &dimmed
 }
 
-// Quantized returns a copy of the theme with every style snapped onto the
-// 256-color palette, for terminals without true color
+// Quantized returns a copy of the theme with every style snapped onto the 256-color palette, for
+// terminals without true color
 func (t *Theme) Quantized() *Theme {
 	styles := make(map[string]tui.Style, len(t.styles))
 	for scope, style := range t.styles {
@@ -116,8 +116,8 @@ func (t *Theme) Quantized() *Theme {
 	return &quantized
 }
 
-// Get resolves a scope, falling back to its dotted ancestors, and yields the
-// zero style when nothing matches
+// Get resolves a scope, falling back to its dotted ancestors, and yields the zero style when
+// nothing matches
 func (t *Theme) Get(scope string) tui.Style {
 	style, _ := t.TryGet(scope)
 	return style
@@ -149,8 +149,8 @@ func (t *Theme) Scopes() []string {
 	return slices.Clone(t.scopes)
 }
 
-// Is16Color reports whether the theme names only palette colors, so it renders
-// correctly without true color
+// Is16Color reports whether the theme names only palette colors, so it renders correctly without
+// true color
 func (t *Theme) Is16Color() bool {
 	return !t.rgb
 }

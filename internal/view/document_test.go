@@ -430,8 +430,7 @@ func TestDocumentSaveSafety(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t,
-			os.WriteFile(path, []byte("externally changed"), 0o644))
+		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
 
 		err = e.Save(false)
 
@@ -448,8 +447,7 @@ func TestDocumentSaveSafety(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t,
-			os.WriteFile(path, []byte("externally changed"), 0o644))
+		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
 
 		err = e.Save(true)
 
@@ -599,8 +597,8 @@ func TestDocumentExternalChange(t *testing.T) {
 		err = os.WriteFile(path, []byte("new content"), 0o644)
 		assert.NoError(t, err)
 
-		// a file watcher may canonicalize the reported path (notify does on
-		// macOS: /var -> /private/var), the stored document path is not
+		// a file watcher may canonicalize the reported path (notify does on macOS: /var ->
+		// /private/var), the stored document path is not
 		resolved, err := filepath.EvalSymlinks(path)
 		assert.NoError(t, err)
 		ok := e.ProcessExternalFileChange(resolved)
@@ -1008,8 +1006,7 @@ func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 		assert.NoError(t, err)
 		d := e.FocusedDocument()
 		v := e.FocusedView()
-		tx := core.NewTransaction(
-			d.Text()).WithSelection(core.PointSelection(3))
+		tx := core.NewTransaction(d.Text()).WithSelection(core.PointSelection(3))
 
 		assert.NoError(t, e.Apply(tx))
 
@@ -1128,8 +1125,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.NoError(t, err)
 		importTx := core.NewTransaction(d.Text()).WithChanges(importCS)
 		assert.NoError(t, d.Apply(importTx, v.ID()))
-		assert.Equal(t, 4+len("import \"strings\"\n"),
-			d.SelectionFor(v.ID()).Primary().Head)
+		assert.Equal(t, 4+len("import \"strings\"\n"), d.SelectionFor(v.ID()).Primary().Head)
 	})
 
 	t.Run("maps other view selections", func(t *testing.T) {
@@ -1278,8 +1274,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		// no extension + unrecognized-path, but chroma can analyze the content
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "noext")
-		err := os.WriteFile(path,
-			[]byte("#!/usr/bin/env python3\nprint('hi')\n"), 0o644)
+		err := os.WriteFile(path, []byte("#!/usr/bin/env python3\nprint('hi')\n"), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(tmp)
@@ -1410,8 +1405,6 @@ func writeViewLanguages(t *testing.T, args viewLanguagesArgs) {
 	dir := filepath.Join(args.root, loader.DirName)
 	err := os.MkdirAll(dir, 0o755)
 	assert.NoError(t, err)
-	err = os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(args.toml), 0o644,
-	)
+	err = os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(args.toml), 0o644)
 	assert.NoError(t, err)
 }

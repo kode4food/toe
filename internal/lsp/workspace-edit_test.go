@@ -85,9 +85,7 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.TextDocumentEdit{
-						TextDocument: versionedTextDocumentID(
-							"untitled:Untitled-1",
-						),
+						TextDocument: versionedTextDocumentID("untitled:Untitled-1"),
 						Edits: []protocol.TextDocumentEditElement{
 							&protocol.TextEdit{NewText: "x"},
 						},
@@ -124,9 +122,7 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.TextDocumentEdit{
 						TextDocument: versionedTextDocumentID(uri.File(path)),
-						Edits: []protocol.TextDocumentEditElement{
-							&protocol.SnippetTextEdit{},
-						},
+						Edits:        []protocol.TextDocumentEditElement{&protocol.SnippetTextEdit{}},
 					},
 				},
 			})
@@ -152,9 +148,7 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.TextDocumentEdit{
 						TextDocument: versionedTextDocumentID(uri.File(path)),
-						Edits: []protocol.TextDocumentEditElement{
-							new(hugeRangeEdit()),
-						},
+						Edits:        []protocol.TextDocumentEditElement{new(hugeRangeEdit())},
 					},
 				},
 			})
@@ -323,9 +317,7 @@ func TestWorkspaceEditDeleteFileErrors(t *testing.T) {
 	t.Run("recursive delete removes directory", func(t *testing.T) {
 		target := filepath.Join(dir, "sub")
 		assert.NoError(t, os.MkdirAll(target, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(target, "file.session"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(target, "file.session"), []byte("x"), 0o644))
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
@@ -354,13 +346,11 @@ func attachWorkspaceEditSession(t *testing.T, dir, path string) *lsp.Session {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	t.Cleanup(func() { _ = session.Close() })
-	// Attach opens visible documents asynchronously, so wait until the server
-	// the visible buffer has started before exercising it by name
+	// Attach opens visible documents asynchronously, so wait until the server the visible buffer
+	// has started before exercising it by name
 	assert.Eventually(t, func() bool {
 		return !errors.Is(
-			session.ApplyWorkspaceEdit(
-				"session-test", protocol.WorkspaceEdit{},
-			),
+			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
 			view.ErrUnknownLanguageServer,
 		)
 	}, 2*time.Second, 5*time.Millisecond)
@@ -377,8 +367,6 @@ func hugeRangeEdit() protocol.TextEdit {
 	}
 }
 
-func versionedTextDocumentID(
-	u uri.URI,
-) protocol.OptionalVersionedTextDocumentIdentifier {
+func versionedTextDocumentID(u uri.URI) protocol.OptionalVersionedTextDocumentIdentifier {
 	return protocol.OptionalVersionedTextDocumentIdentifier{URI: u}
 }

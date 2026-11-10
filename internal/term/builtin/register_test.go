@@ -184,9 +184,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("buffer_next"))
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char('g'), test.Char('n'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char('g'), test.Char('n')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 	})
@@ -195,9 +193,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("goto_line_end_newline"))
-		lookup, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{
-			test.Special(command.End),
-		})
+		lookup, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{test.Special(command.End)})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 	})
@@ -215,9 +211,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital hints omit shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
-			nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false,
-		)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false)
 
 		assert.Contains(t, hints, command.KeyHint{
 			Key:   "F",
@@ -228,9 +222,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("space hints are ordered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
-			nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false,
-		)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false)
 
 		keys := make([]string, 0, len(hints))
 		for _, h := range hints {
@@ -266,9 +258,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal window menu mirrors other panes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
-			nil, view.ModeTerminal, []command.KeyEvent{ctrl('w')}, false,
-		)
+		_, hints := km.PendingHints(nil, view.ModeTerminal, []command.KeyEvent{ctrl('w')}, false)
 
 		labels := make(map[string]string, len(hints))
 		for _, h := range hints {
@@ -308,9 +298,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		for _, mode := range []view.Mode{view.ModeImage, view.ModeBinary} {
-			lookup, ok := km.Lookup(mode, []command.KeyEvent{
-				test.Char(':'),
-			})
+			lookup, ok := km.Lookup(mode, []command.KeyEvent{test.Char(':')})
 
 			assert.True(t, ok)
 			assert.False(t, lookup.Prefix)
@@ -340,9 +328,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("image window hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(
-			nil, view.ModeImage, []command.KeyEvent{ctrl('w')}, false,
-		)
+		title, hints := km.PendingHints(nil, view.ModeImage, []command.KeyEvent{ctrl('w')}, false)
 
 		assert.Equal(t, "Window", title)
 		assert.Contains(t, hints, command.KeyHint{
@@ -386,8 +372,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		title, hints := km.PendingHints(
-			nil, view.ModeNormal,
-			[]command.KeyEvent{test.Char('Z').WithMods(command.ModShift)},
+			nil, view.ModeNormal, []command.KeyEvent{test.Char('Z').WithMods(command.ModShift)},
 			false,
 		)
 
@@ -398,33 +383,23 @@ func TestDefaults(t *testing.T) {
 	t.Run("paragraph keys use unimpaired prefixes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char('['),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char('[')})
 		assert.False(t, ok)
 		assert.True(t, lookup.Prefix)
 
-		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char('['), test.Char('p'),
-		})
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char('['), test.Char('p')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 
-		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char(']'),
-		})
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char(']')})
 		assert.False(t, ok)
 		assert.True(t, lookup.Prefix)
 
-		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char(']'), test.Char('p'),
-		})
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char(']'), test.Char('p')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 
-		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
-			test.Char('p'),
-		})
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{test.Char('p')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 	})
@@ -454,9 +429,7 @@ func TestDefaults(t *testing.T) {
 			if len(info.names) < 2 || allowedDuplicateKey(key, info.names) {
 				continue
 			}
-			assert.Failf(t, "duplicate key binding",
-				"%s %s: %v", key.mode, key.seq, info.names,
-			)
+			assert.Failf(t, "duplicate key binding", "%s %s: %v", key.mode, key.seq, info.names)
 		}
 		for key, info := range seqs {
 			for other := range seqs {
@@ -491,9 +464,7 @@ func TestOptionCompleters(t *testing.T) {
 		e, km := test.Env(t, "")
 		cmd := km.ResolveCommand("toggle_option")
 		assert.NotNil(t, cmd)
-		allComps := cmd.Signature.Completer.Complete(
-			e, cmd.Signature, "",
-		)
+		allComps := cmd.Signature.Completer.Complete(e, cmd.Signature, "")
 		for _, c := range allComps {
 			assert.NotEqual(t, "scrolloff", c.Text)
 		}
@@ -528,9 +499,7 @@ func TestOptionCompleters(t *testing.T) {
 		}
 		for _, tc := range cases {
 			t.Run(tc.input, func(t *testing.T) {
-				comps := cmd.Signature.Completer.Complete(
-					e, cmd.Signature, tc.input,
-				)
+				comps := cmd.Signature.Completer.Complete(e, cmd.Signature, tc.input)
 				texts := make([]string, len(comps))
 				for i, c := range comps {
 					texts[i] = c.Text
@@ -598,9 +567,7 @@ func allCommands(km *command.Keymaps) []*command.Command {
 	return km.CommandsIn(command.AllModes | view.ModeCompletion)
 }
 
-func commandBindings(
-	cmd *command.Command, mode view.Mode,
-) command.KeyBinding {
+func commandBindings(cmd *command.Command, mode view.Mode) command.KeyBinding {
 	if bindings, ok := cmd.Keys[mode]; ok {
 		return bindings
 	}
@@ -632,9 +599,7 @@ func documentedCommands(t *testing.T) ([]string, map[string]string) {
 	_, file, _, ok := runtime.Caller(0)
 	assert.True(t, ok)
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "../../.."))
-	data, err := os.ReadFile(
-		filepath.Join(root, "docs/content/docs/commands.md"),
-	)
+	data, err := os.ReadFile(filepath.Join(root, "docs/content/docs/commands.md"))
 	assert.NoError(t, err)
 	seen := map[string]bool{}
 	var names []string
@@ -661,9 +626,7 @@ func documentedCommands(t *testing.T) ([]string, map[string]string) {
 	return names, descs
 }
 
-func appendDocumentedCommandNames(
-	out []string, seen map[string]bool, cell string,
-) []string {
+func appendDocumentedCommandNames(out []string, seen map[string]bool, cell string) []string {
 	for {
 		_, rest, ok := strings.Cut(cell, "`")
 		if !ok {

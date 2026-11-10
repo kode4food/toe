@@ -88,9 +88,7 @@ func defaultLineEnding(le core.LineEnding) core.LineEnding {
 	return le
 }
 
-func prepareSaveText(
-	s string, le core.LineEnding, opts *Options, ec *config.EditorConfig,
-) string {
+func prepareSaveText(s string, le core.LineEnding, opts *Options, ec *config.EditorConfig) string {
 	trim := opts.TrimTrailingWhitespace
 	if ec != nil && ec.TrimTrailingWhitespace != nil {
 		trim = *ec.TrimTrailingWhitespace

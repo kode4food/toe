@@ -30,8 +30,7 @@ func (d *docRenderCache) visibleHexColors(
 	to := min(max(lines.To, from), last)
 	start := lineIdx[from]
 	d.hexScratch = hexColorSpans(
-		d.hexScratch[:0], rawText[start.byteStart:lineIdx[to].byteStart],
-		start.charStart,
+		d.hexScratch[:0], rawText[start.byteStart:lineIdx[to].byteStart], start.charStart,
 	)
 	return d.hexScratch
 }
@@ -67,9 +66,7 @@ func colorLuma(c tui.Color) int {
 	return lumaRed*int(r>>8) + lumaGreen*int(g>>8) + lumaBlue*int(b>>8)
 }
 
-func hexColorSpans(
-	out []view.DocumentColor, text string, baseChar int,
-) []view.DocumentColor {
+func hexColorSpans(out []view.DocumentColor, text string, baseChar int) []view.DocumentColor {
 	var prev rune
 	charPos := baseChar
 	for bytePos, ch := range text {
@@ -110,10 +107,8 @@ func hexColor(digits string, at core.Span) view.DocumentColor {
 		return color
 	}
 	color.Red = uint8(hexDigit(rune(digits[0]))*16 + hexDigit(rune(digits[1])))
-	color.Green = uint8(hexDigit(rune(digits[2]))*16 +
-		hexDigit(rune(digits[3])))
-	color.Blue = uint8(hexDigit(rune(digits[4]))*16 +
-		hexDigit(rune(digits[5])))
+	color.Green = uint8(hexDigit(rune(digits[2]))*16 + hexDigit(rune(digits[3])))
+	color.Blue = uint8(hexDigit(rune(digits[4]))*16 + hexDigit(rune(digits[5])))
 	return color
 }
 

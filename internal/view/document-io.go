@@ -13,9 +13,9 @@ type saveTarget struct {
 	dir  string
 }
 
-// Save writes the document to its current path. Unless force is set, it refuses
-// an unsafe overwrite (changed on disk, or read-only). A log has no path of its
-// own, so it can only be copied out with WriteCopy
+// Save writes the document to its current path. Unless force is set, it refuses an unsafe overwrite
+// (changed on disk, or read-only). A log has no path of its own, so it can only be copied out with
+// WriteCopy
 func (d *Document) Save(opts *Options, force bool) error {
 	if !d.Loaded() {
 		return nil
@@ -37,8 +37,7 @@ func (d *Document) Save(opts *Options, force bool) error {
 		return err
 	}
 	text := prepareSaveText(
-		d.content.text.String(), d.format.lineEnding, opts,
-		d.format.editorConfig,
+		d.content.text.String(), d.format.lineEnding, opts, d.format.editorConfig,
 	)
 	if err := d.applySaveText(text); err != nil {
 		return err
@@ -86,14 +85,12 @@ func (d *Document) WriteCopy(path string, opts *Options) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	text := prepareSaveText(
-		d.Text().String(), d.format.lineEnding, opts, d.format.editorConfig,
-	)
+	text := prepareSaveText(d.Text().String(), d.format.lineEnding, opts, d.format.editorConfig)
 	return writeFileSynced(path, []byte(text), 0o644)
 }
 
-// Reload replaces the document text with the current file contents on disk
-// All per-view selections are reset to the start of the document
+// Reload replaces the document text with the current file contents on disk All per-view selections
+// are reset to the start of the document
 func (d *Document) Reload() error {
 	return d.reloadPreservingSelections()
 }
@@ -179,15 +176,13 @@ func (d *Document) markSaved() {
 	d.edits.savePoint = d.edits.history.CurrentRevision()
 }
 
-// DocumentRelativeNameArgs is a document path and the directory to make it
-// relative to
+// DocumentRelativeNameArgs is a document path and the directory to make it relative to
 type DocumentRelativeNameArgs struct {
 	Path    string
 	BaseDir string
 }
 
-// DocumentRelativeName returns Path relative to BaseDir, falling back to the
-// absolute path on error
+// DocumentRelativeName returns Path relative to BaseDir, falling back to the absolute path on error
 func DocumentRelativeName(args DocumentRelativeNameArgs) string {
 	path := args.Path
 	if path == "" {

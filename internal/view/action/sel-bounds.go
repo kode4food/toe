@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// ExtendToLineBounds extends each selection range to cover complete lines
-// (from line start to next-line start), preserving direction
+// ExtendToLineBounds extends each selection range to cover complete lines (from line start to
+// next-line start), preserving direction
 func ExtendToLineBounds(e *view.Editor) {
 	applyMove(e, func(text core.Rope, r core.Range) core.Range {
 		lr, err := r.LineSpan(text)
@@ -35,8 +35,8 @@ func ExtendToLineBounds(e *view.Editor) {
 	})
 }
 
-// ShrinkToLineBounds shrinks each multi-line selection so that it no longer
-// includes leading/trailing line endings. Single-line selections are unchanged
+// ShrinkToLineBounds shrinks each multi-line selection so that it no longer includes
+// leading/trailing line endings. Single-line selections are unchanged
 func ShrinkToLineBounds(e *view.Editor) {
 	applyMove(e, func(text core.Rope, r core.Range) core.Range {
 		lr, err := r.LineSpan(text)

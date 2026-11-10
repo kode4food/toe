@@ -256,8 +256,8 @@ func TestSelectLineBelow(t *testing.T) {
 	})
 
 	t.Run("extends snapped forward selection", func(t *testing.T) {
-		// Start with a line-aligned forward selection (0→3 covers "ab\n"),
-		// then extend again so anchorLine < headLine is reached with cnt > 0
+		// Start with a line-aligned forward selection (0→3 covers "ab\n"), then extend again so
+		// anchorLine < headLine is reached with cnt > 0
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
 		testutil.SetSelection(t, e, []core.Range{{
 			Anchor: 0,
@@ -313,10 +313,7 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
-		assert.Equal(t,
-			[]core.Range{core.PointRange(1)},
-			doc.SelectionFor(v.ID()).Ranges(),
-		)
+		assert.Equal(t, []core.Range{core.PointRange(1)}, doc.SelectionFor(v.ID()).Ranges())
 	})
 
 	t.Run("splits final line without newline", func(t *testing.T) {
@@ -495,10 +492,7 @@ func TestPasteAfter(t *testing.T) {
 
 	t.Run("multiple cursors reuse last value", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(1), core.PointRange(3)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(3)}, 0)
 		e.Registers().Write('+', []string{"x"})
 
 		action.PasteAfter(e)
@@ -858,8 +852,8 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 
 func TestTryRestoreIndent(t *testing.T) {
 	t.Run("normal clears whitespace line", func(t *testing.T) {
-		// in "a\n    \nb" line 1 spans 2..6, so its lineEnd is lineStart(2) +
-		// LineEndCharIndex("    \n") = 6
+		// in "a\n \nb" line 1 spans 2..6, so its lineEnd is lineStart(2) + LineEndCharIndex(" \n")
+		// = 6
 		e := testutil.EditorWithText(t, "a\n    \nb")
 		testutil.SetCursor(t, e, 6)
 		e.SetMode(view.ModeInsert)
@@ -872,8 +866,8 @@ func TestTryRestoreIndent(t *testing.T) {
 	})
 
 	t.Run("non-blank line is not cleared", func(t *testing.T) {
-		// "a\n  x\nb": a=0,\n=1,' '=2,' '=3,x=4,\n=5,b=6
-		// lineEnd for line 1 = 2 + LineEndCharIndex("  x\n") = 2+3=5
+		// "a\n x\nb": a=0,\n=1,' '=2,' '=3,x=4,\n=5,b=6 lineEnd for line 1 = 2 + LineEndCharIndex("
+		// x\n") = 2+3=5
 		e := testutil.EditorWithText(t, "a\n  x\nb")
 		testutil.SetCursor(t, e, 5)
 		e.SetMode(view.ModeInsert)
@@ -991,10 +985,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 	t.Run("duplicate cursors share insertion", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(1), core.PointRange(1)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(1)}, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1055,10 +1046,7 @@ func TestAddNewlineEdges(t *testing.T) {
 
 	t.Run("duplicate target inserts once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(0), core.PointRange(1)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(1)}, 0)
 
 		action.AddNewlineAbove(e)
 
@@ -1093,10 +1081,7 @@ func TestAutoPairsDisabled(t *testing.T) {
 func TestInsertNewlineDuplicateCursors(t *testing.T) {
 	t.Run("duplicate cursors insert newline once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(1),
-			core.PointRange(1),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(1)}, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1133,10 +1118,7 @@ func TestCountOrOne(t *testing.T) {
 func TestInsertCharDuplicate(t *testing.T) {
 	t.Run("same-position cursors insert once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(0),
-			core.PointRange(0),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(0)}, 0)
 
 		action.InsertChar(e, 'x')
 
@@ -1184,10 +1166,7 @@ func TestInsertCharAutoPair(t *testing.T) {
 func TestDeleteCharForwardDuplicate(t *testing.T) {
 	t.Run("same-position cursors delete once", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(0),
-			core.PointRange(0),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(0)}, 0)
 
 		action.DeleteCharForward(e)
 
@@ -1198,8 +1177,8 @@ func TestDeleteCharForwardDuplicate(t *testing.T) {
 
 func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 	t.Run("trims trailing whitespace", func(t *testing.T) {
-		// "hello  ", cursor at 7 (pos after 'o'), chars 5,6 are spaces
-		// firstTrailingWS=5, pos=7 → 5 < 7 hits the elif branch
+		// "hello ", cursor at 7 (pos after 'o'), chars 5,6 are spaces firstTrailingWS=5, pos=7 →
+		// 5 < 7 hits the elif branch
 		e := testutil.EditorWithText(t, "hello  ")
 		testutil.SetCursor(t, e, 7)
 		e.SetMode(view.ModeInsert)

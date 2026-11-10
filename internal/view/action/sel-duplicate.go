@@ -5,14 +5,13 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// CopyOnNextLine duplicates each selection range to the same column
-// on the next line (count times)
+// CopyOnNextLine duplicates each selection range to the same column on the next line (count times)
 func CopyOnNextLine(e *view.Editor) {
 	copySelectionOnLine(e, true)
 }
 
-// CopyOnPrevLine duplicates each selection range to the same column
-// on the previous line (count times)
+// CopyOnPrevLine duplicates each selection range to the same column on the previous line (count
+// times)
 func CopyOnPrevLine(e *view.Editor) {
 	copySelectionOnLine(e, false)
 }

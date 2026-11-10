@@ -9,8 +9,8 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-// Worst-case wheel tick over a 1MB single-line document. The offset deepens
-// every iteration, so ns/op averages ticks at increasing scroll depths
+// Worst-case wheel tick over a 1MB single-line document. The offset deepens every iteration, so
+// ns/op averages ticks at increasing scroll depths
 func BenchmarkScrollViewColumns(b *testing.B) {
 	line := strings.Repeat("x", 1_000_000)
 	e := view.NewEditor(b.TempDir())
@@ -25,9 +25,7 @@ func BenchmarkScrollViewColumns(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	tx := core.NewTransaction(rope).
-		WithChanges(cs).
-		WithSelection(core.PointSelection(0))
+	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))
 	if err := e.Apply(tx); err != nil {
 		b.Fatal(err)
 	}

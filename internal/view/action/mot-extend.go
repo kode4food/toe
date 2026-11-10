@@ -9,9 +9,7 @@ import (
 func ExtendCharLeft(e *view.Editor) {
 	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveHorizontally(
-			doc, core.DirectionBackward, n, core.MovementExtend,
-		)
+		return r.MoveHorizontally(doc, core.DirectionBackward, n, core.MovementExtend)
 	})
 }
 
@@ -19,9 +17,7 @@ func ExtendCharLeft(e *view.Editor) {
 func ExtendCharRight(e *view.Editor) {
 	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveHorizontally(
-			doc, core.DirectionForward, n, core.MovementExtend,
-		)
+		return r.MoveHorizontally(doc, core.DirectionForward, n, core.MovementExtend)
 	})
 }
 
@@ -34,8 +30,7 @@ func ExtendLineUp(e *view.Editor) {
 	})
 }
 
-// ExtendLineDown extends the selection down one visual line, respecting
-// soft-wrap
+// ExtendLineDown extends the selection down one visual line, respecting soft-wrap
 func ExtendLineDown(e *view.Editor) {
 	applyVerticalMove(e, core.VerticalMove{
 		Dir:      core.DirectionForward,

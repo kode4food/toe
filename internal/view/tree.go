@@ -35,21 +35,21 @@ type (
 		Shutdown()
 	}
 
-	// AsyncRenderer marks a pane that mutates outside the event loop. The tree
-	// hands it a redraw hook on insertion so it can wake the render loop
+	// AsyncRenderer marks a pane that mutates outside the event loop. The tree hands it a redraw
+	// hook on insertion so it can wake the render loop
 	AsyncRenderer interface {
 		SetRedraw(func())
 	}
 
-	// ResizeHolder marks a pane that would rather not see every step of a
-	// resize, so a run of them is held until the layout settles
+	// ResizeHolder marks a pane that would rather not see every step of a resize, so a run of them
+	// is held until the layout settles
 	ResizeHolder interface {
 		HoldResize()
 		ResumeResize()
 	}
 
-	// Displaceable marks a pane that frees heavy resources while stashed behind
-	// another pane and reacquires them when reverted back into view
+	// Displaceable marks a pane that frees heavy resources while stashed behind another pane and
+	// reacquires them when reverted back into view
 	Displaceable interface {
 		OnDisplace()
 		OnRevert()
@@ -96,8 +96,8 @@ const (
 	minPaneHeight = 4
 )
 
-// maxPaneHistory caps how many displaced panes a slot remembers, so a long
-// chain of replacements can't pin documents in memory indefinitely
+// maxPaneHistory caps how many displaced panes a slot remembers, so a long chain of replacements
+// can't pin documents in memory indefinitely
 const maxPaneHistory = 10
 
 func newTree(size geom.Size) *Tree {
@@ -117,8 +117,8 @@ func newTree(size geom.Size) *Tree {
 	return t
 }
 
-// SetRedraw installs the hook the tree hands to [AsyncRenderer] panes on
-// insertion, wiring any that are already present
+// SetRedraw installs the hook the tree hands to [AsyncRenderer] panes on insertion, wiring any that
+// are already present
 func (t *Tree) SetRedraw(fn func()) {
 	t.redraw = fn
 	for _, n := range t.nodes {
@@ -171,9 +171,9 @@ func (t *Tree) ReplacePane(id Id, p Pane) {
 	}
 }
 
-// DisplacePane swaps the pane at id for p, stashing the displaced pane on the
-// node so RevertPane can bring it back when p closes. The oldest entry is
-// discarded once the stack exceeds maxPaneHistory
+// DisplacePane swaps the pane at id for p, stashing the displaced pane on the node so RevertPane
+// can bring it back when p closes. The oldest entry is discarded once the stack exceeds
+// maxPaneHistory
 func (t *Tree) DisplacePane(id Id, p Pane) {
 	n, ok := t.nodes[id]
 	if !ok || n.pane == nil {
@@ -189,8 +189,7 @@ func (t *Tree) DisplacePane(id Id, p Pane) {
 	}
 }
 
-// RevertPane restores the most recently displaced pane at id, reporting whether
-// one was available
+// RevertPane restores the most recently displaced pane at id, reporting whether one was available
 func (t *Tree) RevertPane(id Id) bool {
 	n, ok := t.nodes[id]
 	if !ok || len(n.history) == 0 {
@@ -207,8 +206,8 @@ func (t *Tree) RevertPane(id Id) bool {
 	return true
 }
 
-// DiscardHistory discards every pane stashed behind id, for when the slot is
-// vacated without reverting
+// DiscardHistory discards every pane stashed behind id, for when the slot is vacated without
+// reverting
 func (t *Tree) DiscardHistory(id Id) {
 	n, ok := t.nodes[id]
 	if !ok {
@@ -220,8 +219,8 @@ func (t *Tree) DiscardHistory(id Id) {
 	n.history = nil
 }
 
-// CanSplit reports whether there is enough room to split the focused pane in
-// the given layout while keeping all resulting panes at or above the min size
+// CanSplit reports whether there is enough room to split the focused pane in the given layout while
+// keeping all resulting panes at or above the min size
 func (t *Tree) CanSplit(layout Layout) bool {
 	if t.IsEmpty() {
 		return true
@@ -249,9 +248,9 @@ func (t *Tree) CanSplit(layout Layout) bool {
 	return false
 }
 
-// Split creates a new pane alongside the focused pane using the given layout.
-// If the focused pane's parent container already uses the same layout, the
-// new pane is added as a sibling. Otherwise a new sub-container is created
+// Split creates a new pane alongside the focused pane using the given layout. If the focused pane's
+// parent container already uses the same layout, the new pane is added as a sibling. Otherwise a
+// new sub-container is created
 func (t *Tree) Split(p Pane, layout Layout) Id {
 	focus := t.focus
 	parent := t.nodes[focus].parent
@@ -287,8 +286,8 @@ func (t *Tree) Split(p Pane, layout Layout) Id {
 	return id
 }
 
-// Remove removes a view from the tree. Focus is moved to the previous view
-// before removal. Empty containers are collapsed
+// Remove removes a view from the tree. Focus is moved to the previous view before removal. Empty
+// containers are collapsed
 func (t *Tree) Remove(id Id) {
 	if t.focus == id {
 		t.setFocus(t.Prev())
@@ -370,8 +369,7 @@ func (t *Tree) IsEmpty() bool {
 	return len(t.nodes[t.root].container.children) == 0
 }
 
-// Resize updates the total area and recalculates view areas. Returns true if
-// the area changed
+// Resize updates the total area and recalculates view areas. Returns true if the area changed
 func (t *Tree) Resize(size geom.Size) bool {
 	a := geom.Area{Size: size}
 	if t.area == a {
@@ -382,8 +380,8 @@ func (t *Tree) Resize(size geom.Size) bool {
 	return true
 }
 
-// Range calls fn for each leaf pane in DFS order (left-to-right,
-// top-to-bottom), stopping early if fn returns false. It does not allocate
+// Range calls fn for each leaf pane in DFS order (left-to-right, top-to-bottom), stopping early if
+// fn returns false. It does not allocate
 func (t *Tree) Range(fn func(Pane) bool) {
 	t.rangePane(t.root, fn)
 }
@@ -417,8 +415,8 @@ func (t *Tree) Count() int {
 	return n
 }
 
-// Traverse returns all leaf panes in DFS order (left-to-right, top-to-bottom).
-// Prefer [Tree.Range] when a slice isn't actually needed
+// Traverse returns all leaf panes in DFS order (left-to-right, top-to-bottom). Prefer [Tree.Range]
+// when a slice isn't actually needed
 func (t *Tree) Traverse() []Pane {
 	out := make([]Pane, 0, t.Count())
 	t.Range(func(p Pane) bool {

@@ -14,9 +14,9 @@ type FindCharArgs struct {
 	Extend    bool
 }
 
-// FindChar moves (or extends) each cursor to the nth occurrence of ch in the
-// given direction. inclusive=true lands on the char (f/F), false stops before/
-// after it (t/T). extend=true keeps the anchor (select mode)
+// FindChar moves (or extends) each cursor to the nth occurrence of ch in the given direction.
+// inclusive=true lands on the char (f/F), false stops before/ after it (t/T). extend=true keeps the
+// anchor (select mode)
 func FindChar(args FindCharArgs) {
 	n := args.Editor.CountOr(1)
 	applyMove(args.Editor, func(doc core.Rope, r core.Range) core.Range {
@@ -68,8 +68,8 @@ func FindChar(args FindCharArgs) {
 	})
 }
 
-// charSearchRes is where a character was found and where the next search
-// resumes. found is -1 when the character is not present
+// charSearchRes is where a character was found and where the next search resumes. found is -1 when
+// the character is not present
 type charSearchRes struct {
 	found int
 	next  int

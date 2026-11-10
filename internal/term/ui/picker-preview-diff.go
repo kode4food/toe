@@ -74,9 +74,7 @@ const (
 	tintAmount      = 0.2
 )
 
-func (p *Picker) diffBaseFor(
-	vc view.VersionControl, path string, staged bool,
-) *previewDocEntry {
+func (p *Picker) diffBaseFor(vc view.VersionControl, path string, staged bool) *previewDocEntry {
 	key := diffBaseKey{path: path, staged: staged}
 	if entry, ok := p.preview.diffBaseCache[key]; ok {
 		return entry
@@ -114,8 +112,8 @@ func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 					line: l,
 				})
 			}
-			// a replacement marks its removed and added lines alike, so the
-			// scrollbar paints one run rather than two
+			// a replacement marks its removed and added lines alike, so the scrollbar paints one
+			// run rather than two
 			mark := diffMarkKind(hunkGutterKind(h))
 			for l := h.BaseFrom; l < h.BaseTo; l++ {
 				out = append(out, diffPreviewLine{
@@ -143,9 +141,7 @@ func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 	}
 }
 
-func allLines(
-	text core.Rope, kind diffLineKind, mark scrollMarkKind,
-) []diffPreviewLine {
+func allLines(text core.Rope, kind diffLineKind, mark scrollMarkKind) []diffPreviewLine {
 	n := text.LenLines()
 	out := make([]diffPreviewLine, 0, n)
 	for l := range n {
@@ -252,9 +248,7 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		rr.maxRows = args.area.Height - row + skip
 		var prefix renderedRow
 		if softWrap {
-			prefix = softWrapContinuationRow(
-				args.format, rr.indentCol, rr.styles,
-			)
+			prefix = softWrapContinuationRow(args.format, rr.indentCol, rr.styles)
 		}
 		rendered := rr.rows()
 		for i := min(skip, len(rendered)); i < len(rendered); i++ {
@@ -289,9 +283,7 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	})
 }
 
-func drawDiffPreviewScrollbar(
-	args *diffPreviewRender, buf *tui.Buffer, start int,
-) {
+func drawDiffPreviewScrollbar(args *diffPreviewRender, buf *tui.Buffer, start int) {
 	bar := args.bar
 	bar.reset(
 		scrollbarGeom{
@@ -317,12 +309,9 @@ func tintToward(args tintColors) tui.Color {
 	accent := rgb8(args.accent)
 	amount := args.amount
 	mixed := tui.ColorRGB(
-		uint8(float64(base.red)+
-			(float64(accent.red)-float64(base.red))*amount),
-		uint8(float64(base.green)+
-			(float64(accent.green)-float64(base.green))*amount),
-		uint8(float64(base.blue)+
-			(float64(accent.blue)-float64(base.blue))*amount),
+		uint8(float64(base.red)+(float64(accent.red)-float64(base.red))*amount),
+		uint8(float64(base.green)+(float64(accent.green)-float64(base.green))*amount),
+		uint8(float64(base.blue)+(float64(accent.blue)-float64(base.blue))*amount),
 	)
 	if !args.trueColor {
 		return mixed.Quantized()
@@ -374,9 +363,7 @@ func clampDiffHScroll(args clampDiffHScrollArgs) int {
 	return min(args.render.hScroll, max(widest-args.contentWidth, 0))
 }
 
-func diffPreviewWalk(
-	args *diffPreviewRender, softWrap bool,
-) core.VisualRowWalk {
+func diffPreviewWalk(args *diffPreviewRender, softWrap bool) core.VisualRowWalk {
 	walk := core.VisualRowWalk{Lines: len(args.lines)}
 	if !softWrap {
 		return walk

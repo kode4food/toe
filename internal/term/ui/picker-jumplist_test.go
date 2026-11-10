@@ -93,16 +93,13 @@ func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(motion.JumplistPicker),
-		[]command.KeyEvent{char('j')},
+		km, "jumplist", m.PickerAction(motion.JumplistPicker), []command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 30)
 	return sendKey(m, 'j'), e, jumplistAnchor
 }
 
-func jumplistSelectionModel(t *testing.T) (
-	ui.Model, *view.Editor, core.Selection,
-) {
+func jumplistSelectionModel(t *testing.T) (ui.Model, *view.Editor, core.Selection) {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "file.txt")
@@ -123,8 +120,7 @@ func jumplistSelectionModel(t *testing.T) (
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(motion.JumplistPicker),
-		[]command.KeyEvent{char('j')},
+		km, "jumplist", m.PickerAction(motion.JumplistPicker), []command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 30)
 	return sendKey(m, 'j'), e, sel
@@ -159,8 +155,7 @@ func jumplistPreviewModel(t *testing.T) ui.Model {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(motion.JumplistPicker),
-		[]command.KeyEvent{char('j')},
+		km, "jumplist", m.PickerAction(motion.JumplistPicker), []command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 12)
 	return sendKey(m, 'j')

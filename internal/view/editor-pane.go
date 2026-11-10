@@ -102,8 +102,8 @@ func (e *Editor) HSplitNew() *View {
 	return v
 }
 
-// ReplacePane swaps the pane at id for p in place, discarding any panes stashed
-// behind id, and returns the evicted pane for the caller to dispose of
+// ReplacePane swaps the pane at id for p in place, discarding any panes stashed behind id, and
+// returns the evicted pane for the caller to dispose of
 func (e *Editor) ReplacePane(id Id, p Pane) Pane {
 	old := e.panes.tree.Get(id)
 	e.panes.tree.DiscardHistory(id)
@@ -111,26 +111,25 @@ func (e *Editor) ReplacePane(id Id, p Pane) Pane {
 	return old
 }
 
-// DisplacePane swaps the pane at id for p, stashing the displaced pane on the
-// node so RevertPane can restore it when p closes
+// DisplacePane swaps the pane at id for p, stashing the displaced pane on the node so RevertPane
+// can restore it when p closes
 func (e *Editor) DisplacePane(id Id, p Pane) {
 	e.panes.tree.DisplacePane(id, p)
 }
 
-// RevertPane restores the pane most recently displaced at id, reporting whether
-// one was available
+// RevertPane restores the pane most recently displaced at id, reporting whether one was available
 func (e *Editor) RevertPane(id Id) bool {
 	return e.panes.tree.RevertPane(id)
 }
 
-// DiscardPane closes p's document, if p is a view and this was its last
-// reference, for a displaced pane the caller has decided not to keep
+// DiscardPane closes p's document, if p is a view and this was its last reference, for a displaced
+// pane the caller has decided not to keep
 func (e *Editor) DiscardPane(p Pane) {
 	p.Discard()
 }
 
-// ClosePane closes the pane at id. If it is the tree's only pane, it is
-// replaced with a fresh scratch document instead of leaving the tree empty
+// ClosePane closes the pane at id. If it is the tree's only pane, it is replaced with a fresh
+// scratch document instead of leaving the tree empty
 func (e *Editor) ClosePane(id Id) {
 	p := e.panes.tree.Get(id)
 	if p == nil {
@@ -154,8 +153,7 @@ func (e *Editor) ClosePane(id Id) {
 	}
 }
 
-// RegisterPaneRestorer registers how to rebuild a leaf pane of the given
-// session kind
+// RegisterPaneRestorer registers how to rebuild a leaf pane of the given session kind
 func (e *Editor) RegisterPaneRestorer(kind SessionKind, fn PaneRestorer) {
 	if e.panes.restorers == nil {
 		e.panes.restorers = map[SessionKind]PaneRestorer{}

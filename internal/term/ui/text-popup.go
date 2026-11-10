@@ -37,8 +37,8 @@ type (
 	}
 )
 
-// markdownLink matches inline links and images: [text](url) and ![alt](url),
-// capturing the visible text so the URL and brackets can be dropped
+// markdownLink matches inline links and images: [text](url) and ![alt](url), capturing the visible
+// text so the URL and brackets can be dropped
 var markdownLink = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
 
 func (p *popupMarkdown) parse(text string) {
@@ -68,8 +68,8 @@ func (p *popupMarkdown) parseLine(line string) {
 	}
 	line = strings.TrimRight(line, " \t")
 	if strings.TrimSpace(line) == "" {
-		// collapse a run of blanks to one break and drop leading blanks. A
-		// preceding rule counts as blank here, so it swallows the blank after
+		// collapse a run of blanks to one break and drop leading blanks. A preceding rule counts as
+		// blank here, so it swallows the blank after
 		if len(p.lines) == 0 || p.lines[len(p.lines)-1].text == "" {
 			return
 		}
@@ -166,9 +166,7 @@ func (r *popupTextRenderer) renderCode(line popupLine, y int) {
 	}
 }
 
-func (r *popupTextRenderer) writeRun(
-	at geom.Point, text string, st tui.Style,
-) int {
+func (r *popupTextRenderer) writeRun(at geom.Point, text string, st tui.Style) int {
 	r.buf.SetString(at, text, st)
 	return at.X + runewidth.StringWidth(text)
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// BenchmarkCompletionTyping re-filters an open completion popup on every
-// keystroke, the same shape as BenchmarkPickerTyping
+// BenchmarkCompletionTyping re-filters an open completion popup on every keystroke, the same shape
+// as BenchmarkPickerTyping
 func BenchmarkCompletionTyping(b *testing.B) {
 	for _, n := range []int{1000, 10000, 50000} {
 		items := benchCompletionItems(n)

@@ -32,9 +32,7 @@ func TestDidChangeWatchedFile(t *testing.T) {
 		server := &watchServer{
 			changes: make(chan *protocol.DidChangeWatchedFilesParams, 1),
 		}
-		_, serverRPC, _ := protocol.NewServer(
-			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-		)
+		_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
@@ -57,9 +55,7 @@ func TestDidChangeWatchedFile(t *testing.T) {
 		server := &watchServer{
 			changes: make(chan *protocol.DidChangeWatchedFilesParams, 1),
 		}
-		_, serverRPC, _ := protocol.NewServer(
-			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-		)
+		_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
@@ -68,9 +64,7 @@ func TestDidChangeWatchedFile(t *testing.T) {
 		assert.NoError(t, client.DidChangeWatchedFile(ctx, "/tmp/main.go"))
 		params := <-server.changes
 		assert.Len(t, params.Changes, 1)
-		assert.Equal(t,
-			protocol.FileChangeTypeChanged, params.Changes[0].Type,
-		)
+		assert.Equal(t, protocol.FileChangeTypeChanged, params.Changes[0].Type)
 	})
 }
 
@@ -93,8 +87,8 @@ func TestWatchRegistrationEdgeCases(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 
-		// the fake server registers then fully unregisters a "*.watched"
-		// watcher, via nil, mismatched, and malformed ones before the real
+		// the fake server registers then fully unregisters a "*.watched" watcher, via nil,
+		// mismatched, and malformed ones before the real
 		_, _ = session.Completions(doc, v.ID())
 		time.Sleep(100 * time.Millisecond)
 
@@ -126,9 +120,7 @@ file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerCompletionEnv, testServerWatchRegEdgeEnv,
 		testServerFileWatchNotifyEnv, notifyFile)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 

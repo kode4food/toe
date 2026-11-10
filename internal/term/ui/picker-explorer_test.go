@@ -20,9 +20,7 @@ func TestFileExplorer(t *testing.T) {
 	t.Run("lists dirs and files", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "alpha.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "alpha.txt"), []byte("x"), 0o644))
 		out := stripANSI(viewContent(explorerModel(t, dir)))
 		assert.Contains(t, out, "alpha.txt")
 		assert.Contains(t, out, "\U000f024b sub/")
@@ -75,9 +73,7 @@ func TestFileExplorer(t *testing.T) {
 	t.Run("dir preview lists contents", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
-		assert.NoError(t, os.Mkdir(
-			filepath.Join(dir, "sub", "nested"), 0o755,
-		))
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub", "nested"), 0o755))
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, "sub", "inner.go"), []byte("package p\n"), 0o644,
 		))
@@ -105,9 +101,7 @@ func TestFileExplorer(t *testing.T) {
 		bindNormalTestAction(
 			km, "explorer",
 			m.PickerAction(func(e *view.Editor) *ui.Picker {
-				return files.NewFileExplorer(
-					e, files.DefaultFileExplorerOptions(),
-				)
+				return files.NewFileExplorer(e, files.DefaultFileExplorerOptions())
 			}),
 			[]command.KeyEvent{char('e')},
 		)
@@ -126,9 +120,7 @@ func TestFileExplorer(t *testing.T) {
 	t.Run("navigates into a directory", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "sub", "inner.txt"), []byte("y"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "sub", "inner.txt"), []byte("y"), 0o644))
 		m := explorerModel(t, dir)
 		for _, ch := range "sub" {
 			m = sendKey(m, ch)
@@ -144,9 +136,7 @@ func TestFileExplorer(t *testing.T) {
 		testutil.WriteFile(t, filepath.Join(dir, "alpha.txt"), []byte("a"))
 		m := explorerModel(t, dir)
 		before := stripANSI(viewContent(m))
-		assert.Less(t,
-			strings.Index(before, "sub/"), strings.Index(before, "alpha.txt"),
-		)
+		assert.Less(t, strings.Index(before, "sub/"), strings.Index(before, "alpha.txt"))
 		m = sendSpecial(m, tea.KeyEscape)
 
 		testutil.WriteFile(t, filepath.Join(dir, "DELETE.txt"), []byte("d"))
@@ -163,9 +153,7 @@ func TestFileExplorer(t *testing.T) {
 	t.Run("forgets the dir it left", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
-		testutil.WriteFile(t,
-			filepath.Join(dir, "sub", "inner.txt"), []byte("y"),
-		)
+		testutil.WriteFile(t, filepath.Join(dir, "sub", "inner.txt"), []byte("y"))
 		testutil.WriteFile(t, filepath.Join(dir, "other.txt"), []byte("x"))
 		m := explorerModel(t, dir)
 		for _, ch := range "sub" {
@@ -182,9 +170,7 @@ func TestFileExplorer(t *testing.T) {
 		dir := t.TempDir()
 		nested := filepath.Join(dir, "one", "two")
 		assert.NoError(t, os.MkdirAll(nested, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(nested, "inner.txt"), []byte("y"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(nested, "inner.txt"), []byte("y"), 0o644))
 
 		m := explorerModel(t, dir)
 		out := stripANSI(viewContent(m))
@@ -199,9 +185,7 @@ func TestFileExplorer(t *testing.T) {
 
 	t.Run("shows hidden files by default", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644))
 
 		out := stripANSI(viewContent(explorerModel(t, dir)))
 
@@ -210,9 +194,7 @@ func TestFileExplorer(t *testing.T) {
 
 	t.Run("hides hidden files when configured", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644))
 		opts := files.DefaultFileExplorerOptions()
 		opts.Hidden = true
 
@@ -226,9 +208,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, ".ignore"), []byte("ignored.txt\n"), 0o644,
 		))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644))
 
 		out := stripANSI(viewContent(explorerModel(t, dir)))
 
@@ -240,9 +220,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, ".ignore"), []byte("ignored.txt\n"), 0o644,
 		))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644))
 		opts := files.DefaultFileExplorerOptions()
 		opts.IgnoreFiles = true
 
@@ -255,9 +233,7 @@ func TestFileExplorer(t *testing.T) {
 		dir := t.TempDir()
 		nested := filepath.Join(dir, "one", "two")
 		assert.NoError(t, os.MkdirAll(nested, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(nested, "inner.txt"), []byte("y"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(nested, "inner.txt"), []byte("y"), 0o644))
 		opts := files.DefaultFileExplorerOptions()
 		opts.FlattenDirs = false
 
@@ -271,9 +247,7 @@ func TestFileExplorer(t *testing.T) {
 		dir := t.TempDir()
 		target := filepath.Join(dir, "target", "child")
 		assert.NoError(t, os.MkdirAll(target, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(target, "inner.txt"), []byte("y"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(target, "inner.txt"), []byte("y"), 0o644))
 		link := filepath.Join(dir, "linked")
 		if err := os.Symlink(filepath.Join(dir, "target"), link); err != nil {
 			t.Skip("symlink unavailable")
@@ -301,9 +275,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "explorer_buf",
-			m.PickerAction(bufferDirExplorer),
-			[]command.KeyEvent{char('e')},
+			km, "explorer_buf", m.PickerAction(bufferDirExplorer), []command.KeyEvent{char('e')},
 		)
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
@@ -314,9 +286,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		dir := t.TempDir()
 		sub := filepath.Join(dir, "images")
 		assert.NoError(t, os.Mkdir(sub, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(sub, "sibling.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(sub, "sibling.txt"), []byte("x"), 0o644))
 
 		e := view.NewEditor(dir)
 		openRenderImagePane(t, e, writeRenderImage(t, sub, 4, 4, nil))
@@ -341,16 +311,12 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 
 	t.Run("scratch falls back to cwd", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "cwd.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "cwd.txt"), []byte("x"), 0o644))
 		e := view.NewEditor(dir)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "explorer_buf",
-			m.PickerAction(bufferDirExplorer),
-			[]command.KeyEvent{char('e')},
+			km, "explorer_buf", m.PickerAction(bufferDirExplorer), []command.KeyEvent{char('e')},
 		)
 
 		m = resize(m, 100, 30)
@@ -360,9 +326,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 	})
 }
 
-func explorerModel(
-	t *testing.T, dir string, opts ...files.FileExplorerOptions,
-) ui.Model {
+func explorerModel(t *testing.T, dir string, opts ...files.FileExplorerOptions) ui.Model {
 	t.Helper()
 	cfg := files.DefaultFileExplorerOptions()
 	if len(opts) > 0 {

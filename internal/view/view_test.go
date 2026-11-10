@@ -169,21 +169,19 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 	t.Run("mid-viewport cursor does not scroll", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		// line 1 wraps to 8 visual rows, so the cursor on line 2 stays well
-		// within the viewport though adjacent by text-line index
+		// line 1 wraps to 8 visual rows, so the cursor on line 2 stays well within the viewport
+		// though adjacent by text-line index
 		long := strings.Repeat("x", 80)
 		doc := core.NewRope("a\n" + long + "\nb\nc\nd\ne\nf\ng")
 		line1Start, _ := doc.LineToChar(1)
 		line2Start, _ := doc.LineToChar(2)
 		v.SetOffset(view.Position{Anchor: line1Start})
-		sel, _ := core.NewSelection(
-			[]core.Range{core.PointRange(line2Start)}, 0,
-		)
+		sel, _ := core.NewSelection([]core.Range{core.PointRange(line2Start)}, 0)
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
-		// the text-line fallback would wrongly scroll up here. The visual path
-		// recognizes the cursor is already in range and leaves the anchor put
+		// the text-line fallback would wrongly scroll up here. The visual path recognizes the
+		// cursor is already in range and leaves the anchor put
 		v.EnsureCursorVisible(&view.CursorScroll{
 			Doc:       doc,
 			Selection: sel,
@@ -197,8 +195,8 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 	t.Run("scrolls within a tall line", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		// 80 cells wrap to 8 visual rows at width 10, so a 4-row viewport must
-		// scroll into the line rather than anchor at its start
+		// 80 cells wrap to 8 visual rows at width 10, so a 4-row viewport must scroll into the line
+		// rather than anchor at its start
 		doc := core.NewRope(strings.Repeat("x", 80))
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(79)}, 0)
 		vf := &core.VisualMoveFormat{
@@ -211,8 +209,8 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 			ScrollOff: 0,
 			Visual:    vf,
 		})
-		// anchor stays at the line start, but the view scrolls 4 visual rows
-		// into the line so the cursor sits on the bottom viewport row
+		// anchor stays at the line start, but the view scrolls 4 visual rows into the line so the
+		// cursor sits on the bottom viewport row
 		assert.Equal(t, 0, v.Offset().Anchor)
 		assert.Equal(t, 4, v.Offset().VerticalOffset)
 	})
@@ -507,9 +505,7 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 	t.Run("scrolloff clamped when height is small", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		doc := core.NewRope(
-			"line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n",
-		)
+		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(36)}, 0)
 		v.EnsureCursorVisible(&view.CursorScroll{
 			Doc:       doc,
@@ -555,8 +551,8 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 			Height:    10,
 			ScrollOff: 5,
 		})
-		// Anchor puts the cursor at height-soBottom-1=4, leaving the full
-		// bottom margin of blank rows below EOF (anchor = 29-4 = line 25)
+		// Anchor puts the cursor at height-soBottom-1=4, leaving the full bottom margin of blank
+		// rows below EOF (anchor = 29-4 = line 25)
 		anchorLine, _ := doc.CharToLine(v.Offset().Anchor)
 		assert.Equal(t, 25, anchorLine)
 	})
@@ -625,9 +621,7 @@ func TestScrollOffsetPerDocument(t *testing.T) {
 			for i, path := range tt.openPaths {
 				_, err = e.OpenFile(path)
 				assert.NoError(t, err)
-				assert.Equal(t,
-					tt.wantOffsets[i], e.FocusedView().Offset(),
-				)
+				assert.Equal(t, tt.wantOffsets[i], e.FocusedView().Offset())
 			}
 		})
 	}

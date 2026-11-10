@@ -20,15 +20,14 @@ var (
 	ErrRangeIndexNotFound   = errors.New("range index not found")
 )
 
-// NewSelection returns a selection over ranges, sorted and merged, with the
-// range at primaryIndex kept primary
+// NewSelection returns a selection over ranges, sorted and merged, with the range at primaryIndex
+// kept primary
 func NewSelection(ranges []Range, primaryIndex int) (Selection, error) {
 	if len(ranges) == 0 {
 		return Selection{}, ErrEmptySelection
 	}
 	if primaryIndex < 0 || primaryIndex >= len(ranges) {
-		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound,
-			primaryIndex)
+		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound, primaryIndex)
 	}
 	s := Selection{
 		ranges:       slices.Clone(ranges),
@@ -69,8 +68,7 @@ func (s Selection) PrimaryIndex() int {
 	return s.primaryIndex
 }
 
-// Equal reports whether two selections have identical ranges and the same
-// primary index
+// Equal reports whether two selections have identical ranges and the same primary index
 func (s Selection) Equal(other Selection) bool {
 	return s.primaryIndex == other.primaryIndex &&
 		slices.Equal(s.ranges, other.ranges)
@@ -79,8 +77,7 @@ func (s Selection) Equal(other Selection) bool {
 // SetPrimaryIndex makes the range at idx primary
 func (s Selection) SetPrimaryIndex(idx int) (Selection, error) {
 	if idx < 0 || idx >= len(s.ranges) {
-		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound,
-			idx)
+		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound, idx)
 	}
 	s.primaryIndex = idx
 	return s, nil
@@ -133,8 +130,7 @@ func (s Selection) MergeRanges() Selection {
 	return Selection{ranges: []Range{first.Merge(last)}, primaryIndex: 0}
 }
 
-// MergeConsecutiveRanges joins only ranges that touch end to start, leaving
-// separated ranges alone
+// MergeConsecutiveRanges joins only ranges that touch end to start, leaving separated ranges alone
 func (s Selection) MergeConsecutiveRanges() Selection {
 	sel := s.normalize()
 	if len(sel.ranges) < 2 {

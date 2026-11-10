@@ -16,8 +16,8 @@ import (
 var uiKeyRE = regexp.MustCompile(`i18n\.Key = "([^"]+)"`)
 
 func TestPackageKeys(t *testing.T) {
-	// a key whose text lives in another package's module resolves only once
-	// that module registers, which leaves this package's messages untranslated
+	// a key whose text lives in another package's module resolves only once that module registers,
+	// which leaves this package's messages untranslated
 	t.Run("resolve without other modules", func(t *testing.T) {
 		for _, key := range packageKeys(t) {
 			t.Run(key, func(t *testing.T) {

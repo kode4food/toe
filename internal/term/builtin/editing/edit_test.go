@@ -195,8 +195,7 @@ func TestEditTextOps(t *testing.T) {
 	t.Run("ensure forward makes selection forward", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		test.RunCmd(t, km, e, "ensure_forward")
-		assert.NotContains(t,
-			test.RunCmd(t, km, e, "ensure_forward").Message, "error")
+		assert.NotContains(t, test.RunCmd(t, km, e, "ensure_forward").Message, "error")
 	})
 }
 
@@ -242,9 +241,7 @@ func TestEditOptions(t *testing.T) {
 
 	t.Run("toggle auto-save", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "toggle_option", "auto-save.focus-lost",
-		)
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "auto-save.focus-lost")
 		assert.Contains(t, res.Message, "is now")
 	})
 }
@@ -258,8 +255,8 @@ func TestEditUndoRedo(t *testing.T) {
 		assert.Equal(t, "abc", test.DocText(t, e))
 	})
 
-	// revert semantics live in core/history_test. Here the command wrappers and
-	// their count branch must complete without a continuation
+	// revert semantics live in core/history_test. Here the command wrappers and their count branch
+	// must complete without a continuation
 	t.Run("earlier and later take no continuation", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		assert.Nil(t, test.RunCmd(t, km, e, "earlier").Continuation)

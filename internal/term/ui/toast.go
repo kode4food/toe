@@ -48,8 +48,7 @@ const (
 	toastRise       = 200 * time.Millisecond
 	toastFade       = 500 * time.Millisecond
 	toastMaxRows    = 5
-	// width tracks the screen rather than the message, so a new entry never
-	// resizes the popup
+	// width tracks the screen rather than the message, so a new entry never resizes the popup
 	toastWidthPct = 40
 	toastMinWidth = 40
 	toastMaxWidth = 80
@@ -67,8 +66,8 @@ const (
 
 func (t *toastState) push(text string, level toastLevel) {
 	now := time.Now()
-	// a new message cancels an exit, the spent entries going with it. The
-	// rise resumes from where the exit got to, so the popup never jerks
+	// a new message cancels an exit, the spent entries going with it. The rise resumes from where
+	// the exit got to, so the popup never jerks
 	if !t.leaving.IsZero() {
 		t.items = nil
 		t.leaving = time.Time{}
@@ -135,8 +134,8 @@ func (t *toastState) step(now time.Time, animate bool) bool {
 	return t.expire(now) || changed
 }
 
-// distance from the resting place, 100 being fully off screen. Frames read
-// this rather than the clock, so a repaint cannot move the popup uncached
+// distance from the resting place, 100 being fully off screen. Frames read this rather than the
+// clock, so a repaint cannot move the popup uncached
 func (t *toastState) slidePct(now time.Time, animate bool) int {
 	if !animate {
 		return 0
@@ -144,8 +143,8 @@ func (t *toastState) slidePct(now time.Time, animate bool) int {
 	if !t.leaving.IsZero() {
 		return min(int(now.Sub(t.leaving)*100/toastRise), 100)
 	}
-	// a clock that has not reached the push yet means the rise has not
-	// started, never that it has finished
+	// a clock that has not reached the push yet means the rise has not started, never that it has
+	// finished
 	elapsed := max(now.Sub(t.shown), 0)
 	if elapsed >= toastRise {
 		return 0
@@ -153,8 +152,7 @@ func (t *toastState) slidePct(now time.Time, animate bool) int {
 	return int((toastRise - elapsed) * 100 / toastRise)
 }
 
-// ends any slide in progress, so turning animation off never strands the
-// popup part way off screen
+// ends any slide in progress, so turning animation off never strands the popup part way off screen
 func (t *toastState) snap() {
 	if !t.leaving.IsZero() {
 		t.dismiss()
@@ -197,8 +195,8 @@ func (t *toastState) spent(now time.Time) bool {
 	return len(t.items) > 0
 }
 
-// true while the popup is sliding either way or an entry is fading out, so
-// frames are due at frame rate rather than at the idle tick
+// true while the popup is sliding either way or an entry is fading out, so frames are due at frame
+// rate rather than at the idle tick
 func (t *toastState) animating(now time.Time) bool {
 	if len(t.items) == 0 {
 		return false
@@ -252,8 +250,7 @@ func (ec *EditorComponent) pushToast(text string, level toastLevel) {
 	ec.requestRedraw()
 }
 
-// started when a toast is queued, so a tick is only pending while something is
-// waiting to expire
+// started when a toast is queued, so a tick is only pending while something is waiting to expire
 func (ec *EditorComponent) toastTickCmd() tea.Cmd {
 	if !ec.toasts.pending() {
 		return nil
@@ -273,9 +270,7 @@ func (ec *EditorComponent) toastNextCmd(gen int) tea.Cmd {
 	})
 }
 
-func (ec *EditorComponent) handleToastTick(
-	msg toastTickMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleToastTick(msg toastTickMsg) (EventResult, tea.Cmd) {
 	if msg.gen != ec.toasts.gen {
 		return consumed(), nil
 	}
@@ -301,8 +296,8 @@ func (ec *EditorComponent) dismissToastAt(at geom.Point) bool {
 	return true
 }
 
-// draws the queued messages as one popup in the bottom-right corner, its last
-// row above the statusline
+// draws the queued messages as one popup in the bottom-right corner, its last row above the
+// statusline
 func (r *renderPass) renderToasts(buf *tui.Buffer) {
 	items := r.editor.toasts.items
 	if len(items) == 0 {
@@ -337,8 +332,7 @@ func (r *renderPass) renderToasts(buf *tui.Buffer) {
 			st = fadedStyle(st, item.expires.Sub(now))
 		}
 		buf.SetString(
-			area.Add(geom.Point{Y: i}),
-			runewidth.Truncate(item.text, area.Width, promptEllipsis),
+			area.Add(geom.Point{Y: i}), runewidth.Truncate(item.text, area.Width, promptEllipsis),
 			st,
 		)
 	}

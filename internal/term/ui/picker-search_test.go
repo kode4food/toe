@@ -70,9 +70,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.True(t, strings.HasSuffix(doc.Path(), "a.txt"))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		line, err := doc.Text().CharToLine(
-			doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()),
-		)
+		line, err := doc.Text().CharToLine(doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()))
 		assert.NoError(t, err)
 		assert.Equal(t, 30, line)
 		anchorLine, err := doc.Text().CharToLine(v.Offset().Anchor)
@@ -124,31 +122,19 @@ func TestGlobalSearch(t *testing.T) {
 	t.Run("respects ignore files", func(t *testing.T) {
 		dir := t.TempDir()
 		err := os.WriteFile(
-			filepath.Join(dir, ".gitignore"),
-			[]byte("ignored.txt\nignored-dir/\n"),
-			0o644,
+			filepath.Join(dir, ".gitignore"), []byte("ignored.txt\nignored-dir/\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(dir, "ignored.txt"),
-			[]byte("findme hidden\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(dir, "ignored.txt"), []byte("findme hidden\n"), 0o644)
 		assert.NoError(t, err)
 		ignoredDir := filepath.Join(dir, "ignored-dir")
 		err = os.MkdirAll(ignoredDir, 0o755)
 		assert.NoError(t, err)
 		err = os.WriteFile(
-			filepath.Join(ignoredDir, "nested.txt"),
-			[]byte("findme nested\n"),
-			0o644,
+			filepath.Join(ignoredDir, "nested.txt"), []byte("findme nested\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(dir, "visible.txt"),
-			[]byte("findme visible\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("findme visible\n"), 0o644)
 		assert.NoError(t, err)
 
 		m := openGlobalSearch(t, view.NewEditor(dir), "findme")
@@ -166,9 +152,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NoError(t, os.MkdirAll(root, 0o755))
 		assert.NoError(t, os.MkdirAll(external, 0o755))
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(external, "needle.txt"),
-			[]byte("findme outside\n"),
-			0o644,
+			filepath.Join(external, "needle.txt"), []byte("findme outside\n"), 0o644,
 		))
 		assert.NoError(t, os.Symlink(external, filepath.Join(root, "linked")))
 
@@ -197,9 +181,7 @@ func TestGlobalSearch(t *testing.T) {
 			}, "memory needle\n"),
 		})
 		assert.NoError(t, err)
-		tx := core.NewTransaction(rope).
-			WithChanges(cs).
-			WithSelection(core.PointSelection(0))
+		tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))
 		assert.NoError(t, e.Apply(tx))
 
 		m := openGlobalSearch(t, e, "needle")

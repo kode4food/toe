@@ -26,8 +26,7 @@ func Spaces(n uint8) IndentStyle {
 	return IndentStyle{width: n}
 }
 
-// ParseIndentStyle creates an IndentStyle from an indent string such as
-// "    " (four spaces) or "\t"
+// ParseIndentStyle creates an IndentStyle from an indent string such as " " (four spaces) or "\t"
 func ParseIndentStyle(s string) IndentStyle {
 	if len(s) == 0 || s[0] != ' ' {
 		return Tabs()
@@ -65,8 +64,8 @@ func (i IndentStyle) IndentWidth(tabWidth int) int {
 	return int(i.width)
 }
 
-// AutoDetect attempts to detect the indentation style used in doc. Returns the
-// detected style and true, or false if confidence is too low
+// AutoDetect attempts to detect the indentation style used in doc. Returns the detected style and
+// true, or false if confidence is too low
 func AutoDetect(doc Rope) (IndentStyle, bool) {
 	var histogram [MaxIndent + 1]int
 	prevIsTabs := false

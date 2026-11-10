@@ -51,9 +51,7 @@ func TestPickerMatch(t *testing.T) {
 		tmp := t.TempDir()
 		for i := range 30 {
 			name := fmt.Sprintf("file-%02d.go", i)
-			err := os.WriteFile(
-				filepath.Join(tmp, name), []byte("package p\n"), 0o644,
-			)
+			err := os.WriteFile(filepath.Join(tmp, name), []byte("package p\n"), 0o644)
 			assert.NoError(t, err)
 		}
 
@@ -61,8 +59,7 @@ func TestPickerMatch(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -91,8 +88,7 @@ func TestPickerMatch(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('b')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 30)
@@ -281,8 +277,7 @@ func treePicker(t *testing.T) ui.Model {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "file_picker",
-		m.PickerAction(files.NewFilePickerInDir(tmp)),
+		km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 		[]command.KeyEvent{char('p')},
 	)
 	return sendKeyAndFeed(resize(m, 70, 20), 'p')

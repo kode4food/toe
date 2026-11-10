@@ -249,9 +249,7 @@ func TestOverlayAnchoring(t *testing.T) {
 	})
 }
 
-func insertTextAt(
-	t *testing.T, e *view.Editor, doc *view.Document, at int, s string,
-) {
+func insertTextAt(t *testing.T, e *view.Editor, doc *view.Document, at int, s string) {
 	t.Helper()
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{

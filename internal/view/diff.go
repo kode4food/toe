@@ -14,16 +14,15 @@ type DiffSides struct {
 	Doc  core.Rope
 }
 
-// MaxDiffLines and MaxDiffBytes bound the inputs Diff will process, so a
-// pathological file cannot stall the diff. Larger documents simply render
-// without diff gutter marks
+// MaxDiffLines and MaxDiffBytes bound the inputs Diff will process, so a pathological file cannot
+// stall the diff. Larger documents simply render without diff gutter marks
 const (
 	MaxDiffLines = 65536
 	MaxDiffBytes = 16 << 20
 )
 
-// Diff returns the line-level hunks that turn Base into Doc, sorted ascending
-// and non-overlapping. It returns nil when either side exceeds the size caps
+// Diff returns the line-level hunks that turn Base into Doc, sorted ascending and non-overlapping.
+// It returns nil when either side exceeds the size caps
 func Diff(sides DiffSides) []DiffHunk {
 	base := sides.Base
 	doc := sides.Doc

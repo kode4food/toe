@@ -18,8 +18,8 @@ type (
 	}
 )
 
-// AddDocumentObserver installs a document lifecycle observer. Observers are
-// notified in registration order
+// AddDocumentObserver installs a document lifecycle observer. Observers are notified in
+// registration order
 func (e *Editor) AddDocumentObserver(o DocumentObserver) {
 	e.docObservers = append(e.docObservers, o)
 }

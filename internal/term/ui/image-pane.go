@@ -23,8 +23,8 @@ import (
 )
 
 type (
-	// ImagePane displays an image in the editor's pane tree, zooming and
-	// panning it in response to keys and mouse, and shows no text cursor
+	// ImagePane displays an image in the editor's pane tree, zooming and panning it in response to
+	// keys and mouse, and shows no text cursor
 	ImagePane struct {
 		viewport viewportState
 		wheel    wheelState
@@ -47,8 +47,8 @@ type (
 		zooming bool
 	}
 
-	// Image holds decoded image data, its content identifier, and the decoded
-	// source format (e.g. "png") for transmission fast paths
+	// Image holds decoded image data, its content identifier, and the decoded source format (e.g.
+	// "png") for transmission fast paths
 	Image struct {
 		image.Image
 		id     uint32
@@ -63,21 +63,23 @@ const (
 	minImageZoom       = 25
 	maxImageZoom       = 400
 	imageKeyPanStep    = 4
-	// wheelGestureGap is the longest pause that still counts as one continuous
-	// scroll, covering the cadence of momentum events after a key is released
+	// wheelGestureGap is the longest pause that still counts as one continuous scroll, covering the
+	// cadence of momentum events after a key is released
 	wheelGestureGap = 200 * time.Millisecond
 
 	imageSessionZoomKey = "zoom"
 	imageSessionPanXKey = "pan_x"
 	imageSessionPanYKey = "pan_y"
 
-	// wheelMods: holding any of these swaps the bare-wheel action between pan
-	// and zoom, the closest a terminal gets to pinch-to-zoom
+	// wheelMods: holding any of these swaps the bare-wheel action between pan and zoom, the closest
+	// a terminal gets to pinch-to-zoom
 	wheelMods = tea.ModCtrl | tea.ModAlt | tea.ModSuper
 )
 
 // ErrInvalidImage reports a file that cannot be decoded as an image
-var ErrInvalidImage = errors.New("invalid image")
+var (
+	ErrInvalidImage = errors.New("invalid image")
+)
 
 var (
 	_ view.Pane         = (*ImagePane)(nil)
@@ -128,12 +130,10 @@ func (i *Image) ContentID() uint32 {
 	return i.id
 }
 
-// HandleEvent handles image mouse input: a left click zooms in, a right or
-// modified left click zooms out, a bare wheel pans, and a modified wheel zooms.
-// Everything else falls through to the editor
-func (p *ImagePane) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, bool) {
+// HandleEvent handles image mouse input: a left click zooms in, a right or modified left click
+// zooms out, a bare wheel pans, and a modified wheel zooms. Everything else falls through to the
+// editor
+func (p *ImagePane) HandleEvent(cx *Context, msg tea.Msg) (EventResult, bool) {
 	switch m := msg.(type) {
 	case tea.MouseClickMsg:
 		switch {
@@ -149,15 +149,15 @@ func (p *ImagePane) HandleEvent(
 		return consumed(), true
 	case tea.MouseWheelMsg:
 		zooming := m.Mod&wheelMods != 0
-		// hold a zoom gesture through the modifier-less momentum tail, but let
-		// a pan gesture switch to zoom the moment the modifier appears
+		// hold a zoom gesture through the modifier-less momentum tail, but let a pan gesture switch
+		// to zoom the moment the modifier appears
 		if !zooming && p.wheel.zooming &&
 			time.Since(p.wheel.at) < wheelGestureGap {
 			zooming = true
 		}
 		p.wheel.at, p.wheel.zooming = time.Now(), zooming
-		// drop input while the last change is still transmitting, so a fast
-		// burst is paced to the pipeline instead of queuing a laggy tail
+		// drop input while the last change is still transmitting, so a fast burst is paced to the
+		// pipeline instead of queuing a laggy tail
 		id := kittyImageID(kittyImageIDArgs{
 			content: p.image.ContentID(),
 			surface: uint32(p.id),
@@ -237,8 +237,8 @@ func (p *ImagePane) Image() *Image {
 	return p.image
 }
 
-// OnDisplace drops the decoded bitmap while the pane is stashed behind another
-// pane, freeing its memory
+// OnDisplace drops the decoded bitmap while the pane is stashed behind another pane, freeing its
+// memory
 func (p *ImagePane) OnDisplace() {
 	p.image = nil
 }
@@ -248,8 +248,8 @@ func (p *ImagePane) OnRevert() {
 	_ = p.Reload()
 }
 
-// Reload re-decodes the backing file after an external change. The new bytes
-// yield a new ContentID, so the display path retransmits automatically
+// Reload re-decodes the backing file after an external change. The new bytes yield a new ContentID,
+// so the display path retransmits automatically
 func (p *ImagePane) Reload() error {
 	img, err := LoadImage(p.path)
 	if err != nil {

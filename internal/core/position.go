@@ -1,15 +1,15 @@
 package core
 
 type (
-	// Position is a 1-based line and column document address, the way a person
-	// names a location. Distinct from geom.Point, a screen cell
+	// Position is a 1-based line and column document address, the way a person names a location.
+	// Distinct from geom.Point, a screen cell
 	Position struct {
 		Line   int
 		Column int
 	}
 
-	// LinePos addresses a point inside a line by 0-based line index and the
-	// absolute character offset of the point, not a column
+	// LinePos addresses a point inside a line by 0-based line index and the absolute character
+	// offset of the point, not a column
 	LinePos struct {
 		Line int
 		Pos  int

@@ -49,9 +49,7 @@ func (g gutterSpec) renderBlank(buf *tui.Buffer, at geom.Point) {
 	buf.FillRange(at, g.width, g.lineStyle)
 }
 
-func (g gutterSpec) renderTilde(
-	buf *tui.Buffer, at geom.Point, selected bool,
-) {
+func (g gutterSpec) renderTilde(buf *tui.Buffer, at geom.Point, selected bool) {
 	st := g.lineStyleFor(selected)
 	buf.FillRange(at, g.width, st)
 	for _, gt := range g.layout {
@@ -132,9 +130,7 @@ func (g gutterSpec) gutterTypeWidth(gt view.GutterType) int {
 	return 1
 }
 
-func (g gutterSpec) diagnosticStyle(
-	severity view.DiagnosticSeverity,
-) tui.Style {
+func (g gutterSpec) diagnosticStyle(severity view.DiagnosticSeverity) tui.Style {
 	switch severity {
 	case view.DiagnosticSeverityError:
 		return g.severityError
@@ -158,9 +154,7 @@ func (g gutterSpec) diffMarker(kind diffGutterKind) (string, tui.Style) {
 	}
 }
 
-func gutterLineNumberWidth(
-	text core.Rope, g view.Gutter, layout []view.GutterType,
-) int {
+func gutterLineNumberWidth(text core.Rope, g view.Gutter, layout []view.GutterType) int {
 	if !slices.Contains(layout, view.GutterTypeLineNumbers) {
 		return 0
 	}
@@ -179,9 +173,7 @@ func gutterLayoutWidth(layout []view.GutterType, lineNumW int) int {
 	return w
 }
 
-func diffGutterLines(
-	hunks []view.DiffHunk, nLines int,
-) map[int]diffGutterKind {
+func diffGutterLines(hunks []view.DiffHunk, nLines int) map[int]diffGutterKind {
 	if len(hunks) == 0 {
 		return nil
 	}

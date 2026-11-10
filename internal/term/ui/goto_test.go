@@ -29,9 +29,7 @@ func TestGotoPath(t *testing.T) {
 
 		assert.True(t, ok)
 		assert.Equal(t, v.DocID(), landed.DocID())
-		assert.Equal(t,
-			"edited AAA\n", e.FocusedDocument().Text().String(),
-		)
+		assert.Equal(t, "edited AAA\n", e.FocusedDocument().Text().String())
 	})
 
 	t.Run("records a jump back to the departed file", func(t *testing.T) {
@@ -62,9 +60,7 @@ func TestGotoPath(t *testing.T) {
 
 		e := view.NewEditor(dir)
 		lines := &core.Span{From: 1, To: 1}
-		v, ok := ui.GotoPath(
-			e, path, ui.GotoLines(lines), ui.PickerAcceptReplace,
-		)
+		v, ok := ui.GotoPath(e, path, ui.GotoLines(lines), ui.PickerAcceptReplace)
 
 		assert.True(t, ok)
 		doc := e.Document(v.DocID())

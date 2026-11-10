@@ -159,8 +159,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageUp),
 				Modes:     command.DocModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(kit.Ctrl('b'), kit.PgUp),
-					kit.Or(z(kit.Ctrl('b')), z(kit.PgUp)),
+					kit.Or(kit.Ctrl('b'), kit.PgUp), kit.Or(z(kit.Ctrl('b')), z(kit.PgUp)),
 					kit.Or(Z(kit.Ctrl('b')), Z(kit.PgUp)),
 				)},
 			},
@@ -170,8 +169,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageDown),
 				Modes:     command.DocModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(kit.Ctrl('f'), kit.PgDn),
-					kit.Or(z(kit.Ctrl('f')), z(kit.PgDn)),
+					kit.Or(kit.Ctrl('f'), kit.PgDn), kit.Or(z(kit.Ctrl('f')), z(kit.PgDn)),
 					kit.Or(Z(kit.Ctrl('f')), Z(kit.PgDn)),
 				)},
 			},
@@ -181,8 +179,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageCursorHalfUp),
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(kit.Ctrl('u')),
-					kit.Or(z(kit.Ctrl('u')), z(kit.Bksp)),
+					kit.Or(kit.Ctrl('u')), kit.Or(z(kit.Ctrl('u')), z(kit.Bksp)),
 					kit.Or(Z(kit.Ctrl('u')), Z(kit.Bksp)),
 				)},
 			},
@@ -192,8 +189,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageCursorHalfDown),
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(kit.Ctrl('d')),
-					kit.Or(z(kit.Ctrl('d')), z(kit.Char(' '))),
+					kit.Or(kit.Ctrl('d')), kit.Or(z(kit.Ctrl('d')), z(kit.Char(' '))),
 					kit.Or(Z(kit.Ctrl('d')), Z(kit.Char(' '))),
 				)},
 			},
@@ -247,8 +243,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.AlignViewBottom),
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(z(kit.Char('b'))),
-					kit.Or(Z(kit.Char('b'))),
+					kit.Or(z(kit.Char('b'))), kit.Or(Z(kit.Char('b'))),
 				)},
 			},
 			{
@@ -258,8 +253,7 @@ func ViewModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(z(kit.Char('k')), z(kit.Up)),
-					kit.Or(Z(kit.Char('k')), Z(kit.Up)),
+					kit.Or(z(kit.Char('k')), z(kit.Up)), kit.Or(Z(kit.Char('k')), Z(kit.Up)),
 				)},
 			},
 			{
@@ -269,8 +263,7 @@ func ViewModule(model ui.Model) command.Module {
 				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(z(kit.Char('j')), z(kit.Down)),
-					kit.Or(Z(kit.Char('j')), Z(kit.Down)),
+					kit.Or(z(kit.Char('j')), z(kit.Down)), kit.Or(Z(kit.Char('j')), Z(kit.Down)),
 				)},
 			},
 			{
@@ -279,8 +272,7 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(model.TerminalAction),
 				Modes:     command.CmdKeyModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
-					kit.Or(Cw(kit.Char('x'))),
-					kit.Or(Spcw(kit.Char('x'))),
+					kit.Or(Cw(kit.Char('x'))), kit.Or(Spcw(kit.Char('x'))),
 				)},
 			},
 			{
@@ -377,46 +369,30 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
-				Run: kit.Runner(runDirAction(
-					(*view.Editor).FocusDirection, view.DirectionLeft,
-				)),
-				Modes: command.PaneModes,
-				Keys: kit.Window(
-					kit.Char('h'), kit.Ctrl('h'), kit.Left,
-				),
+				Run:       kit.Runner(runDirAction((*view.Editor).FocusDirection, view.DirectionLeft)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Window(kit.Char('h'), kit.Ctrl('h'), kit.Left),
 			},
 			{
 				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
-				Run: kit.Runner(runDirAction(
-					(*view.Editor).FocusDirection, view.DirectionDown,
-				)),
-				Modes: command.PaneModes,
-				Keys: kit.Window(
-					kit.Char('j'), kit.Ctrl('j'), kit.Down,
-				),
+				Run:       kit.Runner(runDirAction((*view.Editor).FocusDirection, view.DirectionDown)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Window(kit.Char('j'), kit.Ctrl('j'), kit.Down),
 			},
 			{
 				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
-				Run: kit.Runner(runDirAction(
-					(*view.Editor).FocusDirection, view.DirectionUp,
-				)),
-				Modes: command.PaneModes,
-				Keys: kit.Window(
-					kit.Char('k'), kit.Ctrl('k'), kit.Up,
-				),
+				Run:       kit.Runner(runDirAction((*view.Editor).FocusDirection, view.DirectionUp)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Window(kit.Char('k'), kit.Ctrl('k'), kit.Up),
 			},
 			{
 				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
-				Run: kit.Runner(runDirAction(
-					(*view.Editor).FocusDirection, view.DirectionRight,
-				)),
-				Modes: command.PaneModes,
-				Keys: kit.Window(
-					kit.Char('l'), kit.Ctrl('l'), kit.Right,
-				),
+				Run:       kit.Runner(runDirAction((*view.Editor).FocusDirection, view.DirectionRight)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Window(kit.Char('l'), kit.Ctrl('l'), kit.Right),
 			},
 			{
 				Name:      actSwapViewLeft,
@@ -480,10 +456,7 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().LineNumber = v
 					return nil
 				},
-				Complete: command.StaticCompleter(
-					view.LineNumberAbsolute,
-					view.LineNumberRelative,
-				),
+				Complete: command.StaticCompleter(view.LineNumberAbsolute, view.LineNumberRelative),
 			},
 			kit.EditorBoolOption("cursorline",
 				func(e *view.Editor) bool {
@@ -624,9 +597,7 @@ func ViewModule(model ui.Model) command.Module {
 					return nil
 				},
 				Complete: command.StaticCompleter(
-					view.BufferLineNever,
-					view.BufferLineAlways,
-					view.BufferLineMultiple,
+					view.BufferLineNever, view.BufferLineAlways, view.BufferLineMultiple,
 				),
 			},
 			{
@@ -653,8 +624,7 @@ func ViewModule(model ui.Model) command.Module {
 					return nil
 				},
 				Complete: command.StaticCompleter(
-					view.WhitespaceRenderNone,
-					view.WhitespaceRenderAll,
+					view.WhitespaceRenderNone, view.WhitespaceRenderAll,
 				),
 			},
 			whitespaceRenderOption("whitespace.render.space",
@@ -779,9 +749,7 @@ func ViewModule(model ui.Model) command.Module {
 					}
 					layout := make([]view.GutterType, len(values))
 					for i, value := range values {
-						if err := layout[i].UnmarshalText(
-							[]byte(value),
-						); err != nil {
+						if err := layout[i].UnmarshalText([]byte(value)); err != nil {
 							return err
 						}
 					}
@@ -790,9 +758,7 @@ func ViewModule(model ui.Model) command.Module {
 					return nil
 				},
 				Complete: sliceCompleter(
-					view.GutterTypeDiagnostics,
-					view.GutterTypeLineNumbers,
-					view.GutterTypeSpacer,
+					view.GutterTypeDiagnostics, view.GutterTypeLineNumbers, view.GutterTypeSpacer,
 					view.GutterTypeDiff,
 				),
 			},
@@ -818,12 +784,8 @@ func ViewModule(model ui.Model) command.Module {
 			Reset:  func() { *cfg = viewSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.LineNumber = cmp.Or(
-					cfg.Editor.LineNumber, view.LineNumberAbsolute,
-				)
-				opts.InactiveDim = kit.IntOr(
-					cfg.Editor.InactiveDim, view.DefaultInactiveDim,
-				)
+				opts.LineNumber = cmp.Or(cfg.Editor.LineNumber, view.LineNumberAbsolute)
+				opts.InactiveDim = kit.IntOr(cfg.Editor.InactiveDim, view.DefaultInactiveDim)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
 				opts.Scrollbar = kit.BoolOr(cfg.Editor.Scrollbar, true)
@@ -833,34 +795,22 @@ func ViewModule(model ui.Model) command.Module {
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.SetRulers(cfg.Editor.Rulers)
-				opts.BufferLine = cmp.Or(
-					cfg.Editor.BufferLine, view.BufferLineNever,
-				)
+				opts.BufferLine = cmp.Or(cfg.Editor.BufferLine, view.BufferLineNever)
 				opts.Whitespace = cfg.Editor.Whitespace
 				opts.IndentGuides = cfg.Editor.IndentGuides
 				opts.Gutters = cfg.Editor.Gutters
 			},
 		},
 		Labels: []command.PrefixLabel{
-			kit.Label(
-				"View", kit.Char('z'), command.DocNormalModes,
-			),
-			kit.Label(
-				"View", kit.Char('Z'), command.DocNormalModes,
-			),
-			kit.Label(
-				"Window", kit.Ctrl('w'), command.PaneModes,
-			),
-			kit.Label(
-				"Window", kit.LeaderPrefix(kit.Char('w')), command.PaneModes,
-			),
+			kit.Label("View", kit.Char('z'), command.DocNormalModes),
+			kit.Label("View", kit.Char('Z'), command.DocNormalModes),
+			kit.Label("Window", kit.Ctrl('w'), command.PaneModes),
+			kit.Label("Window", kit.LeaderPrefix(kit.Char('w')), command.PaneModes),
 		},
 	}
 }
 
-func whitespaceRenderOption(
-	key string, get wsRenderGetter, set wsRenderSetter,
-) command.Option {
+func whitespaceRenderOption(key string, get wsRenderGetter, set wsRenderSetter) command.Option {
 	return command.Option{
 		Key: key,
 		Get: func(e *view.Editor) (string, error) {
@@ -874,16 +824,11 @@ func whitespaceRenderOption(
 			set(&e.Options().Whitespace.Render, &v)
 			return nil
 		},
-		Complete: command.StaticCompleter(
-			view.WhitespaceRenderNone,
-			view.WhitespaceRenderAll,
-		),
+		Complete: command.StaticCompleter(view.WhitespaceRenderNone, view.WhitespaceRenderAll),
 	}
 }
 
-func runeOption(
-	key string, get optionGetter[rune], set optionSetter[string],
-) command.Option {
+func runeOption(key string, get optionGetter[rune], set optionSetter[string]) command.Option {
 	return command.Option{
 		Key: key,
 		Get: func(e *view.Editor) (string, error) {

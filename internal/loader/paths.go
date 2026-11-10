@@ -9,15 +9,17 @@ import (
 	"strings"
 )
 
-// WorkspaceFiles names a global settings file and the workspace file merged
-// over it, alongside the directory whose trust governs that merge
+// WorkspaceFiles names a global settings file and the workspace file merged over it, alongside the
+// directory whose trust governs that merge
 type WorkspaceFiles struct {
 	Global    string
 	Workspace string
 	Dir       string
 }
 
-var ErrPathUnavailable = errors.New("path unavailable")
+var (
+	ErrPathUnavailable = errors.New("path unavailable")
+)
 
 const (
 	DirName          = "toe"
@@ -25,8 +27,7 @@ const (
 	WorkspaceDirName = "." + DirName
 )
 
-// CanonicalPath resolves symlinks in path's parent directory and joins the
-// unresolved final element
+// CanonicalPath resolves symlinks in path's parent directory and joins the unresolved final element
 func CanonicalPath(path string) string {
 	abs, err := filepath.Abs(path)
 	if err != nil {
@@ -135,8 +136,8 @@ func WorkspaceTrustFile() (string, bool) {
 	return "", false
 }
 
-// FindWorkspace walks up for a .git or .toe directory. The bool reports a
-// fallback to dir itself, not success
+// FindWorkspace walks up for a .git or .toe directory. The bool reports a fallback to dir itself,
+// not success
 func FindWorkspace(dir string) (string, bool) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {

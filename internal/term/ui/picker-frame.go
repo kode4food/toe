@@ -55,9 +55,7 @@ func (f pickerBoxFrame) drawSplit(args drawSplitArgs) pickerBoxAreas {
 	}
 }
 
-func (f pickerBoxFrame) drawSingle(
-	buf *tui.Buffer, area geom.Area, cutY int,
-) geom.Area {
+func (f pickerBoxFrame) drawSingle(buf *tui.Buffer, area geom.Area, cutY int) geom.Area {
 	inner := f.popup().drawInto(buf, area)
 	if area.Width < 2 || area.Height < 2 {
 		return geom.Area{}

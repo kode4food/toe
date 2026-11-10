@@ -20,9 +20,7 @@ func TestPickerOptions(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.key, func(t *testing.T) {
 			e, km := test.Env(t, "")
-			test.RunCmdArgs(t,
-				km, e, "set-option", tc.key+" "+tc.value,
-			)
+			test.RunCmdArgs(t, km, e, "set-option", tc.key+" "+tc.value)
 			res := test.RunCmdArgs(t, km, e, "get-option", tc.key)
 			assert.Equal(t, tc.key+": "+tc.value, res.Message)
 		})
@@ -30,17 +28,13 @@ func TestPickerOptions(t *testing.T) {
 
 	t.Run("defaults buffer picker to top", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "get-option", "buffer-picker.start-position",
-		)
+		res := test.RunCmdArgs(t, km, e, "get-option", "buffer-picker.start-position")
 		assert.Equal(t, "buffer-picker.start-position: top", res.Message)
 	})
 
 	t.Run("defaults directory flattening", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "get-option", "file-explorer.flatten-dirs",
-		)
+		res := test.RunCmdArgs(t, km, e, "get-option", "file-explorer.flatten-dirs")
 		assert.Equal(t, "file-explorer.flatten-dirs: true", res.Message)
 	})
 
@@ -52,20 +46,17 @@ func TestPickerOptions(t *testing.T) {
 			},
 		}
 		assert.NoError(t, reg.ApplyTOML(e, raw))
-		res := test.RunCmdArgs(t,
-			km, e, "get-option", "file-explorer.flatten-dirs")
+		res := test.RunCmdArgs(t, km, e, "get-option", "file-explorer.flatten-dirs")
 		assert.Equal(t, "file-explorer.flatten-dirs: false", res.Message)
 
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{}))
-		res = test.RunCmdArgs(t,
-			km, e, "get-option", "file-explorer.flatten-dirs")
+		res = test.RunCmdArgs(t, km, e, "get-option", "file-explorer.flatten-dirs")
 		assert.Equal(t, "file-explorer.flatten-dirs: true", res.Message)
 	})
 
 	t.Run("rejects invalid start position", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "set-option", "buffer-picker.start-position invalid")
+		res := test.RunCmdArgs(t, km, e, "set-option", "buffer-picker.start-position invalid")
 		assert.Contains(t, res.Message, "error")
 	})
 }

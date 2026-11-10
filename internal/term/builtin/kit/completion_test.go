@@ -16,9 +16,7 @@ func TestFileCompleter(t *testing.T) {
 	t.Run("completes files in cwd by prefix", func(t *testing.T) {
 		dir := t.TempDir()
 		for _, name := range []string{"alpha.txt", "almond.txt", "beta.txt"} {
-			assert.NoError(t, os.WriteFile(
-				filepath.Join(dir, name), []byte("x"), 0o644,
-			))
+			assert.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o644))
 		}
 		e := view.NewEditor(dir)
 
@@ -50,8 +48,7 @@ func TestStaticSig(t *testing.T) {
 
 func TestFileSig(t *testing.T) {
 	dir := t.TempDir()
-	assert.NoError(t,
-		os.WriteFile(filepath.Join(dir, "x.go"), []byte("x"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "x.go"), []byte("x"), 0o644))
 	sig := kit.FileSig(kit.OptionalArg())
 	e := view.NewEditor(dir)
 

@@ -38,12 +38,10 @@ func softWrapMoveFormat(format *language.TextFormat) core.VisualMoveFormat {
 		return core.VisualMoveFormat{}
 	}
 	return core.VisualMoveFormat{
-		ViewportWidth:   format.ViewportWidth,
-		TabWidth:        format.TabWidth,
-		MaxWrap:         format.MaxWrap,
-		MaxIndentRetain: format.MaxIndentRetain,
-		WrapIndicatorWidth: runewidth.StringWidth(
-			format.WrapIndicatorPrefix(),
-		),
+		ViewportWidth:      format.ViewportWidth,
+		TabWidth:           format.TabWidth,
+		MaxWrap:            format.MaxWrap,
+		MaxIndentRetain:    format.MaxIndentRetain,
+		WrapIndicatorWidth: runewidth.StringWidth(format.WrapIndicatorPrefix()),
 	}
 }

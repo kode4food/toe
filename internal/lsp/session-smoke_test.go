@@ -27,9 +27,7 @@ func TestSessionGopls(t *testing.T) {
 		dir := t.TempDir()
 		writeGoplsLanguages(t, gopls)
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "go.mod"),
-			[]byte("module smoke\n\ngo 1.26\n"),
-			0o644,
+			filepath.Join(dir, "go.mod"), []byte("module smoke\n\ngo 1.26\n"), 0o644,
 		))
 		text := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Pr\n}\n"
 		path := filepath.Join(dir, "main.go")
@@ -74,8 +72,6 @@ file-types = ["go"]
 roots = ["go.mod"]
 language-servers = ["gopls"]
 `, gopls, args)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }

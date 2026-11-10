@@ -35,8 +35,8 @@ const (
 	CommentChangeWhitespace
 )
 
-// FindBlockComments inspects each range in sel to determine whether it is
-// already block-commented and returns the per-range actions
+// FindBlockComments inspects each range in sel to determine whether it is already block-commented
+// and returns the per-range actions
 func FindBlockComments(
 	tokens []BlockCommentToken, text Rope, sel Selection,
 ) (bool, []CommentChange, error) {

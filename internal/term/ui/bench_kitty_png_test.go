@@ -21,9 +21,7 @@ func BenchmarkKittyPNGEncoding(b *testing.B) {
 		{name: "scrollbar", area: geom.Size{Width: 9, Height: 456}},
 		{name: "large", area: geom.Size{Width: 400, Height: 300}},
 	} {
-		pixels := image.NewRGBA(
-			image.Rect(0, 0, size.area.Width, size.area.Height),
-		)
+		pixels := image.NewRGBA(image.Rect(0, 0, size.area.Width, size.area.Height))
 		for y := range size.area.Height {
 			shade := uint8(y * 7)
 			for x := range size.area.Width {
@@ -54,9 +52,7 @@ func BenchmarkKittyPNGEncoding(b *testing.B) {
 				b.ReportAllocs()
 				for b.Loop() {
 					buf.Reset()
-					if err := kitty.EncodeGraphics(
-						&buf, variant.img, opts,
-					); err != nil {
+					if err := kitty.EncodeGraphics(&buf, variant.img, opts); err != nil {
 						b.Fatal(err)
 					}
 				}

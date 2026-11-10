@@ -26,9 +26,7 @@ type pickerRender struct {
 	count       tui.Style
 }
 
-func newPickerRender(
-	p *PickerComponent, cx *Context, buf *tui.Buffer,
-) *pickerRender {
+func newPickerRender(p *PickerComponent, cx *Context, buf *tui.Buffer) *pickerRender {
 	ps := p.state
 	cols := ps.source.Columns()
 	return &pickerRender{
@@ -100,8 +98,7 @@ func (p *pickerRender) drawList(area geom.Area) {
 			break
 		}
 		p.writeItem(
-			geom.Point{X: area.X, Y: itemY + i},
-			ps.list.matched[idx], idx == ps.list.cursor,
+			geom.Point{X: area.X, Y: itemY + i}, ps.list.matched[idx], idx == ps.list.cursor,
 		)
 	}
 	if len(ps.list.matched) == 0 {

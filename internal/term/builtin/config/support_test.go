@@ -17,9 +17,7 @@ import (
 func TestSupportQuit(t *testing.T) {
 	t.Run("quit clean signals quit", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal,
-		)
+		assert.Equal(t, command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal)
 	})
 
 	t.Run("quit dirty warns", func(t *testing.T) {
@@ -29,16 +27,14 @@ func TestSupportQuit(t *testing.T) {
 
 	t.Run("redraw signals clear screen", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t,
-			command.SignalClearScreen, test.RunCmd(t, km, e, "redraw").Signal)
+		assert.Equal(t, command.SignalClearScreen, test.RunCmd(t, km, e, "redraw").Signal)
 	})
 }
 
 func TestSupportEchoInfo(t *testing.T) {
 	t.Run("echo returns joined args", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t, "hello world",
-			test.RunCmdArgs(t, km, e, "echo", "hello world").Message)
+		assert.Equal(t, "hello world", test.RunCmdArgs(t, km, e, "echo", "hello world").Message)
 	})
 
 	t.Run("character info describes cursor char", func(t *testing.T) {
@@ -49,9 +45,7 @@ func TestSupportEchoInfo(t *testing.T) {
 
 	t.Run("no formatter for plain text", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		assert.Contains(t,
-			test.RunCmd(t, km, e, "format").Message, "no formatter",
-		)
+		assert.Contains(t, test.RunCmd(t, km, e, "format").Message, "no formatter")
 	})
 }
 
@@ -65,16 +59,12 @@ func TestSupportGoto(t *testing.T) {
 
 	t.Run("goto rejects junk", func(t *testing.T) {
 		e, km := test.Env(t, "l0\nl1\n")
-		assert.Contains(t,
-			test.RunCmdArgs(t, km, e, "goto", "x").Message, "invalid",
-		)
+		assert.Contains(t, test.RunCmdArgs(t, km, e, "goto", "x").Message, "invalid")
 	})
 
 	t.Run("goto without args errors", func(t *testing.T) {
 		e, km := test.Env(t, "l0\n")
-		assert.Contains(t,
-			test.RunCmd(t, km, e, "goto").Message, "no line number",
-		)
+		assert.Contains(t, test.RunCmd(t, km, e, "goto").Message, "no line number")
 	})
 
 	t.Run("goto line:col moves to column", func(t *testing.T) {
@@ -124,8 +114,7 @@ func TestSupportSelectionOps(t *testing.T) {
 			Anchor: 0,
 			Head:   20,
 		}}, 0)
-		assert.NotContains(t,
-			test.RunCmdArgs(t, km, e, "reflow", "10").Message, "error")
+		assert.NotContains(t, test.RunCmdArgs(t, km, e, "reflow", "10").Message, "error")
 	})
 
 	t.Run("reflow uses configured text width", func(t *testing.T) {
@@ -140,8 +129,7 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("reflow rejects bad width", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		assert.Contains(t,
-			test.RunCmdArgs(t, km, e, "reflow", "0").Message, "error")
+		assert.Contains(t, test.RunCmdArgs(t, km, e, "reflow", "0").Message, "error")
 	})
 
 	t.Run("toggle comments runs", func(t *testing.T) {

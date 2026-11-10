@@ -24,10 +24,7 @@ func TestEditorRegisters(t *testing.T) {
 
 	t.Run("selection indices are computed", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(0),
-			core.PointRange(2),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(2)}, 0)
 
 		assert.Equal(t, []string{"1", "2"}, e.ReadRegister('#'))
 	})

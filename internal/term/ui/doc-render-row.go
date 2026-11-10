@@ -70,8 +70,8 @@ func (r *rowRender) rows() []renderedRow {
 		end:       indentCol / tabW,
 	}
 
-	// pre-sizing avoids the geometric regrowth of appending grapheme by
-	// grapheme from nil, the dominant per-frame alloc
+	// pre-sizing avoids the geometric regrowth of appending grapheme by grapheme from nil, the
+	// dominant per-frame alloc
 	cellCap := min(len(r.lineText)+1, r.format.ViewportWidth+1)
 
 	var row renderedRow
@@ -123,9 +123,7 @@ func (r *rowRender) rows() []renderedRow {
 	writeAnnotations := func(pos int) {
 		for annIdx < len(r.annotations) && r.annotations[annIdx].pos == pos {
 			ann := r.annotations[annIdx]
-			writeRendered(
-				ann.text, runewidth.StringWidth(ann.text), ann.style,
-			)
+			writeRendered(ann.text, runewidth.StringWidth(ann.text), ann.style)
 			annIdx++
 		}
 	}

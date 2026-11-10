@@ -211,9 +211,7 @@ func TestNoViewSetLineEnding(t *testing.T) {
 
 func TestNoViewReturnActions(t *testing.T) {
 	t.Run("sort returns nil", func(t *testing.T) {
-		err := action.SortSelections(
-			editorWithNoView(t), action.SortSelectionsArgs{},
-		)
+		err := action.SortSelections(editorWithNoView(t), action.SortSelectionsArgs{})
 		assert.NoError(t, err)
 	})
 

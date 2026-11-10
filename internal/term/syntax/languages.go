@@ -46,8 +46,7 @@ func languageFor(name string) *sitter.Language {
 	return langRegistry[name]
 }
 
-// parseTree: the tree outlives the parser that made it, so the caller only has
-// to close the tree
+// parseTree: the tree outlives the parser that made it, so the caller only has to close the tree
 func parseTree(src []byte, language *sitter.Language) (*sitter.Tree, bool) {
 	p := sitter.NewParser()
 	defer p.Close()

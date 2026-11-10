@@ -12,9 +12,7 @@ type searchMatch struct {
 	wrapped bool
 }
 
-func compileSearchRegexp(
-	pattern string, smartCase bool,
-) (*regexp.Regexp, error) {
+func compileSearchRegexp(pattern string, smartCase bool) (*regexp.Regexp, error) {
 	if smartCase && !hasUppercase(pattern) {
 		pattern = "(?i)" + pattern
 	}
@@ -30,9 +28,7 @@ func hasUppercase(pattern string) bool {
 	return false
 }
 
-func findNextMatch(
-	re *regexp.Regexp, text string, from int, wrap bool,
-) searchMatch {
+func findNextMatch(re *regexp.Regexp, text string, from int, wrap bool) searchMatch {
 	runes := []rune(text)
 	wrapped := false
 	if from >= len(runes) {
@@ -62,9 +58,7 @@ func findNextMatch(
 	return searchMatch{pos: -1}
 }
 
-func findPrevMatch(
-	re *regexp.Regexp, text string, before int, wrap bool,
-) searchMatch {
+func findPrevMatch(re *regexp.Regexp, text string, before int, wrap bool) searchMatch {
 	runes := []rune(text)
 	wrapped := false
 	if before <= 0 {

@@ -111,9 +111,7 @@ func (s *Session) renameOpenDocument(rename view.FileRename) {
 	}
 }
 
-func prepareRenameTarget(
-	newPath string, opts *protocol.RenameFileOptions,
-) (bool, error) {
+func prepareRenameTarget(newPath string, opts *protocol.RenameFileOptions) (bool, error) {
 	exists, err := pathExists(newPath)
 	if err != nil {
 		return false, err

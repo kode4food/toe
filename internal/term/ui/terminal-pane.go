@@ -23,9 +23,8 @@ import (
 )
 
 type (
-	// TerminalPane is a [view.Pane] backed by a real PTY and a VT100/xterm
-	// emulator, so full-screen programs (editors, pagers, TUIs) render
-	// correctly
+	// TerminalPane is a [view.Pane] backed by a real PTY and a VT100/xterm emulator, so full-screen
+	// programs (editors, pagers, TUIs) render correctly
 	TerminalPane struct {
 		id     view.Id
 		editor *view.Editor
@@ -59,8 +58,8 @@ type (
 		bellRung bool
 	}
 
-	// resizeState tracks a deferred PTY resize. held is set while the layout is
-	// in motion, pending records that a size arrived while it was
+	// resizeState tracks a deferred PTY resize. held is set while the layout is in motion, pending
+	// records that a size arrived while it was
 	resizeState struct {
 		held    bool
 		pending bool
@@ -80,7 +79,9 @@ type (
 
 const maxPendingNotes = 8
 
-var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
+var (
+	ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
+)
 
 var (
 	_ view.Pane          = (*TerminalPane)(nil)
@@ -92,11 +93,8 @@ var (
 	_ Draggable          = (*TerminalPane)(nil)
 )
 
-// NewTerminalPane spawns shell in a PTY and pumps its output into a VT emulator
-// sized w by h
-func NewTerminalPane(
-	e *view.Editor, shell string, size geom.Size,
-) (*TerminalPane, error) {
+// NewTerminalPane spawns shell in a PTY and pumps its output into a VT emulator sized w by h
+func NewTerminalPane(e *view.Editor, shell string, size geom.Size) (*TerminalPane, error) {
 	return NewTerminalPaneInDir(e, TerminalPaneArgs{
 		Shell: shell,
 		Dir:   e.Cwd(),
@@ -112,9 +110,7 @@ type TerminalPaneArgs struct {
 }
 
 // NewTerminalPaneInDir spawns the shell in the given directory
-func NewTerminalPaneInDir(
-	e *view.Editor, args TerminalPaneArgs,
-) (*TerminalPane, error) {
+func NewTerminalPaneInDir(e *view.Editor, args TerminalPaneArgs) (*TerminalPane, error) {
 	args.Size.Width = max(args.Size.Width, 1)
 	args.Size.Height = max(args.Size.Height, 1)
 	cmd := exec.Command(args.Shell)
@@ -168,8 +164,7 @@ func (t *TerminalPane) SetID(id view.Id) {
 // Split starts another terminal using the same shell
 func (t *TerminalPane) Split() (view.Pane, error) {
 	return NewTerminalPane(
-		t.editor, t.shell,
-		geom.Size{Width: t.area.Width, Height: max(t.area.Height-1, 1)},
+		t.editor, t.shell, geom.Size{Width: t.area.Width, Height: max(t.area.Height-1, 1)},
 	)
 }
 
@@ -193,14 +188,13 @@ func (t *TerminalPane) MarkDirty() {
 	t.dirty = true
 }
 
-// SetRedraw installs the hook the shell calls to wake the render loop when it
-// mutates the pane off the event loop. The tree wires it on insertion
+// SetRedraw installs the hook the shell calls to wake the render loop when it mutates the pane off
+// the event loop. The tree wires it on insertion
 func (t *TerminalPane) SetRedraw(fn func()) {
 	t.notify = fn
 }
 
-// Mode reports [view.ModeTerminal], since a terminal pane has no
-// insert/select/normal distinction
+// Mode reports [view.ModeTerminal], since a terminal pane has no insert/select/normal distinction
 func (t *TerminalPane) Mode() view.Mode {
 	return view.ModeTerminal
 }
@@ -217,8 +211,8 @@ func (t *TerminalPane) SaveSession(w *view.SessionWriter) {
 	w.SaveSlot(view.SessionKindTerminal, t.Path())
 }
 
-// SetArea updates the pane's screen rectangle and resizes the PTY and
-// emulator to match, reflowing the shell, unless resizing is held
+// SetArea updates the pane's screen rectangle and resizes the PTY and emulator to match, reflowing
+// the shell, unless resizing is held
 func (t *TerminalPane) SetArea(a geom.Area) {
 	if a == t.area {
 		return
@@ -232,15 +226,13 @@ func (t *TerminalPane) SetArea(a geom.Area) {
 	t.applyResize()
 }
 
-// HoldResize defers PTY resizing until [TerminalPane.ResumeResize], since a
-// shell redraws its prompt on every SIGWINCH, and a storm of them leaves
-// multi-line prompts stacked up the scrollback
+// HoldResize defers PTY resizing until [TerminalPane.ResumeResize], since a shell redraws its
+// prompt on every SIGWINCH, and a storm of them leaves multi-line prompts stacked up the scrollback
 func (t *TerminalPane) HoldResize() {
 	t.resize.held = true
 }
 
-// ResumeResize re-enables PTY resizing, pushing the size the pane reached
-// while held
+// ResumeResize re-enables PTY resizing, pushing the size the pane reached while held
 func (t *TerminalPane) ResumeResize() {
 	t.resize.held = false
 	if t.resize.pending {
@@ -249,8 +241,7 @@ func (t *TerminalPane) ResumeResize() {
 	}
 }
 
-// ConsumeDirty reports whether the pane has changed since the last call,
-// clearing the flag
+// ConsumeDirty reports whether the pane has changed since the last call, clearing the flag
 func (t *TerminalPane) ConsumeDirty() bool {
 	d := t.dirty
 	t.dirty = false
@@ -282,17 +273,17 @@ func (t *TerminalPane) Emulator() *vt.SafeEmulator {
 	return t.emu
 }
 
-// Title returns the terminal title most recently set by the shell or the
-// program running in it (OSC 0/2), or "" if none has been set yet
+// Title returns the terminal title most recently set by the shell or the program running in it (OSC
+// 0/2), or "" if none has been set yet
 func (t *TerminalPane) Title() string {
 	t.metadata.Lock()
 	defer t.metadata.Unlock()
 	return t.metadata.title
 }
 
-// SendKey forwards a key event to the shell. Printable text bypasses vt's
-// encoder, which silently drops runes whose Mod is non-zero (e.g. shifted).
-// Any keypress returns the view to live output, like a real terminal
+// SendKey forwards a key event to the shell. Printable text bypasses vt's encoder, which silently
+// drops runes whose Mod is non-zero (e.g. shifted). Any keypress returns the view to live output,
+// like a real terminal
 func (t *TerminalPane) SendKey(k uv.KeyEvent) {
 	t.ScrollToBottom()
 	if kp, ok := k.(uv.KeyPressEvent); ok && kp.Text != "" {
@@ -302,8 +293,8 @@ func (t *TerminalPane) SendKey(k uv.KeyEvent) {
 	t.emu.SendKey(k)
 }
 
-// MouseEnabled reports whether the program running in the shell has requested
-// mouse tracking (e.g. vim, htop, tmux)
+// MouseEnabled reports whether the program running in the shell has requested mouse tracking (e.g.
+// vim, htop, tmux)
 func (t *TerminalPane) MouseEnabled() bool {
 	return t.mouseOn.Load()
 }
@@ -318,8 +309,8 @@ func (t *TerminalPane) ScrollOffset() int {
 	return t.scrollOff
 }
 
-// ScrollLines moves the view n lines back into scrollback (n < 0 moves toward
-// live output). A no-op while the alt screen is active
+// ScrollLines moves the view n lines back into scrollback (n < 0 moves toward live output). A no-op
+// while the alt screen is active
 func (t *TerminalPane) ScrollLines(n int) {
 	if t.emu.IsAltScreen() {
 		return
@@ -337,8 +328,8 @@ func (t *TerminalPane) ScrollToBottom() {
 	}
 }
 
-// SearchScrollback jumps to the nearest line above the current view containing
-// pattern (case-insensitive), reporting whether one was found
+// SearchScrollback jumps to the nearest line above the current view containing pattern
+// (case-insensitive), reporting whether one was found
 func (t *TerminalPane) SearchScrollback(pattern string) bool {
 	if pattern == "" {
 		return false
@@ -363,8 +354,8 @@ func (t *TerminalPane) Stop() error {
 	return t.pty.Close()
 }
 
-// IngestOutput applies a chunk of output as if it had just been read from the
-// PTY, letting tests simulate shell output without a real child process
+// IngestOutput applies a chunk of output as if it had just been read from the PTY, letting tests
+// simulate shell output without a real child process
 func (t *TerminalPane) IngestOutput(data []byte) {
 	_, _ = t.emu.Write(data)
 	if len(data) > 0 {
@@ -374,9 +365,9 @@ func (t *TerminalPane) IngestOutput(data []byte) {
 	t.notify()
 }
 
-// ConsumeBell reports whether the bell has rung since it was last consumed. A
-// rung bell only clears when read while focused, so it stays visible in the
-// status line until the pane is actually looked at
+// ConsumeBell reports whether the bell has rung since it was last consumed. A rung bell only clears
+// when read while focused, so it stays visible in the status line until the pane is actually looked
+// at
 func (t *TerminalPane) ConsumeBell(focused bool) bool {
 	t.metadata.Lock()
 	defer t.metadata.Unlock()
@@ -387,15 +378,15 @@ func (t *TerminalPane) ConsumeBell(focused bool) bool {
 	return rung
 }
 
-// Paste sends text to the shell, bracketing it with paste-mode escapes if the
-// running program requested bracketed paste
+// Paste sends text to the shell, bracketing it with paste-mode escapes if the running program
+// requested bracketed paste
 func (t *TerminalPane) Paste(text string) {
 	t.ScrollToBottom()
 	t.emu.Paste(text)
 }
 
-// ConsumeNotifications returns the desktop notifications the shell has
-// requested since the last call, clearing them
+// ConsumeNotifications returns the desktop notifications the shell has requested since the last
+// call, clearing them
 func (t *TerminalPane) ConsumeNotifications() []string {
 	t.metadata.Lock()
 	defer t.metadata.Unlock()
@@ -426,8 +417,8 @@ func (t *TerminalPane) setMouseMode(m ansi.Mode, on bool) {
 	switch m {
 	case ansi.ModeMouseNormal, ansi.ModeMouseHighlight,
 		ansi.ModeMouseButtonEvent, ansi.ModeMouseAnyEvent:
-		// vt exposes no query for tracking mode, only these enable/disable
-		// callbacks, so track it ourselves
+		// vt exposes no query for tracking mode, only these enable/disable callbacks, so track it
+		// ourselves
 		t.mouseOn.Store(on)
 	default:
 		// no-op
@@ -441,8 +432,7 @@ func (t *TerminalPane) handleOSC52(data []byte) bool {
 	}
 	payload := string(parts[2])
 	if payload == "?" {
-		// ignore clipboard queries, matching most terminals' default
-		// disallow-read stance
+		// ignore clipboard queries, matching most terminals' default disallow-read stance
 		return true
 	}
 	decoded, err := base64.StdEncoding.DecodeString(payload)
@@ -477,8 +467,8 @@ func (t *TerminalPane) handleOSC9(data []byte) bool {
 	if !ok || body == "" {
 		return false
 	}
-	// ConEmu reuses OSC 9 for numbered progress and cwd reports, which are
-	// state updates rather than notifications
+	// ConEmu reuses OSC 9 for numbered progress and cwd reports, which are state updates rather
+	// than notifications
 	if len(body) > 1 && body[1] == ';' && body[0] >= '0' && body[0] <= '9' {
 		return true
 	}
@@ -614,8 +604,8 @@ func (t *TerminalPane) applyResize() {
 	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
 }
 
-// keepCursorRow scrolls the top rows into scrollback before a shrink to height,
-// so the emulator's bottom-row truncation never drops the cursor
+// keepCursorRow scrolls the top rows into scrollback before a shrink to height, so the emulator's
+// bottom-row truncation never drops the cursor
 func (t *TerminalPane) keepCursorRow(h int) {
 	drop := t.emu.CursorPosition().Y - (h - 1)
 	if drop <= 0 || t.emu.IsAltScreen() {
@@ -663,8 +653,8 @@ func dirOK(path string) bool {
 }
 
 func interactiveShell() string {
-	// distinct from view.Options.Shell, which is a non-login `sh -c` filter
-	// runner rather than the user's real interactive shell
+	// distinct from view.Options.Shell, which is a non-login `sh -c` filter runner rather than the
+	// user's real interactive shell
 	if sh := os.Getenv("SHELL"); sh != "" {
 		return sh
 	}

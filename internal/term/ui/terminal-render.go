@@ -60,9 +60,7 @@ func (s *tuiScreen) styleFor(st uv.Style) tui.Style {
 	return out
 }
 
-func (r *renderPass) renderTerminalPane(
-	buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool,
-) {
+func (r *renderPass) renderTerminalPane(buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool) {
 	cx := r.context
 	a := tp.Area()
 	contentH := max(a.Height-1, 0)
@@ -85,16 +83,12 @@ func (r *renderPass) renderTerminalPane(
 		highlightSelection(scr, tp)
 	} else {
 		style := cx.ThemeFor(focused).Get("ui.text")
-		renderCenteredMessage(
-			buf, scr.area, i18n.Text(i18n.StatusTerminalStarting), style,
-		)
+		renderCenteredMessage(buf, scr.area, i18n.Text(i18n.StatusTerminalStarting), style)
 	}
 	r.renderTerminalStatus(buf, tp, y0, focused)
 }
 
-func (r *renderPass) renderTerminalStatus(
-	buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool,
-) {
+func (r *renderPass) renderTerminalStatus(buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool) {
 	a := tp.Area()
 	th := r.context.Theme()
 	statusKey := "ui.statusline.inactive"
@@ -138,8 +132,8 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 	if !ok {
 		return
 	}
-	// span is in absolute (scrollback+screen) rows, so translate to the rows
-	// currently visible in this viewport
+	// span is in absolute (scrollback+screen) rows, so translate to the rows currently visible in
+	// this viewport
 	start := tp.viewStart(scr.area.Height)
 	y0, y1 := sp.start.Y-start, sp.end.Y-start
 	for y := max(y0, 0); y <= y1 && y < scr.area.Height; y++ {
@@ -197,9 +191,7 @@ func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
 	return ansiUnderlineTUIStyles[u]
 }
 
-func drawViewport(
-	scr *tuiScreen, tp *TerminalPane, n int, size geom.Size,
-) {
+func drawViewport(scr *tuiScreen, tp *TerminalPane, n int, size geom.Size) {
 	emu := tp.Emulator()
 	bg := emu.BackgroundColor()
 	blank := uv.EmptyCell

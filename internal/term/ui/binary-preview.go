@@ -7,9 +7,7 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-func (p *previewBinaryEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
-) {
+func (p *previewBinaryEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
 	offsetWidth := binaryOffsetWidth(p.size)
 	width := binaryBytesPerRow(binaryBytesPerRowArgs{
 		width:       ctx.size.Width,
@@ -17,13 +15,10 @@ func (p *previewBinaryEntry) renderInto(
 	})
 	rows := (p.size + int64(width) - 1) / int64(width)
 	scroll := ctx.picker.preview.vScroll.resolve(
-		core.VisualPos{}, core.VisualRowWalk{Lines: int(rows)},
-		ctx.size.Height,
+		core.VisualPos{}, core.VisualRowWalk{Lines: int(rows)}, ctx.size.Height,
 	).Line
 	offset := int64(scroll * width)
-	data, err := readBinaryRange(
-		p.path, offset, width*ctx.size.Height,
-	)
+	data, err := readBinaryRange(p.path, offset, width*ctx.size.Height)
 	area := geom.Area{Point: at, Size: ctx.size}
 	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	if err != nil {

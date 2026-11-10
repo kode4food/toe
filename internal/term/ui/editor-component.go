@@ -15,8 +15,8 @@ import (
 )
 
 type (
-	// EditorComponent renders the pane tree and drives the editor's key, mouse,
-	// and animation handling for one frame at a time
+	// EditorComponent renders the pane tree and drives the editor's key, mouse, and animation
+	// handling for one frame at a time
 	EditorComponent struct {
 		context *Context
 
@@ -171,9 +171,7 @@ func newEditorComponent(cx *Context) *EditorComponent {
 					toLow bool,
 				) (int, bool) {
 					area := v.Area()
-					gutterW := gutterWidthFor(
-						doc.Text(), r.context.Editor.Options().Gutters,
-					)
+					gutterW := gutterWidthFor(doc.Text(), r.context.Editor.Options().Gutters)
 					edgeX := area.Right()
 					if toLow {
 						edgeX = area.X + gutterW
@@ -192,8 +190,7 @@ func (m Model) Animation() bool {
 	return m.component.animation
 }
 
-// SetAnimation controls whether UI animations play. When off they snap to
-// their final state
+// SetAnimation controls whether UI animations play. When off they snap to their final state
 func (m Model) SetAnimation(enabled bool) {
 	m.component.animation = enabled
 	if !enabled {
@@ -202,9 +199,7 @@ func (m Model) SetAnimation(enabled bool) {
 }
 
 // HandleEvent routes keys, mouse, and editor messages to the panes
-func (ec *EditorComponent) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) HandleEvent(cx *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	cx.fileWatcher.sync(cx.Editor)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -257,8 +252,8 @@ func (ec *EditorComponent) HandleEvent(
 	return ignored(), nil
 }
 
-// Render returns the editor's cell buffer for the compositor to blit overlays
-// onto, skipping an ANSI round-trip
+// Render returns the editor's cell buffer for the compositor to blit overlays onto, skipping an
+// ANSI round-trip
 func (ec *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
 	if ec.buf == nil || ec.buf.Size != screen {
 		ec.buf = tui.NewBuffer(screen)
@@ -271,9 +266,7 @@ func (ec *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
 }
 
 // Cursor returns the focused pane's cursor position and shape
-func (ec *EditorComponent) Cursor(
-	cx *Context, screen geom.Size,
-) (tea.Cursor, bool) {
+func (ec *EditorComponent) Cursor(cx *Context, screen geom.Size) (tea.Cursor, bool) {
 	r := &renderPass{editor: ec, context: cx, size: screen}
 	return r.editorCursor()
 }
@@ -353,9 +346,7 @@ type popupAnchorArgs struct {
 	fallbackRows int
 }
 
-func (ec *EditorComponent) popupAnchorBelowCaret(
-	args popupAnchorArgs,
-) geom.Point {
+func (ec *EditorComponent) popupAnchorBelowCaret(args popupAnchorArgs) geom.Point {
 	if at, ok := ec.caretScreenPos(); ok {
 		at.Y++
 		return at
@@ -472,9 +463,7 @@ func (a *animationState) stop() {
 	a.gen++
 }
 
-func documentHighlightPositionFor(
-	doc *view.Document, v *view.View,
-) docHighlightPosition {
+func documentHighlightPositionFor(doc *view.Document, v *view.View) docHighlightPosition {
 	sel := doc.SelectionFor(v.ID())
 	pos := sel.Primary().Cursor(doc.Text())
 	return docHighlightPosition{

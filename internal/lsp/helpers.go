@@ -21,9 +21,7 @@ type (
 	) (R, bool, error)
 )
 
-func (c *Client) runRequest[R any](
-	ctx context.Context, call clientCallFn[R],
-) (R, bool, error) {
+func (c *Client) runRequest[R any](ctx context.Context, call clientCallFn[R]) (R, bool, error) {
 	ctx, cancel := c.requestContext(ctx)
 	defer cancel()
 	return call(ctx)
@@ -46,9 +44,7 @@ type posRequestArgs[R any] struct {
 }
 
 func (c *Client) posRequest[R any](args posRequestArgs[R]) (R, bool, error) {
-	lspPos, err := lspPosition(
-		core.NewRope(args.doc.Text), args.pos, c.OffsetEncoding(),
-	)
+	lspPos, err := lspPosition(core.NewRope(args.doc.Text), args.pos, c.OffsetEncoding())
 	if err != nil {
 		var zero R
 		return zero, false, err

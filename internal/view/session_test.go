@@ -31,16 +31,10 @@ func TestSession(t *testing.T) {
 		dir := t.TempDir()
 		firstPath := filepath.Join(dir, "first.go")
 		secondPath := filepath.Join(dir, "second.go")
-		assert.NoError(t,
-			os.WriteFile(firstPath, []byte("package main\n"), 0o644),
-		)
-		assert.NoError(t,
-			os.WriteFile(secondPath, []byte("func main() {}\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(firstPath, []byte("package main\n"), 0o644))
+		assert.NoError(t, os.WriteFile(secondPath, []byte("func main() {}\n"), 0o644))
 
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		first, err := e.OpenFile(firstPath)
@@ -96,18 +90,11 @@ func TestSession(t *testing.T) {
 
 		doc := next.Document(views[0].DocID())
 		assert.NotNil(t, doc)
-		assert.Equal(t,
-			firstSel.Ranges(), doc.SelectionFor(views[0].ID()).Ranges(),
-		)
-		assert.Equal(t,
-			firstSel.PrimaryIndex(),
-			doc.SelectionFor(views[0].ID()).PrimaryIndex(),
-		)
+		assert.Equal(t, firstSel.Ranges(), doc.SelectionFor(views[0].ID()).Ranges())
+		assert.Equal(t, firstSel.PrimaryIndex(), doc.SelectionFor(views[0].ID()).PrimaryIndex())
 		doc = next.Document(views[1].DocID())
 		assert.NotNil(t, doc)
-		assert.Equal(t,
-			secondSel.Ranges(), doc.SelectionFor(views[1].ID()).Ranges(),
-		)
+		assert.Equal(t, secondSel.Ranges(), doc.SelectionFor(views[1].ID()).Ranges())
 	})
 
 	t.Run("missing file does not restore", func(t *testing.T) {
@@ -165,9 +152,7 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, "", next.MessagesDocument().Text().String())
 
 		next.AppendMessage("fresh news")
-		assert.Equal(t,
-			"fresh news\n", next.MessagesDocument().Text().String(),
-		)
+		assert.Equal(t, "fresh news\n", next.MessagesDocument().Text().String())
 	})
 
 	t.Run("restores a pane onto a fresh log", func(t *testing.T) {
@@ -205,9 +190,7 @@ func TestSession(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
-		assert.NoError(t, os.WriteFile(
-			sessionPath, readSavedSession(t, sessionPath), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(sessionPath, readSavedSession(t, sessionPath), 0o644))
 		assert.NoError(t, os.Remove(sessionPath+".gz"))
 
 		next := view.NewEditor(dir)
@@ -232,16 +215,13 @@ func TestSession(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		tx := core.NewTransaction(doc.Text()).
-			WithSelection(core.PointSelection(3))
+		tx := core.NewTransaction(doc.Text()).WithSelection(core.PointSelection(3))
 		assert.NoError(t, e.Apply(tx))
 		assert.False(t, doc.Modified())
 
@@ -260,12 +240,8 @@ func TestSession(t *testing.T) {
 	t.Run("observers see restored documents", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -290,15 +266,9 @@ func TestSession(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
 		otherPath := filepath.Join(dir, "other.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package lazy\n"), 0o644),
-		)
-		assert.NoError(t,
-			os.WriteFile(otherPath, []byte("package other\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package lazy\n"), 0o644))
+		assert.NoError(t, os.WriteFile(otherPath, []byte("package other\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -328,12 +298,8 @@ func TestSession(t *testing.T) {
 	t.Run("visible buffer loads on restore", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package eager\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package eager\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -357,9 +323,7 @@ func TestSession(t *testing.T) {
 		bPath := filepath.Join(dir, "b.go")
 		assert.NoError(t, os.WriteFile(aPath, []byte("package aaaa\n"), 0o644))
 		assert.NoError(t, os.WriteFile(bPath, []byte("package bbbb\n"), 0o644))
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		va, err := e.OpenFile(aPath)
@@ -399,9 +363,7 @@ func TestSession(t *testing.T) {
 		bPath := filepath.Join(dir, "b.go")
 		assert.NoError(t, os.WriteFile(aPath, []byte("package aaaa\n"), 0o644))
 		assert.NoError(t, os.WriteFile(bPath, []byte("package bbbb\n"), 0o644))
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		va, err := e.OpenFile(aPath)
@@ -442,12 +404,8 @@ func TestSession(t *testing.T) {
 	t.Run("missing file loads empty", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "gone.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package gone\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package gone\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -482,9 +440,7 @@ func TestSession(t *testing.T) {
 
 		assert.True(t, next.SwitchBuffer(kept.ID()))
 
-		assert.NotContains(t,
-			documentPaths(next), filepath.Join(dir, "gone.go"),
-		)
+		assert.NotContains(t, documentPaths(next), filepath.Join(dir, "gone.go"))
 	})
 
 	t.Run("switching away keeps edited missing file", func(t *testing.T) {
@@ -501,24 +457,16 @@ func TestSession(t *testing.T) {
 
 		assert.True(t, next.SwitchBuffer(kept.ID()))
 
-		assert.Contains(t,
-			documentPaths(next), filepath.Join(dir, "gone.go"),
-		)
+		assert.Contains(t, documentPaths(next), filepath.Join(dir, "gone.go"))
 	})
 
 	t.Run("trims hidden missing file", func(t *testing.T) {
 		dir := t.TempDir()
 		gonePath := filepath.Join(dir, "gone.go")
 		keptPath := filepath.Join(dir, "kept.go")
-		assert.NoError(t,
-			os.WriteFile(gonePath, []byte("package gone\n"), 0o644),
-		)
-		assert.NoError(t,
-			os.WriteFile(keptPath, []byte("package kept\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(gonePath, []byte("package gone\n"), 0o644))
+		assert.NoError(t, os.WriteFile(keptPath, []byte("package kept\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(gonePath)
@@ -549,15 +497,9 @@ func TestSession(t *testing.T) {
 		filePath := filepath.Join(subDir, "file.go")
 		otherPath := filepath.Join(dir, "other.go")
 		assert.NoError(t, os.Mkdir(subDir, 0o755))
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package locked\n"), 0o644),
-		)
-		assert.NoError(t,
-			os.WriteFile(otherPath, []byte("package other\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package locked\n"), 0o644))
+		assert.NoError(t, os.WriteFile(otherPath, []byte("package other\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -583,12 +525,8 @@ func TestSession(t *testing.T) {
 	t.Run("single view no split", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -608,9 +546,7 @@ func TestSession(t *testing.T) {
   }
 }`, filePath)
 		assert.NoError(t, os.MkdirAll(filepath.Dir(sessionPath), 0o755))
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		next := view.NewEditor(dir)
 		next.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, restored, err := next.RestoreSession(sessionPath)
@@ -624,9 +560,7 @@ func TestSession(t *testing.T) {
 	t.Run("session outside workspace dir", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
@@ -643,9 +577,7 @@ func TestSession(t *testing.T) {
 	t.Run("invalid TOML", func(t *testing.T) {
 		dir := t.TempDir()
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte("{{{not json"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte("{{{not json"), 0o644))
 		e := view.NewEditor(dir)
 		_, _, err := e.RestoreSession(sessionPath)
 		assert.Error(t, err)
@@ -676,9 +608,7 @@ func TestSession(t *testing.T) {
 	t.Run("invalid layout kind", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		content := fmt.Sprintf(`{
   "version": 1,
@@ -691,9 +621,7 @@ func TestSession(t *testing.T) {
     "kind": "bogus"
   }
 }`, filePath)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		_, _, err := e.RestoreSession(sessionPath)
 		assert.True(t, errors.Is(err, view.ErrSessionInvalid))
@@ -702,9 +630,7 @@ func TestSession(t *testing.T) {
 	t.Run("view references missing document", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		content := fmt.Sprintf(`{
   "version": 1,
@@ -718,9 +644,7 @@ func TestSession(t *testing.T) {
     "document": 99
   }
 }`, filePath)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, _, err := e.RestoreSession(sessionPath)
@@ -730,12 +654,9 @@ func TestSession(t *testing.T) {
 	t.Run("corrupt selection primary index", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		// primary=5 with one range: NewSelection fails,
-		// falls back to PointSelection(0)
+		// primary=5 with one range: NewSelection fails, falls back to PointSelection(0)
 		content := fmt.Sprintf(`{
   "version": 1,
   "documents": [
@@ -757,9 +678,7 @@ func TestSession(t *testing.T) {
     }
   }
 }`, filePath)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, restored, err := e.RestoreSession(sessionPath)
@@ -784,9 +703,7 @@ func TestSession(t *testing.T) {
     "document": 1
   }
 }`
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, restored, err := e.RestoreSession(sessionPath)
@@ -801,9 +718,7 @@ func TestSession(t *testing.T) {
 	t.Run("uses first view when none focused", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		content := fmt.Sprintf(`{
   "version": 1,
@@ -817,9 +732,7 @@ func TestSession(t *testing.T) {
     "document": 1
   }
 }`, filePath)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, restored, err := e.RestoreSession(sessionPath)
@@ -832,10 +745,8 @@ func TestSession(t *testing.T) {
 		dir := t.TempDir()
 		leftPath := filepath.Join(dir, "left.go")
 		rightPath := filepath.Join(dir, "right.go")
-		assert.NoError(t,
-			os.WriteFile(leftPath, []byte("package main\n"), 0o644))
-		assert.NoError(t,
-			os.WriteFile(rightPath, []byte("package main\n"), 0o644))
+		assert.NoError(t, os.WriteFile(leftPath, []byte("package main\n"), 0o644))
+		assert.NoError(t, os.WriteFile(rightPath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 
 		e := view.NewEditor(dir)
@@ -852,9 +763,7 @@ func TestSession(t *testing.T) {
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 		res, ok := e.Tree().SeparatorAt(geom.Point{X: sepX})
 		assert.True(t, ok)
-		e.Tree().MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, 30,
-		)
+		e.Tree().MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 30)
 
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
@@ -994,8 +903,7 @@ func TestSession(t *testing.T) {
 	t.Run("restores registers", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 
 		e := view.NewEditor(dir)
@@ -1055,9 +963,7 @@ func TestSession(t *testing.T) {
 	t.Run("split child invalid", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		content := fmt.Sprintf(`{
   "version": 1,
@@ -1076,9 +982,7 @@ func TestSession(t *testing.T) {
     ]
   }
 }`, filePath)
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte(content), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(content), 0o644))
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, _, err := e.RestoreSession(sessionPath)
@@ -1088,12 +992,8 @@ func TestSession(t *testing.T) {
 	t.Run("round-trips a non-view pane's slot", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(filePath)
@@ -1109,8 +1009,8 @@ func TestSession(t *testing.T) {
 		next.ResizeTree(geom.Size{Width: 80, Height: 24})
 		redrawn := false
 		next.Tree().SetRedraw(func() { redrawn = true })
-		// the pane rebuilds itself through its registered restorer, keyed by
-		// the kind it persisted, no switch on pane type
+		// the pane rebuilds itself through its registered restorer, keyed by the kind it persisted,
+		// no switch on pane type
 		next.RegisterPaneRestorer(view.SessionKindTerminal,
 			func(e *view.Editor, _ *view.PaneSession) (view.Pane, error) {
 				return &fakePane{editor: e}, nil
@@ -1136,19 +1036,15 @@ func TestSession(t *testing.T) {
 	t.Run("restores a displaced pane", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "main.go")
-		assert.NoError(t,
-			os.WriteFile(filePath, []byte("package main\n"), 0o644),
-		)
-		sessionPath := filepath.Join(
-			dir, loader.WorkspaceDirName, view.SessionFile,
-		)
+		assert.NoError(t, os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
 		e := view.NewEditor(dir)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v, err := e.OpenFile(filePath)
 		assert.NoError(t, err)
 
-		// displace the editor view with a fake terminal, the tree stashes the
-		// view so RevertPane can bring it back
+		// displace the editor view with a fake terminal, the tree stashes the view so RevertPane
+		// can bring it back
 		e.DisplacePane(v.ID(), &fakePane{editor: e})
 
 		assert.NoError(t, e.SaveSession(sessionPath, nil))

@@ -33,8 +33,8 @@ var trueColorTerms = []termMatch{
 	{env: "TERM", value: "wezterm"},
 }
 
-// TrueColorSupported reports whether the terminal can render 24-bit color,
-// based on well-known environment variables
+// TrueColorSupported reports whether the terminal can render 24-bit color, based on well-known
+// environment variables
 func TrueColorSupported() bool {
 	if hasTrueColorVTE() {
 		return true

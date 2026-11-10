@@ -17,8 +17,8 @@ type (
 		Insert CursorKind `toml:"insert"`
 	}
 
-	// StatusLine is the configured status bar: the elements on each side and
-	// the shape of the dividers between them
+	// StatusLine is the configured status bar: the elements on each side and the shape of the
+	// dividers between them
 	StatusLine struct {
 		Left  []StatusLineItem `toml:"left"`
 		Right []StatusLineItem `toml:"right"`
@@ -28,9 +28,9 @@ type (
 	// StatusLineEdges is the shape the powerline dividers are drawn with
 	StatusLineEdges string
 
-	// StatusLineItem is one configured status bar element. In TOML it is the
-	// element name, optionally suffixed with "!" to pin it so it is never
-	// dropped when the bar is too narrow to fit every element
+	// StatusLineItem is one configured status bar element. In TOML it is the element name,
+	// optionally suffixed with "!" to pin it so it is never dropped when the bar is too narrow to
+	// fit every element
 	StatusLineItem struct {
 		Element StatusLineElement
 		Pinned  bool
@@ -48,16 +48,15 @@ type (
 	// BufferLine is when the buffer line is shown
 	BufferLine string
 
-	// Whitespace is how invisible characters are drawn: which kinds render, and
-	// the glyph each one uses
+	// Whitespace is how invisible characters are drawn: which kinds render, and the glyph each one
+	// uses
 	Whitespace struct {
 		Render     WhitespaceRender     `toml:"render"`
 		Characters WhitespaceCharacters `toml:"characters"`
 	}
 
-	// WhitespaceRender holds per-kind whitespace rendering settings. A
-	// plain-string TOML value sets Default only. A table sets fields
-	// independently, each falling back to Default then "none"
+	// WhitespaceRender holds per-kind whitespace rendering settings. A plain-string TOML value sets
+	// Default only. A table sets fields independently, each falling back to Default then "none"
 	WhitespaceRender struct {
 		Default *WhitespaceRenderValue
 		Space   *WhitespaceRenderValue
@@ -78,17 +77,16 @@ type (
 		Newline string `toml:"newline"`
 	}
 
-	// IndentGuides is how indent guides are drawn, and how many leading levels
-	// are left unmarked
+	// IndentGuides is how indent guides are drawn, and how many leading levels are left unmarked
 	IndentGuides struct {
 		Render     bool   `toml:"render"`
 		Character  string `toml:"character"`
 		SkipLevels *int   `toml:"skip-levels"`
 	}
 
-	// Gutter controls which gutters are shown and in what order. In TOML it can
-	// be an array of type strings or a table with layout/line-numbers. Present
-	// tracks whether the config was explicitly set
+	// Gutter controls which gutters are shown and in what order. In TOML it can be an array of type
+	// strings or a table with layout/line-numbers. Present tracks whether the config was explicitly
+	// set
 	Gutter struct {
 		Present     bool
 		Layout      []GutterType      `toml:"layout"`
@@ -107,8 +105,8 @@ type (
 const (
 	DefaultTheme = "mocha"
 
-	// DefaultLanguage is the document language name used when no language
-	// could be detected or was explicitly cleared
+	// DefaultLanguage is the document language name used when no language could be detected or was
+	// explicitly cleared
 	DefaultLanguage = "text"
 
 	BufferLineNever    BufferLine = "never"
@@ -211,8 +209,8 @@ var allStatusLineEdges = []StatusLineEdges{
 	StatusLineEdgesLine,
 }
 
-// cursorKinds is the single source of truth for valid CursorKind values.
-// UnmarshalText and CursorKindNames both derive from it
+// cursorKinds is the single source of truth for valid CursorKind values. UnmarshalText and
+// CursorKindNames both derive from it
 var cursorKinds = []CursorKind{
 	CursorKindBlock, CursorKindBar, CursorKindUnderline, CursorKindHidden,
 }
@@ -378,8 +376,7 @@ func (g *Gutter) UnmarshalTOML(value any) error {
 		if raw, ok := v["layout"]; ok {
 			items, ok := raw.([]any)
 			if !ok {
-				return fmt.Errorf("%w: layout must be an array",
-					ErrInvalidGutterType)
+				return fmt.Errorf("%w: layout must be an array", ErrInvalidGutterType)
 			}
 			layout, err := decodeGutterLayout(items)
 			if err != nil {
@@ -442,9 +439,7 @@ func (w *WhitespaceRender) UnmarshalTOML(value any) error {
 		for key, raw := range v {
 			s, ok := raw.(string)
 			if !ok {
-				return fmt.Errorf(
-					"%w: %v", ErrInvalidWhitespaceRender, raw,
-				)
+				return fmt.Errorf("%w: %v", ErrInvalidWhitespaceRender, raw)
 			}
 			rv, err := ParseWhitespaceRenderValue(s)
 			if err != nil {

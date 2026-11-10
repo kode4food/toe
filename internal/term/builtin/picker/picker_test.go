@@ -97,10 +97,7 @@ func TestPickerConfig(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(
-			t, 0.65,
-			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
-		)
+		assert.Equal(t, 0.65, m.PickerLayoutOptions().SplitRatios["Diagnostics"])
 	})
 
 	t.Run("picker split ratios option", func(t *testing.T) {
@@ -117,14 +114,8 @@ func TestPickerConfig(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NoError(t, valueErr)
-		assert.Equal(
-			t, 0.65,
-			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
-		)
-		assert.Equal(
-			t, "0.65",
-			values["picker.split.Diagnostics"],
-		)
+		assert.Equal(t, 0.65, m.PickerLayoutOptions().SplitRatios["Diagnostics"])
+		assert.Equal(t, "0.65", values["picker.split.Diagnostics"])
 	})
 
 	t.Run("picker split ratios clamp out of range", func(t *testing.T) {
@@ -139,10 +130,7 @@ func TestPickerConfig(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			ui.MaxPickerSplitRatio,
-			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
-		)
+		assert.Equal(t, ui.MaxPickerSplitRatio, m.PickerLayoutOptions().SplitRatios["Diagnostics"])
 	})
 
 	t.Run("picker split ratios rejects garbage", func(t *testing.T) {

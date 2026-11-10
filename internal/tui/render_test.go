@@ -30,8 +30,8 @@ func TestRenderEmpty(t *testing.T) {
 		assert.Len(t, rows, 2)
 	})
 
-	// guards the emit invariant: unwritten cells carry " ", not "", so a
-	// blank buffer renders as spaces rather than collapsing to empty
+	// guards the emit invariant: unwritten cells carry " ", not "", so a blank buffer renders as
+	// spaces rather than collapsing to empty
 	t.Run("unwritten cells render as spaces", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
 		b.SetString(geom.Point{X: 0, Y: 0}, "x", tui.Style{})
@@ -72,10 +72,7 @@ func TestEmitFgColor(t *testing.T) {
 	}
 
 	t.Run("reset", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Fg(tui.ColorRed),
-			tui.Style{}.Fg(tui.ColorReset),
-		)
+		out := renderTwo(tui.Style{}.Fg(tui.ColorRed), tui.Style{}.Fg(tui.ColorReset))
 		assert.Contains(t, out, "\x1b[39m")
 	})
 }
@@ -113,10 +110,7 @@ func TestEmitBgColor(t *testing.T) {
 	}
 
 	t.Run("reset", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Bg(tui.ColorRed),
-			tui.Style{}.Bg(tui.ColorReset),
-		)
+		out := renderTwo(tui.Style{}.Bg(tui.ColorRed), tui.Style{}.Bg(tui.ColorReset))
 		assert.Contains(t, out, "\x1b[49m")
 	})
 }
@@ -125,8 +119,7 @@ func TestEmitUlColor(t *testing.T) {
 	t.Run("reset emits 59m", func(t *testing.T) {
 		// Change from a non-reset to reset to force emission
 		out := renderTwo(
-			tui.Style{}.UlColor(tui.ColorRGB(1, 2, 3)),
-			tui.Style{}.UlColor(tui.ColorReset),
+			tui.Style{}.UlColor(tui.ColorRGB(1, 2, 3)), tui.Style{}.UlColor(tui.ColorReset),
 		)
 		assert.Contains(t, out, "\x1b[59m")
 	})
@@ -143,8 +136,7 @@ func TestEmitUlColor(t *testing.T) {
 
 	t.Run("named color falls back to reset seq", func(t *testing.T) {
 		out := renderTwo(
-			tui.Style{}.UlColor(tui.ColorRGB(1, 2, 3)),
-			tui.Style{}.UlColor(tui.ColorRed),
+			tui.Style{}.UlColor(tui.ColorRGB(1, 2, 3)), tui.Style{}.UlColor(tui.ColorRed),
 		)
 		assert.Contains(t, out, "\x1b[59m")
 	})
@@ -171,8 +163,7 @@ func TestEmitUnderline(t *testing.T) {
 
 	t.Run("reset emits 24m", func(t *testing.T) {
 		out := renderTwo(
-			tui.Style{}.UlStyle(tui.UnderlineLine),
-			tui.Style{}.UlStyle(tui.UnderlineReset),
+			tui.Style{}.UlStyle(tui.UnderlineLine), tui.Style{}.UlStyle(tui.UnderlineReset),
 		)
 		assert.Contains(t, out, "\x1b[24m")
 	})
@@ -220,76 +211,49 @@ func TestEmitModifiers(t *testing.T) {
 	})
 
 	t.Run("same modifier not re-emitted", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierBold),
-			tui.Style{}.Mod(tui.ModifierBold),
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierBold), tui.Style{}.Mod(tui.ModifierBold))
 		assert.Equal(t, 1, strings.Count(out, "\x1b[1m"))
 	})
 
 	t.Run("remove reversed emits 27m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierReversed),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierReversed), tui.Style{})
 		assert.Contains(t, out, "\x1b[27m")
 	})
 
 	t.Run("remove italic emits 23m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierItalic),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierItalic), tui.Style{})
 		assert.Contains(t, out, "\x1b[23m")
 	})
 
 	t.Run("remove dim emits 22m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierDim),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierDim), tui.Style{})
 		assert.Contains(t, out, "\x1b[22m")
 	})
 
 	t.Run("remove crossed out emits 29m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierCrossedOut),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierCrossedOut), tui.Style{})
 		assert.Contains(t, out, "\x1b[29m")
 	})
 
 	t.Run("remove slow blink emits 25m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierSlowBlink),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierSlowBlink), tui.Style{})
 		assert.Contains(t, out, "\x1b[25m")
 	})
 
 	t.Run("remove rapid blink emits 25m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierRapidBlink),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierRapidBlink), tui.Style{})
 		assert.Contains(t, out, "\x1b[25m")
 	})
 
 	t.Run("remove hidden emits 28m", func(t *testing.T) {
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierHidden),
-			tui.Style{},
-		)
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierHidden), tui.Style{})
 		assert.Contains(t, out, "\x1b[28m")
 	})
 
 	t.Run("remove bold then add dim emits dim", func(t *testing.T) {
-		// Removing bold emits 22m (normal intensity), so dim must be re-added
-		// because 22m also clears dim
-		out := renderTwo(
-			tui.Style{}.Mod(tui.ModifierBold),
-			tui.Style{}.Mod(tui.ModifierDim),
-		)
+		// Removing bold emits 22m (normal intensity), so dim must be re-added because 22m also
+		// clears dim
+		out := renderTwo(tui.Style{}.Mod(tui.ModifierBold), tui.Style{}.Mod(tui.ModifierDim))
 		assert.Contains(t, out, "\x1b[22m")
 		assert.Contains(t, out, "\x1b[2m")
 	})

@@ -12,9 +12,7 @@ import (
 
 const imageSizeTimes = "\u00d7" // '×' - multiplication sign
 
-func (r *renderPass) renderImagePane(
-	buf *tui.Buffer, pane *ImagePane, y0 int, focused bool,
-) {
+func (r *renderPass) renderImagePane(buf *tui.Buffer, pane *ImagePane, y0 int, focused bool) {
 	if pane.Image() == nil {
 		return
 	}
@@ -56,9 +54,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 
 	pixels := args.pane.Image().Size()
 	right := []statusElem{{
-		text: fmt.Sprintf("%d%s%d",
-			pixels.Width, imageSizeTimes, pixels.Height,
-		),
+		text:  fmt.Sprintf("%d%s%d", pixels.Width, imageSizeTimes, pixels.Height),
 		style: baseTUI,
 	}, {
 		text:  fmt.Sprintf("%d%%", args.pane.Zoom()),
@@ -81,9 +77,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	})
 }
 
-func (r *renderPass) paintImage(
-	buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme,
-) {
+func (r *renderPass) paintImage(buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme) {
 	cx := r.context
 	bg := th.Get("ui.background").BgColor()
 	if !cx.images.graphics {
@@ -95,19 +89,17 @@ func (r *renderPass) paintImage(
 		content: img.ContentID(),
 		surface: uint32(pane.ID()),
 	})
-	// Draw at the put size, not the live zoom, so the grid, the placement's
-	// c=/r=, and the centering box cannot drift apart while a zoom settles
+	// Draw at the put size, not the live zoom, so the grid, the placement's c=/r=, and the
+	// centering box cannot drift apart while a zoom settles
 	cells, ok := cx.images.readySize(id)
 	if !ok {
 		r.renderImageLoading(buf, area, th)
 		return
 	}
-	style := tui.Style{}.
-		Fg(tui.ImageColor(id)).
-		UlColor(tui.ImageColor(imagePlacementID(cells))).
+	style := tui.Style{}.Fg(tui.ImageColor(id)).UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
-	// show a centered window into the grid. Pan scrolls it so a zoomed-in image
-	// exposes its clipped edges instead of pinning to the top-left
+	// show a centered window into the grid. Pan scrolls it so a zoomed-in image exposes its clipped
+	// edges instead of pinning to the top-left
 	visW := min(cells.Width, area.Width)
 	visH := min(cells.Height, area.Height)
 	screen := geom.Point{
@@ -130,9 +122,7 @@ func (r *renderPass) paintImage(
 	}
 }
 
-func (r *renderPass) renderImageLoading(
-	buf *tui.Buffer, area geom.Area, th *theme.Theme,
-) {
+func (r *renderPass) renderImageLoading(buf *tui.Buffer, area geom.Area, th *theme.Theme) {
 	r.renderImageMessage(buf, area, i18n.StatusImageLoading, th)
 }
 

@@ -93,11 +93,9 @@ func formatCmds() []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:   command.DocModes,
-			Aliases: []string{"line-ending"},
-			Signature: kit.StaticSig(
-				kit.OptionalArg(), core.LineEndingNames()...,
-			),
+			Modes:     command.DocModes,
+			Aliases:   []string{"line-ending"},
+			Signature: kit.StaticSig(kit.OptionalArg(), core.LineEndingNames()...),
 		},
 		{
 			Name: actIndentStyle,
@@ -128,9 +126,8 @@ func formatCmds() []command.Command {
 			},
 			Modes: command.DocModes,
 			Signature: kit.StaticSig(
-				kit.OptionalArg(),
-				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
-				"9", "10", "11", "12", "13", "14", "15", "16",
+				kit.OptionalArg(), "tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+				"10", "11", "12", "13", "14", "15", "16",
 			),
 		},
 	}
@@ -157,8 +154,7 @@ func cursorShapeOption(
 }
 
 func statuslineItemsOption(
-	key string, get optionGetter[[]view.StatusLineItem],
-	set optionSetter[[]view.StatusLineItem],
+	key string, get optionGetter[[]view.StatusLineItem], set optionSetter[[]view.StatusLineItem],
 ) command.Option {
 	return command.Option{
 		Key: key,

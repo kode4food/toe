@@ -19,8 +19,7 @@ var underlineStyles = map[string]tui.UnderlineStyle{
 func (p palette) parseColor(value any) (colorSpec, error) {
 	s, ok := value.(string)
 	if !ok {
-		return colorSpec{}, fmt.Errorf("%w: unrecognized value: %v",
-			ErrInvalidTheme, value)
+		return colorSpec{}, fmt.Errorf("%w: unrecognized value: %v", ErrInvalidTheme, value)
 	}
 	if c, ok := p[s]; ok {
 		return c, nil
@@ -28,9 +27,7 @@ func (p palette) parseColor(value any) (colorSpec, error) {
 	return parseRawColor(s)
 }
 
-func (p palette) parseUnderline(
-	style tui.Style, value any,
-) (tui.Style, error) {
+func (p palette) parseUnderline(style tui.Style, value any) (tui.Style, error) {
 	m, ok := value.(map[string]any)
 	if !ok {
 		return style, fmt.Errorf("%w: underline must be table", ErrInvalidTheme)
@@ -52,8 +49,7 @@ func (p palette) parseUnderline(
 			}
 			style = style.UlStyle(u)
 		default:
-			return style, fmt.Errorf("%w: invalid underline attribute: %s",
-				ErrInvalidTheme, name)
+			return style, fmt.Errorf("%w: invalid underline attribute: %s", ErrInvalidTheme, name)
 		}
 	}
 	if seen["color"] && !seen["style"] {
@@ -70,13 +66,11 @@ func parseRawColor(s string) (colorSpec, error) {
 				strings.Repeat(s[3:4], 2)
 		}
 		if len(s) != 7 {
-			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
-				ErrInvalidTheme, s)
+			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s", ErrInvalidTheme, s)
 		}
 		n, err := strconv.ParseUint(s[1:], 16, 32)
 		if err != nil {
-			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
-				ErrInvalidTheme, s)
+			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s", ErrInvalidTheme, s)
 		}
 		return colorSpec{
 			color: tui.ColorRGB(uint8(n>>16), uint8(n>>8), uint8(n)),
@@ -85,8 +79,7 @@ func parseRawColor(s string) (colorSpec, error) {
 	}
 	n, err := strconv.Atoi(s)
 	if err != nil || n < 0 || n > 255 {
-		return colorSpec{}, fmt.Errorf("%w: malformed ANSI: %s",
-			ErrInvalidTheme, s)
+		return colorSpec{}, fmt.Errorf("%w: malformed ANSI: %s", ErrInvalidTheme, s)
 	}
 	return colorSpec{color: tui.ColorANSI(uint8(n))}, nil
 }
@@ -95,8 +88,7 @@ func parseUnderlineStyle(value any) (tui.UnderlineStyle, error) {
 	s, ok := value.(string)
 	if !ok {
 		return tui.UnderlineReset,
-			fmt.Errorf("%w: invalid underline style: %v",
-				ErrInvalidTheme, value)
+			fmt.Errorf("%w: invalid underline style: %v", ErrInvalidTheme, value)
 	}
 	if u, ok := underlineStyles[s]; ok {
 		return u, nil
@@ -108,14 +100,12 @@ func parseUnderlineStyle(value any) (tui.UnderlineStyle, error) {
 func parseModifiers(style tui.Style, value any) (tui.Style, error) {
 	values, ok := value.([]any)
 	if !ok {
-		return style, fmt.Errorf("%w: modifiers should be an array",
-			ErrInvalidTheme)
+		return style, fmt.Errorf("%w: modifiers should be an array", ErrInvalidTheme)
 	}
 	for _, value := range values {
 		s, ok := value.(string)
 		if !ok {
-			return style, fmt.Errorf("%w: invalid modifier: %v",
-				ErrInvalidTheme, value)
+			return style, fmt.Errorf("%w: invalid modifier: %v", ErrInvalidTheme, value)
 		}
 		switch s {
 		case "bold":
@@ -135,8 +125,7 @@ func parseModifiers(style tui.Style, value any) (tui.Style, error) {
 		case "crossed_out":
 			style = style.Mod(tui.ModifierCrossedOut)
 		default:
-			return style, fmt.Errorf("%w: invalid modifier: %s",
-				ErrInvalidTheme, s)
+			return style, fmt.Errorf("%w: invalid modifier: %s", ErrInvalidTheme, s)
 		}
 	}
 	return style, nil

@@ -36,9 +36,7 @@ var completionItemKindNames = map[protocol.CompletionItemKind]string{
 	protocol.CompletionItemKindTypeParameter: "type_param",
 }
 
-func normalizeCompletionResult(
-	server string, result protocol.CompletionResult,
-) CompletionList {
+func normalizeCompletionResult(server string, result protocol.CompletionResult) CompletionList {
 	switch r := result.(type) {
 	case protocol.CompletionItemSlice:
 		return CompletionList{
@@ -66,9 +64,7 @@ func normalizeCompletionItems(
 	return out
 }
 
-func normalizeCompletionItem(
-	server string, item protocol.CompletionItem,
-) view.CompletionItem {
+func normalizeCompletionItem(server string, item protocol.CompletionItem) view.CompletionItem {
 	filter := item.Label
 	if text, ok := item.FilterText.Get(); ok {
 		filter = text
@@ -106,9 +102,7 @@ type completionLabelDetailsRes struct {
 	description string
 }
 
-func completionLabelDetails(
-	item protocol.CompletionItem,
-) completionLabelDetailsRes {
+func completionLabelDetails(item protocol.CompletionItem) completionLabelDetailsRes {
 	if item.LabelDetails == nil {
 		return completionLabelDetailsRes{}
 	}
@@ -130,9 +124,7 @@ func completionItemKind(kind protocol.CompletionItemKind) string {
 	return completionItemKindNames[kind]
 }
 
-func completionDocumentation(
-	detail string, docs protocol.InlayHintTooltip,
-) string {
+func completionDocumentation(detail string, docs protocol.InlayHintTooltip) string {
 	doc := markupText(docs)
 	switch {
 	case detail != "" && doc != "":

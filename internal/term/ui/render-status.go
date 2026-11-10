@@ -154,8 +154,8 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	})
 }
 
-// paintStatus is the only way a status row reaches the buffer, so the badges
-// for editor-wide state land on the corner row whatever pane owns it
+// paintStatus is the only way a status row reaches the buffer, so the badges for editor-wide state
+// land on the corner row whatever pane owns it
 func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
 	if row.at.Y == r.size.Height-1 && row.at.X+row.width == r.size.Width {
 		row.right = append(row.right, r.cornerBadges(row.baseStyle)...)
@@ -221,8 +221,8 @@ func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
 	return statusElem{}
 }
 
-// edgesFor is the configured divider shape, or the plain one when the font has
-// no powerline glyphs to draw the others with
+// edgesFor is the configured divider shape, or the plain one when the font has no powerline glyphs
+// to draw the others with
 func edgesFor(opts *view.Options) view.StatusLineEdges {
 	if !opts.NerdFonts {
 		return view.StatusLineEdgesLine

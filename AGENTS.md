@@ -429,7 +429,7 @@ The architecture page is developer-facing and may describe internals, as long as
 
 ### Line Width
 
-Maximum 80 characters per line (tabs count as 4 spaces). This applies to code _and_ comments, not Markdown prose. Keep short argument lists on a single line when they fit; only break lines when the 80-character limit would be exceeded. When wrapping function signatures or call arguments, pack as many arguments per line as will fit under the limit before wrapping again, one per line only when a line would still exceed the limit. When you must wrap, break after the opening paren:
+Maximum 100 characters per line (tabs count as 4 spaces). This applies to code _and_ comments, not Markdown prose. Keep short argument lists on a single line when they fit; only break lines when the 100-character limit would be exceeded. When wrapping function signatures or call arguments, pack as many arguments per line as will fit under the limit before wrapping again, one per line only when a line would still exceed the limit. When you must wrap, break after the opening paren:
 
 ```go
 func NewChangeSetFromChanges(

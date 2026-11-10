@@ -51,9 +51,7 @@ func fuzzyMatch(args fuzzyMatchArgs) (MatchResult, bool) {
 	return MatchResult{Score: res.Score, Indices: res.Indices}, ok
 }
 
-func parsePickerQuery(
-	columns []string, matchColumn int, input string,
-) map[int]string {
+func parsePickerQuery(columns []string, matchColumn int, input string) map[int]string {
 	fields := map[int]string{}
 	if input == "" {
 		fields[matchColumn] = ""

@@ -1,9 +1,8 @@
 // Package register implements the editor register store
 package register
 
-// Registers maps register names to value lists. '_' is the black hole, whose
-// reads return empty and whose writes are discarded, and '"' is the default
-// yank register
+// Registers maps register names to value lists. '_' is the black hole, whose reads return empty and
+// whose writes are discarded, and '"' is the default yank register
 type Registers map[rune][]string
 
 // New returns an empty Registers
@@ -11,8 +10,7 @@ func New() Registers {
 	return make(Registers)
 }
 
-// Write stores values under name. For the black-hole register ('_') the write
-// is silently discarded
+// Write stores values under name. For the black-hole register ('_') the write is silently discarded
 func (r Registers) Write(name rune, values []string) {
 	if name == '_' {
 		return
@@ -20,8 +18,8 @@ func (r Registers) Write(name rune, values []string) {
 	r[name] = values
 }
 
-// Read returns the values stored under name, in insertion order. Returns nil
-// if the register is empty or unset
+// Read returns the values stored under name, in insertion order. Returns nil if the register is
+// empty or unset
 func (r Registers) Read(name rune) []string {
 	if name == '_' {
 		return nil

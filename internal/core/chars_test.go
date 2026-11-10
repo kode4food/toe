@@ -16,9 +16,7 @@ func TestChars(t *testing.T) {
 
 	t.Run("categorizes whitespace", func(t *testing.T) {
 		for _, ch := range "  　   " {
-			assert.Equal(t, core.CharCategoryWhitespace,
-				core.CategorizeChar(ch),
-			)
+			assert.Equal(t, core.CharCategoryWhitespace, core.CategorizeChar(ch))
 		}
 	})
 
@@ -46,9 +44,7 @@ func TestChars(t *testing.T) {
 
 	t.Run("categorizes punctuation and symbols", func(t *testing.T) {
 		for _, ch := range "!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~" {
-			assert.Equal(t, core.CharCategoryPunctuation,
-				core.CategorizeChar(ch),
-			)
+			assert.Equal(t, core.CharCategoryPunctuation, core.CategorizeChar(ch))
 		}
 	})
 
@@ -59,8 +55,6 @@ func TestChars(t *testing.T) {
 	})
 
 	t.Run("categorizes unknown characters", func(t *testing.T) {
-		assert.Equal(t, core.CharCategoryUnknown,
-			core.CategorizeChar('\u0000'),
-		)
+		assert.Equal(t, core.CharCategoryUnknown, core.CategorizeChar('\u0000'))
 	})
 }

@@ -29,8 +29,8 @@ func (t Transaction) Apply(doc Rope) (Rope, error) {
 	return t.changes.Apply(doc)
 }
 
-// Invert returns the transaction undoing this one, given the document it was
-// built against. The result carries no selection
+// Invert returns the transaction undoing this one, given the document it was built against. The
+// result carries no selection
 func (t Transaction) Invert(original Rope) (Transaction, error) {
 	cs, err := t.changes.Invert(original)
 	if err != nil {
@@ -39,8 +39,8 @@ func (t Transaction) Invert(original Rope) (Transaction, error) {
 	return Transaction{changes: cs}, nil
 }
 
-// Compose returns a transaction equivalent to applying this one then other,
-// keeping other's selection
+// Compose returns a transaction equivalent to applying this one then other, keeping other's
+// selection
 func (t Transaction) Compose(other Transaction) (Transaction, error) {
 	cs, err := t.changes.Compose(other.changes)
 	if err != nil {

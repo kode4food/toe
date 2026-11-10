@@ -15,8 +15,7 @@ import (
 
 // SignatureHelp requests parameter hints for the call at a position
 func (c *Client) SignatureHelp(
-	ctx context.Context, doc DocumentSnapshot, pos int,
-	shCtx protocol.SignatureHelpContext,
+	ctx context.Context, doc DocumentSnapshot, pos int, shCtx protocol.SignatureHelpContext,
 ) (*protocol.SignatureHelp, bool, error) {
 	if !c.SupportsFeature(FeatureSignatureHelp) {
 		return nil, false, nil
@@ -42,17 +41,14 @@ func (c *Client) SignatureHelp(
 }
 
 // SignatureHelp returns the signature help at the cursor for an invoked trigger
-func (s *Session) SignatureHelp(
-	doc *view.Document, viewID view.Id,
-) (view.SignatureHelp, error) {
+func (s *Session) SignatureHelp(doc *view.Document, viewID view.Id) (view.SignatureHelp, error) {
 	ctx := protocol.SignatureHelpContext{
 		TriggerKind: protocol.SignatureHelpTriggerKindInvoked,
 	}
 	return s.signatureHelp(doc, viewID, ctx)
 }
 
-// TriggerSignatureHelp returns signature help triggered by the character before
-// the cursor
+// TriggerSignatureHelp returns signature help triggered by the character before the cursor
 func (s *Session) TriggerSignatureHelp(
 	doc *view.Document, viewID view.Id,
 ) (view.SignatureHelp, error) {
@@ -68,8 +64,7 @@ func (s *Session) TriggerSignatureHelp(
 }
 
 func (s *Session) signatureHelp(
-	doc *view.Document, viewID view.Id,
-	context protocol.SignatureHelpContext,
+	doc *view.Document, viewID view.Id, context protocol.SignatureHelpContext,
 ) (view.SignatureHelp, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
@@ -92,9 +87,7 @@ func (s *Session) signatureHelp(
 	return view.SignatureHelp{}, err
 }
 
-func (s *Session) signatureTrigger(
-	doc *view.Document, viewID view.Id,
-) (string, bool) {
+func (s *Session) signatureTrigger(doc *view.Document, viewID view.Id) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
 	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
@@ -150,9 +143,7 @@ func activeSignature(help *protocol.SignatureHelp) int {
 	return active
 }
 
-func activeParameter(
-	help *protocol.SignatureHelp, sig protocol.SignatureInformation,
-) int {
+func activeParameter(help *protocol.SignatureHelp, sig protocol.SignatureInformation) int {
 	if value, ok := sig.ActiveParameter.Get(); ok {
 		return int(value)
 	}
@@ -189,9 +180,7 @@ func activeParameterRange(
 	}
 }
 
-func signatureTriggerCharacters(
-	capabilities protocol.ServerCapabilities,
-) []string {
+func signatureTriggerCharacters(capabilities protocol.ServerCapabilities) []string {
 	opts := capabilities.SignatureHelpProvider
 	return slices.Concat(opts.TriggerCharacters, opts.RetriggerCharacters)
 }

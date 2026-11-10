@@ -7,8 +7,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// RotateSelectionsForward rotates the primary selection index forward by
-// count steps (wrapping around)
+// RotateSelectionsForward rotates the primary selection index forward by count steps (wrapping
+// around)
 func RotateSelectionsForward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -31,8 +31,8 @@ func RotateSelectionsForward(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-// RotateSelectionsBackward rotates the primary selection index backward by
-// count steps (wrapping around)
+// RotateSelectionsBackward rotates the primary selection index backward by count steps (wrapping
+// around)
 func RotateSelectionsBackward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -54,14 +54,12 @@ func RotateSelectionsBackward(e *view.Editor) {
 	}
 }
 
-// RotateContentsForward rotates the text content of each selection
-// range forward by count steps
+// RotateContentsForward rotates the text content of each selection range forward by count steps
 func RotateContentsForward(e *view.Editor) {
 	rotateSelectionContents(e, true)
 }
 
-// RotateContentsBackward rotates the text content of each selection
-// range backward by count steps
+// RotateContentsBackward rotates the text content of each selection range backward by count steps
 func RotateContentsBackward(e *view.Editor) {
 	rotateSelectionContents(e, false)
 }
@@ -122,15 +120,11 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	}
 	newRanges := rangesAfterReplace(ranges, rotated)
 	if newSel, err := core.NewSelection(newRanges, newPrimary); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 
-func rangesAfterReplace(
-	ranges []core.Range, replacements []string,
-) []core.Range {
+func rangesAfterReplace(ranges []core.Range, replacements []string) []core.Range {
 	out := make([]core.Range, len(ranges))
 	delta := 0
 	for i, r := range ranges {

@@ -95,15 +95,9 @@ func FileModule() command.Module {
 			Reset:  func() { *cfg = fileSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.InsertFinalNewline = kit.BoolOr(
-					cfg.Editor.InsertFinalNewline, true,
-				)
-				opts.TrimFinalNewlines = kit.BoolOr(
-					cfg.Editor.TrimFinalNewlines, false,
-				)
-				opts.TrimTrailingWhitespace = kit.BoolOr(
-					cfg.Editor.TrimTrailingWS, false,
-				)
+				opts.InsertFinalNewline = kit.BoolOr(cfg.Editor.InsertFinalNewline, true)
+				opts.TrimFinalNewlines = kit.BoolOr(cfg.Editor.TrimFinalNewlines, false)
+				opts.TrimTrailingWhitespace = kit.BoolOr(cfg.Editor.TrimTrailingWS, false)
 			},
 		},
 	}
@@ -389,8 +383,8 @@ func fileManageCmds() []command.Command {
 	}
 }
 
-// writeDocument writes the focused document, adopting an explicit path as its
-// own. A log is copied to that path instead, so the buffer stays the editor's
+// writeDocument writes the focused document, adopting an explicit path as its own. A log is copied
+// to that path instead, so the buffer stays the editor's
 func writeDocument(e *view.Editor, args *command.Args, force bool) error {
 	doc := e.FocusedDocument()
 	if doc == nil {

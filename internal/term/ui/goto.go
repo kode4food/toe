@@ -7,15 +7,14 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-// GotoSelector resolves the selection to place once the destination document
-// is open. A nil selector leaves the document's selection alone
+// GotoSelector resolves the selection to place once the destination document is open. A nil
+// selector leaves the document's selection alone
 type GotoSelector func(core.Rope) (core.Selection, bool)
 
-// GotoDocument navigates the pane to an open document, placing the selection
-// the selector resolves and scrolling it into view
+// GotoDocument navigates the pane to an open document, placing the selection the selector resolves
+// and scrolling it into view
 func GotoDocument(
-	e *view.Editor, id view.DocumentId, sel GotoSelector,
-	accept PickerAcceptAction,
+	e *view.Editor, id view.DocumentId, sel GotoSelector, accept PickerAcceptAction,
 ) (*view.View, bool) {
 	v := acceptDocumentID(e, id, accept)
 	if v == nil {
@@ -24,9 +23,9 @@ func GotoDocument(
 	return gotoLanded(e, v, sel)
 }
 
-// GotoPath navigates the pane to a file, switching to it when it is already
-// open, placing the selection the selector resolves and scrolling it into
-// view. Image and binary files open as their own panes and take no selection
+// GotoPath navigates the pane to a file, switching to it when it is already open, placing the
+// selection the selector resolves and scrolling it into view. Image and binary files open as their
+// own panes and take no selection
 func GotoPath(
 	e *view.Editor, path string, sel GotoSelector, accept PickerAcceptAction,
 ) (*view.View, bool) {
@@ -45,12 +44,10 @@ func GotoPath(
 	return gotoLanded(e, v, sel)
 }
 
-// GotoJump navigates to the jump list entry at index, moving the list head onto
-// it instead of recording a new jump, so the history either side of it
-// survives. A split accept opens a new pane and records a jump as usual
-func GotoJump(
-	e *view.Editor, index int, accept PickerAcceptAction,
-) (*view.View, bool) {
+// GotoJump navigates to the jump list entry at index, moving the list head onto it instead of
+// recording a new jump, so the history either side of it survives. A split accept opens a new pane
+// and records a jump as usual
+func GotoJump(e *view.Editor, index int, accept PickerAcceptAction) (*view.View, bool) {
 	v := e.FocusedView()
 	if v == nil {
 		return nil, false
@@ -83,9 +80,7 @@ func GotoLines(lines *core.Span) GotoSelector {
 	}
 }
 
-func acceptDocumentID(
-	e *view.Editor, id view.DocumentId, accept PickerAcceptAction,
-) *view.View {
+func acceptDocumentID(e *view.Editor, id view.DocumentId, accept PickerAcceptAction) *view.View {
 	action.SaveSelection(e)
 	switch accept {
 	case PickerAcceptHorizontalSplit:
@@ -98,8 +93,8 @@ func acceptDocumentID(
 }
 
 func alignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
-	// the view may not have been laid out or measured yet, so fall back to the
-	// editor-wide height and to the full pane width
+	// the view may not have been laid out or measured yet, so fall back to the editor-wide height
+	// and to the full pane width
 	height := v.ContentHeight()
 	if height <= 0 {
 		height = e.ViewHeight()
@@ -120,9 +115,7 @@ func alignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
 	v.EnsureCursorVisibleHorizontal(cs)
 }
 
-func gotoLanded(
-	e *view.Editor, v *view.View, sel GotoSelector,
-) (*view.View, bool) {
+func gotoLanded(e *view.Editor, v *view.View, sel GotoSelector) (*view.View, bool) {
 	doc := e.Document(v.DocID())
 	if doc == nil {
 		return nil, false

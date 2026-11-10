@@ -76,8 +76,7 @@ func (s *Session) DocumentHighlights(
 }
 
 func documentHighlightRanges(
-	client *Client, doc *view.Document,
-	highlights []protocol.DocumentHighlight,
+	client *Client, doc *view.Document, highlights []protocol.DocumentHighlight,
 ) []core.Range {
 	out := make([]core.Range, 0, len(highlights))
 	for _, highlight := range highlights {

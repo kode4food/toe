@@ -22,9 +22,9 @@ const actCompletion = "completion"
 //go:embed i18n/completion.*.json
 var completionFS embed.FS
 
-// CompletionModule returns the completion-popup navigation commands. It lives
-// beside completionComponent because the popup implements every action here by
-// intercepting the resolved command name
+// CompletionModule returns the completion-popup navigation commands. It lives beside
+// completionComponent because the popup implements every action here by intercepting the resolved
+// command name
 func CompletionModule(model Model) command.Module {
 	cfg := new(completionSection)
 	reset := func() {
@@ -123,9 +123,7 @@ func CompletionModule(model Model) command.Module {
 }
 
 func completionIntOption(
-	model Model, key string,
-	get func(CompletionOptions) int,
-	set func(*CompletionOptions, int),
+	model Model, key string, get func(CompletionOptions) int, set func(*CompletionOptions, int),
 ) command.Option {
 	return command.Option{
 		Key: key,

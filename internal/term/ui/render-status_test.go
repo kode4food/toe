@@ -205,8 +205,8 @@ func TestStatusDividers(t *testing.T) {
 
 		m = sendKey(sendKey(m, 'Q'), 'q')
 
-		// no background is emitted for the second arrow, so it keeps the
-		// maximized badge's background under the recording badge's color
+		// no background is emitted for the second arrow, so it keeps the maximized badge's
+		// background under the recording badge's color
 		assert.Regexp(t,
 			` MAX (\x1b\[(1|22)m)*\x1b\[38;2;243;139;168m\x{e0b2}`,
 			lastLine(viewContent(m)),
@@ -218,8 +218,8 @@ func TestStatusDividers(t *testing.T) {
 
 		out := lastLine(viewContent(m))
 
-		// surface0 opens the section, and the elements inside it are divided
-		// by the thin separator, blended part way from that background
+		// surface0 opens the section, and the elements inside it are divided by the thin separator,
+		// blended part way from that background
 		assert.Regexp(t,
 			`38;2;49;50;68m\x{e0b2}(\x1b\[[^m]*m)*\x1b\[48;2;49;50;68m`,
 			out,
@@ -274,8 +274,8 @@ func TestStatusDividers(t *testing.T) {
 
 		out := stripANSI(lastLine(viewContent(m)))
 
-		// the color step divides the badge, a line divides the fields sharing
-		// the section background
+		// the color step divides the badge, a line divides the fields sharing the section
+		// background
 		assert.Contains(t, out, " NOR \u258c [scratch]")
 		assert.Contains(t, out, "\u2590 1 sel \u2502 1:1 ")
 		assert.NotContains(t, out, "\ue0b0")
@@ -599,10 +599,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 
 	t.Run("plural selections include primary", func(t *testing.T) {
 		e := editorWithText(t, "abcd")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(0), core.PointRange(2)},
-			1,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(2)}, 1)
 		e.Options().StatusLine.Left = []view.StatusLineItem{
 			{Element: view.StatusLineSelections},
 			{Element: view.StatusLinePrimaryLen},
@@ -694,8 +691,7 @@ func TestCmdlineHighlight(t *testing.T) {
 
 		m = sendKey(m, '"')
 
-		assert.Equal(t,
-			backgrounds(idle), backgrounds(lastLine(viewContent(m))))
+		assert.Equal(t, backgrounds(idle), backgrounds(lastLine(viewContent(m))))
 		assert.Equal(t, `"`, popupHead(m))
 
 		m = sendKey(m, 'a')
@@ -1082,9 +1078,7 @@ func TestEditorWideBadges(t *testing.T) {
 
 		m = m.ExecTypable("vsplit")
 
-		lines := strings.Split(
-			strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n",
-		)
+		lines := strings.Split(strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n")
 		var rows int
 		for _, line := range lines {
 			if strings.Contains(line, "REC q") {
@@ -1141,8 +1135,8 @@ func popupHead(m ui.Model) string {
 	return strings.TrimSpace(strings.Trim(lines[top+1], "│ "))
 }
 
-// emptySide configures a side that renders nothing: a writable buffer has no
-// read-only indicator, and a non-empty list keeps the defaults from filling in
+// emptySide configures a side that renders nothing: a writable buffer has no read-only indicator,
+// and a non-empty list keeps the defaults from filling in
 func emptySide() []view.StatusLineItem {
 	return []view.StatusLineItem{{Element: view.StatusLineReadOnly}}
 }

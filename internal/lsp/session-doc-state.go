@@ -14,9 +14,7 @@ type docState struct {
 	diagIDs     map[view.DocumentId]map[string]string
 }
 
-func (d *docState) previousDiagnosticID(
-	id view.DocumentId, provider string,
-) *string {
+func (d *docState) previousDiagnosticID(id view.DocumentId, provider string) *string {
 	d.RLock()
 	defer d.RUnlock()
 	if ids, ok := d.diagIDs[id]; ok {
@@ -27,9 +25,7 @@ func (d *docState) previousDiagnosticID(
 	return nil
 }
 
-func (d *docState) setPreviousDiagnosticID(
-	id view.DocumentId, provider string, resultID *string,
-) {
+func (d *docState) setPreviousDiagnosticID(id view.DocumentId, provider string, resultID *string) {
 	d.Lock()
 	defer d.Unlock()
 	if resultID == nil {

@@ -141,9 +141,7 @@ func runFormatter(e *view.Editor) command.Result {
 	return command.Result{}
 }
 
-func runLSPFormatter(
-	e *view.Editor, doc *view.Document, viewID view.Id,
-) command.Result {
+func runLSPFormatter(e *view.Editor, doc *view.Document, viewID view.Id) command.Result {
 	ctl := e.LanguageServerController()
 	if ctl == nil {
 		return command.Result{

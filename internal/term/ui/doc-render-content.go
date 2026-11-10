@@ -179,8 +179,7 @@ func renderContentRows(st *contentRenderState) int {
 		if lineNum == nLines-1 && trailingEmpty {
 			if gutter.width > 0 {
 				gutter.renderTilde(
-					st.buf, geom.Point{X: x, Y: bufRow},
-					lineNum == cursorLine,
+					st.buf, geom.Point{X: x, Y: bufRow}, lineNum == cursorLine,
 				)
 			}
 			var row renderedRow
@@ -190,8 +189,7 @@ func renderContentRows(st *contentRenderState) int {
 			}
 			if cursorLineEnabled && lineNum == cursorLine {
 				st.buf.PatchBgRange(
-					geom.Point{X: contentX, Y: bufRow},
-					format.ViewportWidth, cursorLinePriBg,
+					geom.Point{X: contentX, Y: bufRow}, format.ViewportWidth, cursorLinePriBg,
 				)
 			}
 			row.writeToBuffer(rowWriteArgs{
@@ -234,8 +232,8 @@ func renderContentRows(st *contentRenderState) int {
 
 		rr.prepareLine(st.docCache, lineNum)
 
-		// The anchor line is scrolled by vOff visual rows, so skip those when
-		// drawing so a wrapped line taller than the viewport scrolls within
+		// The anchor line is scrolled by vOff visual rows, so skip those when drawing so a wrapped
+		// line taller than the viewport scrolls within
 		rowSkip := 0
 		if softWrap && lineNum == anchorLine {
 			rowSkip = vOff
@@ -301,9 +299,7 @@ func renderContentRows(st *contentRenderState) int {
 	return bufRow - y
 }
 
-func lineAnnotations(
-	annotations []inlineAnnotation, s core.Span,
-) []inlineAnnotation {
+func lineAnnotations(annotations []inlineAnnotation, s core.Span) []inlineAnnotation {
 	return filterLineItems(annotations, lineItemBounds[inlineAnnotation]{
 		before: func(a inlineAnnotation) bool { return a.pos < s.From },
 		after:  func(a inlineAnnotation) bool { return a.pos > s.To },

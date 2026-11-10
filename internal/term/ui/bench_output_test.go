@@ -100,14 +100,10 @@ func terminalScrollModel(b *testing.B, tc terminalOutputBench) ui.Model {
 	root := b.TempDir()
 	pathA := filepath.Join(root, "a.go")
 	pathB := filepath.Join(root, "b.go")
-	if err := os.WriteFile(
-		pathA, []byte(largeGoSource(2000)), 0o644,
-	); err != nil {
+	if err := os.WriteFile(pathA, []byte(largeGoSource(2000)), 0o644); err != nil {
 		b.Fatal(err)
 	}
-	if err := os.WriteFile(
-		pathB, []byte(largeGoSource(2000)), 0o644,
-	); err != nil {
+	if err := os.WriteFile(pathB, []byte(largeGoSource(2000)), 0o644); err != nil {
 		b.Fatal(err)
 	}
 
@@ -131,9 +127,7 @@ func terminalScrollModel(b *testing.B, tc terminalOutputBench) ui.Model {
 	return resize(ui.New(e, command.NewKeymaps()), 100, 40)
 }
 
-func newTerminalOutputRenderer(
-	w, h int, scrollOpt bool,
-) *terminalOutputRenderer {
+func newTerminalOutputRenderer(w, h int, scrollOpt bool) *terminalOutputRenderer {
 	tr := &terminalOutputRenderer{w: w, h: h}
 	tr.r = uv.NewTerminalRenderer(&tr.out, []string{"TERM=xterm-256color"})
 	tr.r.SetFullscreen(true)

@@ -16,8 +16,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// BenchmarkBufferPickerRender renders a multi-column picker over many open
-// buffers, the per-frame cost paid on every cursor move
+// BenchmarkBufferPickerRender renders a multi-column picker over many open buffers, the per-frame
+// cost paid on every cursor move
 func BenchmarkBufferPickerRender(b *testing.B) {
 	root := b.TempDir()
 	e := view.NewEditor(root)
@@ -34,8 +34,7 @@ func BenchmarkBufferPickerRender(b *testing.B) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "buffer_picker", m.PickerAction(bufferPicker),
-		[]command.KeyEvent{char('p')},
+		km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 40)
 	m = sendKey(m, 'p')
@@ -71,8 +70,7 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 	e.Options().SoftWrap.Enable = &wrap
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
-	m := ui.New(e, command.NewKeymaps()).
-		WithInitialPicker(ui.NewChangedFilePicker)
+	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
 	if !strings.Contains(stripANSI(viewContent(m)), "- abcd") {
 		b.Fatal("diff preview not rendered")
@@ -90,8 +88,8 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 	}
 }
 
-// BenchmarkChangedFileRowSwitch moves the changed-file picker onto a row it has
-// not previewed yet and renders the frame
+// BenchmarkChangedFileRowSwitch moves the changed-file picker onto a row it has not previewed yet
+// and renders the frame
 func BenchmarkChangedFileRowSwitch(b *testing.B) {
 	testutil.RequireGit(b)
 	b.Setenv("XDG_CONFIG_HOME", b.TempDir())
@@ -103,16 +101,15 @@ func BenchmarkChangedFileRowSwitch(b *testing.B) {
 	})
 }
 
-// the repository holds a changed file per iteration, so no row is revisited and
-// every switch reads its texts and hunks cold
+// the repository holds a changed file per iteration, so no row is revisited and every switch reads
+// its texts and hunks cold
 func benchChangedFileRows(b *testing.B, staged bool) {
 	root := testutil.GitRepo(b)
 	benchChangedFiles(b, root, b.N+1, staged)
 	e := view.NewEditor(root)
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
-	m := ui.New(e, command.NewKeymaps()).
-		WithInitialPicker(ui.NewChangedFilePicker)
+	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
 	if !strings.Contains(stripANSI(viewContent(m)), "f00000.txt") {
 		b.Fatal("changed-file picker not rendered")

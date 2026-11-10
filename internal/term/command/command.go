@@ -9,8 +9,8 @@ import (
 )
 
 type (
-	// Module groups commands, translations, runtime options, and an optional
-	// config section for installation together
+	// Module groups commands, translations, runtime options, and an optional config section for
+	// installation together
 	Module struct {
 		Commands     []Command
 		Translations i18n.Translations
@@ -19,17 +19,16 @@ type (
 		Labels       []PrefixLabel
 	}
 
-	// PrefixLabel names an intermediate key-sequence node for the pending-key
-	// hint popup, letting a module label the prefixes it owns
+	// PrefixLabel names an intermediate key-sequence node for the pending-key hint popup, letting a
+	// module label the prefixes it owns
 	PrefixLabel struct {
 		Modes view.Mode
 		Seq   KeyBinding
 		Label string
 	}
 
-	// Option describes a runtime editor option owned by a module. Toggle is
-	// nil when it is not boolean-toggleable, and Private keeps editor-managed
-	// state out of :set and its completions
+	// Option describes a runtime editor option owned by a module. Toggle is nil when it is not
+	// boolean-toggleable, and Private keeps editor-managed state out of :set and its completions
 	Option struct {
 		Key       string
 		DocString string
@@ -61,8 +60,8 @@ type (
 		Apply  func(*view.Editor)
 	}
 
-	// Command describes one registered command: its runner, key bindings, mode
-	// applicability, typeable aliases, and argument signature
+	// Command describes one registered command: its runner, key bindings, mode applicability,
+	// typeable aliases, and argument signature
 	Command struct {
 		Name      string
 		Run       Run
@@ -75,21 +74,21 @@ type (
 		Hints     HintProvider
 	}
 
-	// KeyHint is a (key-string, label) pair used by the pending-key info popup.
-	// Prefix marks a key that opens another menu rather than running a command
+	// KeyHint is a (key-string, label) pair used by the pending-key info popup. Prefix marks a key
+	// that opens another menu rather than running a command
 	KeyHint struct {
 		Key    string
 		Label  string
 		Prefix bool
 	}
 
-	// Run executes a registered command, optionally with parsed arguments. A
-	// nil Run declares the name, docs, and bindings of a command whose behavior
-	// a UI component implements by intercepting the resolved name
+	// Run executes a registered command, optionally with parsed arguments. A nil Run declares the
+	// name, docs, and bindings of a command whose behavior a UI component implements by
+	// intercepting the resolved name
 	Run func(*view.Editor, *Args) Result
 
-	// HintProvider answers the keys a command accepts next when they are not
-	// bindings in the trie, such as the registers currently holding a value
+	// HintProvider answers the keys a command accepts next when they are not bindings in the trie,
+	// such as the registers currently holding a value
 	HintProvider func(*view.Editor) []KeyHint
 
 	// Result is returned by a Run function
@@ -138,16 +137,15 @@ const (
 		view.ModeImage |
 		view.ModeBinary
 
-	// CmdKeyModes is every pane mode except terminal, where keystrokes
-	// belong to the shell
+	// CmdKeyModes is every pane mode except terminal, where keystrokes belong to the shell
 	CmdKeyModes = view.ModeNormal |
 		view.ModeSelect |
 		view.ModeImage |
 		view.ModeBinary
 )
 
-// WithDoc returns a copy of the option described by doc, for options built by
-// a helper rather than declared as a literal
+// WithDoc returns a copy of the option described by doc, for options built by a helper rather than
+// declared as a literal
 func (o Option) WithDoc(doc string) Option {
 	o.DocString = doc
 	return o

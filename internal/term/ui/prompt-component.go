@@ -136,9 +136,7 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 }
 
 // HandleEvent drives editing, history, and completion of the input line
-func (p *PromptComponent) HandleEvent(
-	_ *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (p *PromptComponent) HandleEvent(_ *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return p.handleKey(msg), nil
@@ -164,9 +162,7 @@ func (p *PromptComponent) HandleEvent(
 }
 
 // Layout claims a centered popup over the frame
-func (p *PromptComponent) Layout(
-	_ *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (p *PromptComponent) Layout(_ *Context, screen geom.Size) (geom.Area, bool) {
 	p.markDirty()
 	p.screen = screen
 	if !p.completion.done {
@@ -218,9 +214,7 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 }
 
 // Cursor returns the caret position within the input line
-func (p *PromptComponent) Cursor(
-	cx *Context, _ geom.Size,
-) (cur tea.Cursor, ok bool) {
+func (p *PromptComponent) Cursor(cx *Context, _ geom.Size) (cur tea.Cursor, ok bool) {
 	return insertCursorAt(cx, geom.Point{
 		X: p.bounds.X + 1 + overlayPadX + p.caretDisplayX(),
 		Y: p.bounds.Y + 1,
@@ -320,8 +314,8 @@ func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 	case k.Code.Special == command.PageDown:
 		p.changeCompletion(max(p.completion.list.rows-1, 1))
 
-	// word deletions come before char deletions so a modified backspace or
-	// delete is not swallowed by the plain case
+	// word deletions come before char deletions so a modified backspace or delete is not swallowed
+	// by the plain case
 	case k.Code.Char == 'w' && k.Mods == command.ModCtrl,
 		k.Code.Special == command.Backspace && k.Mods.Has(command.ModCtrl),
 		k.Code.Special == command.Backspace && k.Mods.Has(command.ModAlt):
@@ -514,14 +508,10 @@ func (p *PromptComponent) paintLine(buf *tui.Buffer, area geom.Area) {
 }
 
 func (p *PromptComponent) overlayFrame(within geom.Size) geom.Area {
-	width := p.context.picker.layout.widthScale(
-		p.layoutID(), defaultPromptWidthScale,
-	)
+	width := p.context.picker.layout.widthScale(p.layoutID(), defaultPromptWidthScale)
 	size := geom.Size{
-		Width: max(scaleExtent(within.Width, width), 1),
-		Height: max(
-			scaleExtent(within.Height, promptHeightScale), promptChrome,
-		),
+		Width:  max(scaleExtent(within.Width, width), 1),
+		Height: max(scaleExtent(within.Height, promptHeightScale), promptChrome),
 	}
 	return geom.Area{
 		Point: geom.Area{Size: within}.Center(size),
@@ -529,18 +519,14 @@ func (p *PromptComponent) overlayFrame(within geom.Size) geom.Area {
 	}
 }
 
-func (p *PromptComponent) handleMouseMotion(
-	msg tea.MouseMotionMsg,
-) EventResult {
+func (p *PromptComponent) handleMouseMotion(msg tea.MouseMotionMsg) EventResult {
 	if msg.Button == tea.MouseLeft && p.dragEdge.active() {
 		p.resizeToEdge(geom.Point{X: msg.X, Y: msg.Y})
 	}
 	return consumed()
 }
 
-func (p *PromptComponent) handleMouseRelease(
-	msg tea.MouseReleaseMsg,
-) EventResult {
+func (p *PromptComponent) handleMouseRelease(msg tea.MouseReleaseMsg) EventResult {
 	if msg.Button == tea.MouseLeft {
 		p.dragEdge = overlayDrag{}
 	}
@@ -549,15 +535,13 @@ func (p *PromptComponent) handleMouseRelease(
 
 func (p *PromptComponent) beginEdgeDrag(at geom.Point) bool {
 	drag := overlayDrag{
-		startWidth: p.context.picker.layout.widthScale(
-			p.layoutID(), defaultPromptWidthScale,
-		),
+		startWidth: p.context.picker.layout.widthScale(p.layoutID(), defaultPromptWidthScale),
 	}
 	if !drag.begin(p.bounds, at) {
 		return false
 	}
-	// the box grows downward from a fixed input row, so a vertical drag would
-	// move it rather than resize it
+	// the box grows downward from a fixed input row, so a vertical drag would move it rather than
+	// resize it
 	drag.signY = 0
 	if !drag.active() {
 		return false

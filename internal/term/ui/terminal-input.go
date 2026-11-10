@@ -17,8 +17,8 @@ type terminalDragScrollMsg struct {
 	toLow     bool
 }
 
-// CloseAllTerminalPanes kills every open terminal's shell so the process does
-// not orphan them on exit
+// CloseAllTerminalPanes kills every open terminal's shell so the process does not orphan them on
+// exit
 func CloseAllTerminalPanes(e *view.Editor) {
 	e.Tree().Range(func(p view.Pane) bool {
 		p.Shutdown()
@@ -27,20 +27,16 @@ func CloseAllTerminalPanes(e *view.Editor) {
 }
 
 // HandleEvent routes key and mouse events to the shell
-func (t *TerminalPane) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, bool) {
+func (t *TerminalPane) HandleEvent(cx *Context, msg tea.Msg) (EventResult, bool) {
 	if key, ok := msg.(tea.KeyPressMsg); ok {
 		return t.handleKey(cx, key)
 	}
 	return t.handleMouse(cx, msg)
 }
 
-// BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
-// forwards the click to it otherwise
-func (t *TerminalPane) BeginDrag(
-	cx *Context, at geom.Point, mod tea.KeyMod,
-) bool {
+// BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or forwards the click to
+// it otherwise
+func (t *TerminalPane) BeginDrag(cx *Context, at geom.Point, mod tea.KeyMod) bool {
 	m, ok := t.localMouse(cx, at)
 	if !ok {
 		return false
@@ -55,9 +51,8 @@ func (t *TerminalPane) BeginDrag(
 	return true
 }
 
-// ContinueDrag extends the selection to (x, y), auto-scrolling and
-// scheduling further ticks if the drag has crossed the pane's top or
-// bottom edge
+// ContinueDrag extends the selection to (x, y), auto-scrolling and scheduling further ticks if the
+// drag has crossed the pane's top or bottom edge
 func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
 	yOff := 0
 	if bufferlineVisible(cx) {
@@ -96,8 +91,8 @@ func (t *TerminalPane) CancelDrag() {
 	t.selection.drag.stop()
 }
 
-// DragTick continues scrolling toward toLow if gen still matches the
-// scheduling tick, or is a no-op if a newer drag has since superseded it
+// DragTick continues scrolling toward toLow if gen still matches the scheduling tick, or is a no-op
+// if a newer drag has since superseded it
 func (t *TerminalPane) DragTick(_ *Context, gen int, toLow bool) tea.Cmd {
 	if gen != t.selection.drag.gen {
 		return nil
@@ -116,9 +111,7 @@ func (t *TerminalPane) DragTick(_ *Context, gen int, toLow bool) tea.Cmd {
 	return t.selection.drag.tick(toLow, t.scheduleDragTick)
 }
 
-func (t *TerminalPane) handleKey(
-	_ *Context, msg tea.KeyPressMsg,
-) (EventResult, bool) {
+func (t *TerminalPane) handleKey(_ *Context, msg tea.KeyPressMsg) (EventResult, bool) {
 	k := msg.Key()
 	t.SendKey(uv.KeyPressEvent(uv.Key{
 		Text: k.Text, Mod: k.Mod, Code: k.Code,
@@ -127,9 +120,7 @@ func (t *TerminalPane) handleKey(
 	return consumed(), true
 }
 
-func (t *TerminalPane) handleMouse(
-	cx *Context, msg tea.Msg,
-) (EventResult, bool) {
+func (t *TerminalPane) handleMouse(cx *Context, msg tea.Msg) (EventResult, bool) {
 	wheel, isWheel := msg.(tea.MouseWheelMsg)
 	if isWheel && !t.MouseEnabled() {
 		n := cx.Editor.Options().ScrollLines
@@ -157,9 +148,7 @@ func (t *TerminalPane) handleMouse(
 	return consumed(), true
 }
 
-func (t *TerminalPane) scheduleDragTick(
-	toLow bool, gen int, interval time.Duration,
-) tea.Cmd {
+func (t *TerminalPane) scheduleDragTick(toLow bool, gen int, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		return terminalDragScrollMsg{draggable: t, gen: gen, toLow: toLow}
 	})

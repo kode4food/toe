@@ -12,34 +12,25 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-func (ec *EditorComponent) handleWindowSize(
-	msg tea.WindowSizeMsg,
-) (EventResult, tea.Cmd) {
-	// hold before resizing, so a drag of the window edge reaches the live panes
-	// once, with the size it settles on
+func (ec *EditorComponent) handleWindowSize(msg tea.WindowSizeMsg) (EventResult, tea.Cmd) {
+	// hold before resizing, so a drag of the window edge reaches the live panes once, with the size
+	// it settles on
 	cmd := ec.settlePaneResizeCmd()
 	ec.size = geom.Size{Width: msg.Width, Height: msg.Height}
 	ec.resize()
 	return consumed(), cmd
 }
 
-func (ec *EditorComponent) handleKeyPressEvent(
-	msg tea.KeyPressMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleKeyPressEvent(msg tea.KeyPressMsg) (EventResult, tea.Cmd) {
 	result, cmd := ec.handleKeyPress(msg)
 	if shown := bufferlineVisible(ec.context); shown != ec.bufferlineShown {
 		ec.bufferlineShown = shown
 		ec.resize()
 	}
-	return result, tea.Batch(
-		cmd, ec.autoSaveCmd(), ec.documentHighlightCmd(),
-		ec.macroBlinkCmd(),
-	)
+	return result, tea.Batch(cmd, ec.autoSaveCmd(), ec.documentHighlightCmd(), ec.macroBlinkCmd())
 }
 
-func (ec *EditorComponent) handlePaste(
-	msg tea.PasteMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handlePaste(msg tea.PasteMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
 	if pp, ok := p.(Pasteable); ok {
@@ -68,18 +59,14 @@ func (ec *EditorComponent) handleBlur() (EventResult, tea.Cmd) {
 	return ignored(), nil
 }
 
-func (ec *EditorComponent) handleAutoSaveMsg(
-	msg autoSaveMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleAutoSaveMsg(msg autoSaveMsg) (EventResult, tea.Cmd) {
 	if msg.gen == ec.saveSlot.gen {
 		ec.context.Editor.SaveAll(false)
 	}
 	return consumed(), nil
 }
 
-func (ec *EditorComponent) handleAutoCompletionMsg(
-	msg autoCompletionMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleAutoCompletionMsg(msg autoCompletionMsg) (EventResult, tea.Cmd) {
 	if msg.gen != ec.language.autoGen {
 		return consumed(), nil
 	}
@@ -89,9 +76,7 @@ func (ec *EditorComponent) handleAutoCompletionMsg(
 	return consumed(), ec.completionCmd(false)
 }
 
-func (ec *EditorComponent) handleDocHighlightMsg(
-	msg docHighlightMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleDocHighlightMsg(msg docHighlightMsg) (EventResult, tea.Cmd) {
 	if msg.gen != ec.language.highlightGen {
 		ec.language.highlightPos = docHighlightPosition{}
 		return consumed(), ec.documentHighlightCmd()
@@ -99,9 +84,7 @@ func (ec *EditorComponent) handleDocHighlightMsg(
 	return consumed(), nil
 }
 
-func (ec *EditorComponent) handleCompletionMsg(
-	msg completionMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleCompletionMsg(msg completionMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	if msg.gen != ec.language.completionGen {
 		return consumed(), nil
@@ -187,9 +170,7 @@ func (ec *EditorComponent) handleVCSUpdated() (EventResult, tea.Cmd) {
 	return consumed(), vcsUpdateCmd(cx)
 }
 
-func (ec *EditorComponent) handleSpinnerTick(
-	msg spinnerTickMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleSpinnerTick(msg spinnerTickMsg) (EventResult, tea.Cmd) {
 	if msg.gen != ec.spinner.gen || !ec.spinner.active {
 		return consumed(), nil
 	}
@@ -202,9 +183,7 @@ func (ec *EditorComponent) handleSpinnerTick(
 	return consumed(), spinnerTickCmd(msg.gen)
 }
 
-func (ec *EditorComponent) handleMacroBlinkTick(
-	msg macroBlinkTickMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMacroBlinkTick(msg macroBlinkTickMsg) (EventResult, tea.Cmd) {
 	if msg.gen != ec.macroBlink.gen || !ec.macroBlink.active {
 		return consumed(), nil
 	}
@@ -227,9 +206,7 @@ func (ec *EditorComponent) macroBlinkCmd() tea.Cmd {
 	return nil
 }
 
-func (ec *EditorComponent) handleMouseClick(
-	msg tea.MouseClickMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMouseClick(msg tea.MouseClickMsg) (EventResult, tea.Cmd) {
 	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
 	if len(ec.keys.input) > 0 {
@@ -252,9 +229,7 @@ func (ec *EditorComponent) handleMouseClick(
 	return consumed(), ec.documentHighlightCmd()
 }
 
-func (ec *EditorComponent) handleMouseMotion(
-	msg tea.MouseMotionMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMouseMotion(msg tea.MouseMotionMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
@@ -273,18 +248,14 @@ func (ec *EditorComponent) handleMouseMotion(
 	return consumed(), tea.Batch(dragCmd, ec.documentHighlightCmd())
 }
 
-func (ec *EditorComponent) handleMouseAxisScroll(
-	msg mouseAxisScrollMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMouseAxisScroll(msg mouseAxisScrollMsg) (EventResult, tea.Cmd) {
 	if msg.gen != msg.axis.gen {
 		return consumed(), nil
 	}
 	return consumed(), ec.continueAxisScroll(msg.axis, msg.toLow)
 }
 
-func (ec *EditorComponent) handleMouseRelease(
-	msg tea.MouseReleaseMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMouseRelease(msg tea.MouseReleaseMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
@@ -306,9 +277,7 @@ func (ec *EditorComponent) handleMouseRelease(
 	return consumed(), ec.documentHighlightCmd()
 }
 
-func (ec *EditorComponent) handleMouseWheel(
-	msg tea.MouseWheelMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleMouseWheel(msg tea.MouseWheelMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	ec.language.completionGen++
 	if len(ec.keys.input) > 0 {

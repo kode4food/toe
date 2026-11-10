@@ -32,8 +32,8 @@ func IntOr(p *int, def int) int {
 	return *p
 }
 
-// EditorNullableIntOption builds an option over a nullable int editor value,
-// reporting dflt when unset
+// EditorNullableIntOption builds an option over a nullable int editor value, reporting dflt when
+// unset
 func EditorNullableIntOption(
 	key string, dflt int, get EditorGetter[*int], set EditorSetter[*int],
 ) command.Option {
@@ -57,9 +57,7 @@ func EditorNullableIntOption(
 }
 
 // EditorBoolOption builds a toggleable option over a bool editor value
-func EditorBoolOption(
-	key string, get EditorGetter[bool], set EditorSetter[bool],
-) command.Option {
+func EditorBoolOption(key string, get EditorGetter[bool], set EditorSetter[bool]) command.Option {
 	return command.Option{
 		Key: key,
 		Get: func(e *view.Editor) (string, error) {

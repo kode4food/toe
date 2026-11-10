@@ -11,9 +11,7 @@ import (
 func MoveLeft(e *view.Editor) {
 	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveHorizontally(
-			doc, core.DirectionBackward, n, core.MovementMove,
-		)
+		return r.MoveHorizontally(doc, core.DirectionBackward, n, core.MovementMove)
 	})
 }
 
@@ -21,9 +19,7 @@ func MoveLeft(e *view.Editor) {
 func MoveRight(e *view.Editor) {
 	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveHorizontally(
-			doc, core.DirectionForward, n, core.MovementMove,
-		)
+		return r.MoveHorizontally(doc, core.DirectionForward, n, core.MovementMove)
 	})
 }
 
@@ -156,20 +152,19 @@ func MoveLineStart(e *view.Editor) {
 	})
 }
 
-// MoveLineEnd moves all cursors to the last non-newline character of
-// their current line
+// MoveLineEnd moves all cursors to the last non-newline character of their current line
 func MoveLineEnd(e *view.Editor) {
 	moveLineEnd(e, false)
 }
 
-// MoveLineNonWhitespace moves all cursors to the first non-whitespace
-// character of their current line
+// MoveLineNonWhitespace moves all cursors to the first non-whitespace character of their current
+// line
 func MoveLineNonWhitespace(e *view.Editor) {
 	moveToNonWhitespace(e, e.Mode() == view.ModeSelect)
 }
 
-// ExtendToNonWhitespace extends the selection to the first non-whitespace
-// character on the current line
+// ExtendToNonWhitespace extends the selection to the first non-whitespace character on the current
+// line
 func ExtendToNonWhitespace(e *view.Editor) {
 	moveToNonWhitespace(e, true)
 }
@@ -187,15 +182,15 @@ func MoveFileEnd(e *view.Editor) {
 	moveFileEnd(e, false)
 }
 
-// GotoLine moves (or extends in select mode) the cursor to line n (1-based)
-// If n is 0 the command is a no-op. Clamps to the last non-empty line
+// GotoLine moves (or extends in select mode) the cursor to line n (1-based) If n is 0 the command
+// is a no-op. Clamps to the last non-empty line
 func GotoLine(e *view.Editor, n int) {
 	GotoPosition(e, core.Position{Line: n})
 }
 
-// GotoPosition moves (or extends in select mode) the cursor to a 1-based line
-// and column. A Col <= 1 lands on the line start, otherwise the cursor is
-// clamped to the line end. A Line <= 0 is a no-op
+// GotoPosition moves (or extends in select mode) the cursor to a 1-based line and column. A Col <=
+// 1 lands on the line start, otherwise the cursor is clamped to the line end. A Line <= 0 is a
+// no-op
 func GotoPosition(e *view.Editor, at core.Position) {
 	if at.Line <= 0 {
 		return

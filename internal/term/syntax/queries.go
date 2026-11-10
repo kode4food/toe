@@ -41,9 +41,7 @@ type resolveQueryDirArgs struct {
 	lang string
 }
 
-func resolveQueryDir(
-	ref resolveQueryDirArgs, seen map[string]bool,
-) ([]byte, bool) {
+func resolveQueryDir(ref resolveQueryDirArgs, seen map[string]bool) ([]byte, bool) {
 	lang := ref.lang
 	if seen[lang] {
 		return nil, false
@@ -56,9 +54,7 @@ func resolveQueryDir(
 	var out []byte
 	for line := range strings.SplitSeq(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
-		if after, ok := strings.CutPrefix(
-			trimmed, "; inherits:",
-		); ok {
+		if after, ok := strings.CutPrefix(trimmed, "; inherits:"); ok {
 			for parent := range strings.SplitSeq(after, ",") {
 				parent = strings.TrimSpace(parent)
 				if parent == "" {

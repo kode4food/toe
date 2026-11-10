@@ -43,9 +43,7 @@ func CollapseSelection(e *view.Editor) {
 		pos := r.Cursor(text)
 		ranges[i] = core.PointRange(pos)
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }
@@ -65,9 +63,7 @@ func FlipSelections(e *view.Editor) {
 	for i, r := range ranges {
 		ranges[i] = r.Flip()
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }

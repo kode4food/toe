@@ -33,8 +33,8 @@ type (
 	}
 )
 
-// NewGlobalSearchPicker opens a picker that searches file contents in the
-// workspace as the query is typed
+// NewGlobalSearchPicker opens a picker that searches file contents in the workspace as the query is
+// typed
 func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &globalSearchSource{
 		Editor: e,
@@ -71,16 +71,12 @@ func (g *globalSearchSource) Load() ui.PickerLoad {
 }
 
 // Accept jumps to the chosen match
-func (g *globalSearchSource) Accept(
-	item *ui.PickerItem, action ui.PickerAcceptAction,
-) {
+func (g *globalSearchSource) Accept(item *ui.PickerItem, action ui.PickerAcceptAction) {
 	lines := item.Location.Lines
 	if lines == nil {
 		return
 	}
-	ui.GotoPath(
-		g.Editor, item.Location.Target.Path, ui.GotoLines(lines), action,
-	)
+	ui.GotoPath(g.Editor, item.Location.Target.Path, ui.GotoLines(lines), action)
 }
 
 func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
@@ -117,9 +113,7 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 func (gs *globalSearcher) searchFile(path string) bool {
 	for _, snap := range gs.openDocs {
 		if snap.path == path {
-			return gs.scanLines(
-				path, bufio.NewScanner(strings.NewReader(snap.text)),
-			)
+			return gs.scanLines(path, bufio.NewScanner(strings.NewReader(snap.text)))
 		}
 	}
 	f, err := os.Open(path)

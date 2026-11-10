@@ -13,8 +13,8 @@ type (
 
 const statusNoSelectionsKey i18n.Key = "status.noSelections"
 
-// GotoLineEndNewline moves each cursor to the end of its current line,
-// landing on the newline character (for use in insert mode)
+// GotoLineEndNewline moves each cursor to the end of its current line, landing on the newline
+// character (for use in insert mode)
 func GotoLineEndNewline(e *view.Editor) {
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)
@@ -29,8 +29,8 @@ func GotoLineEndNewline(e *view.Editor) {
 	})
 }
 
-// ExtendToLineEndNewline extends each selection to the end of its current line,
-// landing on the newline character
+// ExtendToLineEndNewline extends each selection to the end of its current line, landing on the
+// newline character
 func ExtendToLineEndNewline(e *view.Editor) {
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)
@@ -70,8 +70,8 @@ func JumpForward(e *view.Editor) {
 	jumpTo(e, (*view.View).JumpForward)
 }
 
-// RemovePrimarySelection removes the primary selection range. If only one
-// range exists, the command is a no-op
+// RemovePrimarySelection removes the primary selection range. If only one range exists, the command
+// is a no-op
 func RemovePrimarySelection(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -119,16 +119,15 @@ func MergeConsecutive(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), sel.MergeConsecutiveRanges())
 }
 
-// EnsureForward forces all selection ranges to have a forward
-// direction (anchor <= head)
+// EnsureForward forces all selection ranges to have a forward direction (anchor <= head)
 func EnsureForward(e *view.Editor) {
 	applyMove(e, func(_ core.Rope, r core.Range) core.Range {
 		return r.WithDirection(core.DirectionForward)
 	})
 }
 
-// GotoLastModification moves each cursor to the position of the most recent
-// committed change in the current document
+// GotoLastModification moves each cursor to the position of the most recent committed change in the
+// current document
 func GotoLastModification(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -143,8 +142,7 @@ func GotoLastModification(e *view.Editor) {
 	extend := e.Mode() == view.ModeSelect
 	SaveSelection(e)
 	newSel, err := core.NewSelection(
-		[]core.Range{core.PointRange(pos).PutCursor(text, pos, extend)},
-		0,
+		[]core.Range{core.PointRange(pos).PutCursor(text, pos, extend)}, 0,
 	)
 	if err != nil {
 		return
@@ -152,9 +150,9 @@ func GotoLastModification(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-// ApplySelection applies sel to the focused document as a selection-only
-// transaction, so cursor moves driven by input (mouse, jumps) go through the
-// same insert-group and history bookkeeping as an edit
+// ApplySelection applies sel to the focused document as a selection-only transaction, so cursor
+// moves driven by input (mouse, jumps) go through the same insert-group and history bookkeeping as
+// an edit
 func ApplySelection(e *view.Editor, sel core.Selection) {
 	if doc := e.FocusedDocument(); doc != nil {
 		_ = e.Apply(core.NewTransaction(doc.Text()).WithSelection(sel))
@@ -254,9 +252,7 @@ func applyMove(e *view.Editor, fn rangeMover) {
 	for i, r := range ranges {
 		ranges[i] = fn(text, r)
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }

@@ -116,10 +116,7 @@ func TestTransport(t *testing.T) {
 			t.Context(), lsp.NewInitializeParams(lsp.InitializeConfig{}),
 		)
 		assert.NoError(t, err)
-		assert.Equal(t,
-			protocol.PositionEncodingKindUTF16,
-			result.Capabilities.PositionEncoding,
-		)
+		assert.Equal(t, protocol.PositionEncodingKindUTF16, result.Capabilities.PositionEncoding)
 		assert.Equal(t, "test", client.Name())
 		assert.NoError(t, client.Close())
 	})
@@ -139,9 +136,7 @@ func TestLSPServerProcess(t *testing.T) {
 		return
 	}
 	if marker := os.Getenv(testServerStartMarkerEnv); marker != "" {
-		f, err := os.OpenFile(
-			marker, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644,
-		)
+		f, err := os.OpenFile(marker, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err == nil {
 			_, _ = f.WriteString("x\n")
 			_ = f.Close()
@@ -149,9 +144,7 @@ func TestLSPServerProcess(t *testing.T) {
 	}
 	ctx := context.Background()
 	server := &processServer{exit: make(chan struct{})}
-	_, conn, _ := protocol.NewServer(
-		ctx, server, jsonrpc2.NewHeaderStream(stdioConn{}),
-	)
+	_, conn, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(stdioConn{}))
 	<-server.exit
 	_ = conn.Close()
 }
@@ -160,15 +153,11 @@ func (s *processServer) Initialize(
 	ctx context.Context, params *protocol.InitializeParams,
 ) (*protocol.InitializeResult, error) {
 	client, _ := protocol.ClientFromContext(ctx)
-	if ms, err := strconv.Atoi(
-		os.Getenv(testServerInitDelayMsEnv),
-	); err == nil {
+	if ms, err := strconv.Atoi(os.Getenv(testServerInitDelayMsEnv)); err == nil {
 		time.Sleep(time.Duration(ms) * time.Millisecond)
 	}
 	if path := os.Getenv(testServerInitializationOptionsEnv); path != "" {
-		if err := os.WriteFile(
-			path, params.InitializationOptions, 0o644,
-		); err != nil {
+		if err := os.WriteFile(path, params.InitializationOptions, 0o644); err != nil {
 			return nil, err
 		}
 	}
@@ -250,9 +239,7 @@ func (s *processServer) Initialize(
 	}
 	navigation := protocol.Boolean(os.Getenv(testServerNavigationEnv) == "1")
 	symbols := protocol.Boolean(os.Getenv(testServerSymbolsEnv) == "1")
-	workspaceSymbols := protocol.Boolean(
-		os.Getenv(testServerWorkspaceSymbolsEnv) == "1",
-	)
+	workspaceSymbols := protocol.Boolean(os.Getenv(testServerWorkspaceSymbolsEnv) == "1")
 	var renameProvider protocol.RenameProvider
 	if os.Getenv(testServerRenameEnv) == "1" {
 		renameProvider = &protocol.RenameOptions{
@@ -274,9 +261,7 @@ func (s *processServer) Initialize(
 	var docLinkProvider *protocol.DocumentLinkOptions
 	if os.Getenv(testServerDocumentLinkEnv) == "1" {
 		docLinkProvider = &protocol.DocumentLinkOptions{
-			ResolveProvider: new(
-				os.Getenv(testServerDocumentLinkResolveEnv) == "1",
-			),
+			ResolveProvider: new(os.Getenv(testServerDocumentLinkResolveEnv) == "1"),
 		}
 	}
 	inlayHints := protocol.Boolean(os.Getenv(testServerInlayHintsEnv) == "1")
@@ -369,20 +354,16 @@ func (s *processServer) Initialize(
 			DiagnosticProvider:              diagnosticProvider,
 			DocumentFormattingProvider:      format,
 			DocumentRangeFormattingProvider: format,
-			DocumentHighlightProvider: protocol.Boolean(
-				os.Getenv(testServerHighlightEnv) == "1",
-			),
-			DocumentLinkProvider: docLinkProvider,
-			InlayHintProvider:    inlayHints,
-			ColorProvider:        docColors,
-			Workspace:            workspace,
+			DocumentHighlightProvider:       protocol.Boolean(os.Getenv(testServerHighlightEnv) == "1"),
+			DocumentLinkProvider:            docLinkProvider,
+			InlayHintProvider:               inlayHints,
+			ColorProvider:                   docColors,
+			Workspace:                       workspace,
 		},
 	}, nil
 }
 
-func (s *processServer) Initialized(
-	ctx context.Context, _ *protocol.InitializedParams,
-) error {
+func (s *processServer) Initialized(ctx context.Context, _ *protocol.InitializedParams) error {
 	client, _ := protocol.ClientFromContext(ctx)
 	if os.Getenv(testServerProgressEnv) == "1" {
 		tok := protocol.String("test-progress")
@@ -401,8 +382,8 @@ func (s *processServer) Initialized(
 			Token: tok,
 			Value: protocol.LSPAny(report),
 		})
-		// hold the token open briefly so a black-box test can observe
-		// Session.Busy() returning true before the matching "end" arrives
+		// hold the token open briefly so a black-box test can observe Session.Busy() returning true
+		// before the matching "end" arrives
 		time.Sleep(50 * time.Millisecond)
 		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
@@ -459,8 +440,7 @@ func (s *processServer) Initialized(
 		})
 	}
 	if os.Getenv(testServerFileWatchNestedEnv) == "1" {
-		// the shape gopls registers: workspace-relative, recursive, with
-		// brace alternatives
+		// the shape gopls registers: workspace-relative, recursive, with brace alternatives
 		cwd, _ := os.Getwd()
 		watchers := fmt.Sprintf(
 			`{"watchers":[{"globPattern":{"pattern":"**/*.{session,go}",`+
@@ -579,9 +559,7 @@ func (s *processServer) DidChange(
 	return nil
 }
 
-func (s *processServer) DidOpen(
-	_ context.Context, p *protocol.DidOpenTextDocumentParams,
-) error {
+func (s *processServer) DidOpen(_ context.Context, p *protocol.DidOpenTextDocumentParams) error {
 	path := os.Getenv(testServerDidOpenFileEnv)
 	if path == "" {
 		return nil
@@ -660,9 +638,7 @@ func (s *processServer) CompletionResolve(
 	return item, nil
 }
 
-func (s *processServer) Hover(
-	context.Context, *protocol.HoverParams,
-) (*protocol.Hover, error) {
+func (s *processServer) Hover(context.Context, *protocol.HoverParams) (*protocol.Hover, error) {
 	if os.Getenv(testServerAllErrorEnv) == "1" {
 		return nil, errors.New("hover error")
 	}
@@ -745,9 +721,7 @@ func (s *processServer) SignatureHelp(
 					{
 						Label: func() protocol.ParameterInformationLabel {
 							if os.Getenv(testServerSignatureOffsetEnv) == "1" {
-								return protocol.ParameterInformationLabelTuple{
-									8, 16,
-								}
+								return protocol.ParameterInformationLabelTuple{8, 16}
 							}
 							return protocol.String("a ...any")
 						}(),
@@ -1515,9 +1489,7 @@ func (s *processServer) WillCreateFiles(
 	return nil, nil
 }
 
-func (s *processServer) DidCreateFiles(
-	_ context.Context, _ *protocol.CreateFilesParams,
-) error {
+func (s *processServer) DidCreateFiles(_ context.Context, _ *protocol.CreateFilesParams) error {
 	if os.Getenv(testServerAllErrorEnv) == "1" {
 		return errors.New("did create error")
 	}
@@ -1533,9 +1505,7 @@ func (s *processServer) WillRenameFiles(
 	return nil, nil
 }
 
-func (s *processServer) DidRenameFiles(
-	_ context.Context, _ *protocol.RenameFilesParams,
-) error {
+func (s *processServer) DidRenameFiles(_ context.Context, _ *protocol.RenameFilesParams) error {
 	if os.Getenv(testServerAllErrorEnv) == "1" {
 		return errors.New("did rename error")
 	}
@@ -1551,9 +1521,7 @@ func (s *processServer) WillDeleteFiles(
 	return nil, nil
 }
 
-func (s *processServer) DidDeleteFiles(
-	_ context.Context, _ *protocol.DeleteFilesParams,
-) error {
+func (s *processServer) DidDeleteFiles(_ context.Context, _ *protocol.DeleteFilesParams) error {
 	if os.Getenv(testServerAllErrorEnv) == "1" {
 		return errors.New("did delete error")
 	}

@@ -32,10 +32,7 @@ func TestDocumentObserver(t *testing.T) {
 		assert.NoError(t, e.Save(false))
 		e.ClosePane(v.ID())
 
-		assert.Equal(t,
-			[]string{"opened", "changed", "saved", "closed"},
-			o.events,
-		)
+		assert.Equal(t, []string{"opened", "changed", "saved", "closed"}, o.events)
 		assert.Equal(t, "package main\n", o.changed.Before.String())
 		assert.False(t, o.changed.Changes.IsEmpty())
 	})
@@ -45,9 +42,7 @@ func (o *recordingDocumentObserver) DocumentOpened(*view.Document) {
 	o.events = append(o.events, "opened")
 }
 
-func (o *recordingDocumentObserver) DocumentChanged(
-	_ *view.Document, change view.DocumentChange,
-) {
+func (o *recordingDocumentObserver) DocumentChanged(_ *view.Document, change view.DocumentChange) {
 	o.changed = change
 	o.events = append(o.events, "changed")
 }

@@ -22,8 +22,8 @@ type fixedPickerSource struct {
 }
 
 func TestPickerScroll(t *testing.T) {
-	// at 120x20 the listBounds are x=7, y=4, w=53, h=12, so valid x is [7,59]
-	// and y is [4,15], with the preview pane at x >= 60 inside the picker
+	// at 120x20 the listBounds are x=7, y=4, w=53, h=12, so valid x is [7,59] and y is [4,15], with
+	// the preview pane at x >= 60 inside the picker
 
 	t.Run("wheel list keeps selection", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
@@ -39,8 +39,7 @@ func TestPickerScroll(t *testing.T) {
 			m = m2.(ui.Model)
 		}
 		out = stripANSI(viewContent(m))
-		// list scrolled to reveal the far item, selection (and preview)
-		// unchanged
+		// list scrolled to reveal the far item, selection (and preview) unchanged
 		assert.Contains(t, out, "item29")
 		assert.Contains(t, out, "CONTENT-00")
 		assert.NotContains(t, out, "CONTENT-29")
@@ -53,8 +52,7 @@ func TestPickerScroll(t *testing.T) {
 		assert.NotContains(t, out, "item29")
 
 		for range 10 {
-			// X=65 is inside the picker but in the preview pane, outside
-			// listBounds
+			// X=65 is inside the picker but in the preview pane, outside listBounds
 			m2, _ := m.Update(tea.MouseWheelMsg{
 				X: 65, Y: 10, Button: tea.MouseWheelDown,
 			})
@@ -67,8 +65,8 @@ func TestPickerScroll(t *testing.T) {
 	t.Run("click selects the item under the cursor", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
-		// locate the rendered row of item05 and click it, the preview should
-		// then show that item's body
+		// locate the rendered row of item05 and click it, the preview should then show that item's
+		// body
 		lines := strings.Split(viewContent(m), "\n")
 		clickX, clickY := -1, -1
 		for y, line := range lines {
@@ -140,8 +138,8 @@ func TestPickerScroll(t *testing.T) {
 			r := m.PickerLayoutOptions().SplitRatios["fixed"]
 			assert.GreaterOrEqual(t, r, ui.MinPickerSplitRatio)
 			assert.LessOrEqual(t, r, ui.MaxPickerSplitRatio)
-			// dragging rightward must never step the ratio back. The
-			// zero-width edge once snapped to the default and broke this
+			// dragging rightward must never step the ratio back. The zero-width edge once snapped
+			// to the default and broke this
 			assert.GreaterOrEqual(t, r, prev)
 			prev = r
 		}
@@ -221,8 +219,8 @@ func TestPickerScroll(t *testing.T) {
 }
 
 func TestPickerBorderResize(t *testing.T) {
-	// At 120x20 the picker is 108x17 at (6,1), so its right border is x=113
-	// and its bottom border is y=17
+	// At 120x20 the picker is 108x17 at (6,1), so its right border is x=113 and its bottom border
+	// is y=17
 
 	t.Run("drag widens and is per picker", func(t *testing.T) {
 		m := fixedPickers(t, 120, 20)

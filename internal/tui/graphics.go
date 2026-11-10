@@ -10,16 +10,16 @@ import (
 )
 
 type (
-	// Style is the full appearance of a cell: its colors, underline treatment,
-	// and modifier bits. The zero value renders as the terminal default
+	// Style is the full appearance of a cell: its colors, underline treatment, and modifier bits.
+	// The zero value renders as the terminal default
 	Style struct {
 		fg, bg, underlineColor Color
 		underlineStyle         UnderlineStyle
 		modifier               Modifier
 	}
 
-	// Color is a terminal color, either reset, one of the named or indexed
-	// palette entries, or a direct rgb triple
+	// Color is a terminal color, either reset, one of the named or indexed palette entries, or a
+	// direct rgb triple
 	Color struct {
 		kind    colorKind
 		r, g, b uint8
@@ -57,8 +57,8 @@ const (
 	ModifierCrossedOut Modifier = 0b0001_0000_0000
 )
 
-// indices below 16 are terminal-configurable, so their nominal values are not
-// reliable match targets
+// indices below 16 are terminal-configurable, so their nominal values are not reliable match
+// targets
 const (
 	paletteFirst = 16
 	paletteSize  = 256
@@ -138,9 +138,7 @@ func ImageColor(id uint32) Color {
 
 // PlaceholderSymbol builds the cell content for image row and column
 func PlaceholderSymbol(at geom.Point) string {
-	return string([]rune{
-		kitty.Placeholder, kitty.Diacritic(at.Y), kitty.Diacritic(at.X),
-	})
+	return string([]rune{kitty.Placeholder, kitty.Diacritic(at.Y), kitty.Diacritic(at.X)})
 }
 
 // RGBA returns the color's red, green, blue, and alpha values
@@ -158,8 +156,8 @@ func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
 	}
 }
 
-// Darkened scales the color toward black by pct/100 (pct<100 darkens). Reset
-// stays reset. Named and indexed colors resolve to rgb first
+// Darkened scales the color toward black by pct/100 (pct<100 darkens). Reset stays reset. Named and
+// indexed colors resolve to rgb first
 func (c Color) Darkened(pct int) Color {
 	if c.IsReset() {
 		return c
@@ -171,8 +169,8 @@ func (c Color) Darkened(pct int) Color {
 	return ColorRGB(scale(r), scale(g), scale(b))
 }
 
-// Blended mixes the color pct/100 of the way toward another. A reset color has
-// no channels to mix, so it stays as it is
+// Blended mixes the color pct/100 of the way toward another. A reset color has no channels to mix,
+// so it stays as it is
 func (c Color) Blended(to Color, pct int) Color {
 	if c.IsReset() || to.IsReset() {
 		return c
@@ -186,8 +184,8 @@ func (c Color) Blended(to Color, pct int) Color {
 	return ColorRGB(mix(r, tr), mix(g, tg), mix(b, tb))
 }
 
-// Quantized returns the nearest 256-color palette entry, by true distance
-// rather than the per-channel rounding a terminal library would apply
+// Quantized returns the nearest 256-color palette entry, by true distance rather than the
+// per-channel rounding a terminal library would apply
 func (c Color) Quantized() Color {
 	if c.kind != colorRGB {
 		return c
@@ -238,8 +236,7 @@ func (s Style) Mod(m Modifier) Style {
 	return s
 }
 
-// Darkened darkens the foreground, background, and underline colors so an
-// unfocused pane recedes
+// Darkened darkens the foreground, background, and underline colors so an unfocused pane recedes
 func (s Style) Darkened(pct int) Style {
 	s.fg = s.fg.Darkened(pct)
 	s.bg = s.bg.Darkened(pct)
@@ -247,8 +244,7 @@ func (s Style) Darkened(pct int) Style {
 	return s
 }
 
-// Quantized snaps the foreground, background, and underline colors onto the
-// 256-color palette
+// Quantized snaps the foreground, background, and underline colors onto the 256-color palette
 func (s Style) Quantized() Style {
 	s.fg = s.fg.Quantized()
 	s.bg = s.bg.Quantized()

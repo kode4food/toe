@@ -1,6 +1,6 @@
-// Package vcs integrates version-control systems with the editor: diff bases
-// for gutter hunks, changed-file listings, and head names. Git is the only
-// provider today. The Provider interface keeps the API explicit and pluggable
+// Package vcs integrates version-control systems with the editor: diff bases for gutter hunks,
+// changed-file listings, and head names. Git is the only provider today. The Provider interface
+// keeps the API explicit and pluggable
 package vcs
 
 import (
@@ -17,8 +17,8 @@ import (
 )
 
 type (
-	// Session owns a differ per open document and implements the editor's
-	// VersionControl seam over the version-control provider
+	// Session owns a differ per open document and implements the editor's VersionControl seam over
+	// the version-control provider
 	Session struct {
 		mu       sync.Mutex
 		editor   *view.Editor
@@ -31,15 +31,13 @@ type (
 		reloads  *debounce.Keyed[view.DocumentId]
 	}
 
-	// Provider supplies diff bases and change information from one
-	// version-control system
+	// Provider supplies diff bases and change information from one version-control system
 	Provider interface {
-		// DiffBase returns the checked-in contents of path, the "base" text a
-		// diff of the working copy is computed against
+		// DiffBase returns the checked-in contents of path, the "base" text a diff of the working
+		// copy is computed against
 		DiffBase(path string) ([]byte, error)
 
-		// HeadName returns a short display name for the current head, such as
-		// a branch name
+		// HeadName returns a short display name for the current head, such as a branch name
 		HeadName(path string) (string, error)
 
 		// HeadID returns the exact current head revision
@@ -51,15 +49,15 @@ type (
 		// IndexText returns the staged contents of path
 		IndexText(cwd, path string) ([]byte, error)
 
-		// Stage adds the working-tree state of path to the staging area of the
-		// repository containing cwd
+		// Stage adds the working-tree state of path to the staging area of the repository
+		// containing cwd
 		Stage(cwd, path string) error
 
 		// Unstage drops path from that staging area, leaving the working tree
 		Unstage(cwd, path string) error
 
-		// Discard restores the working-tree state of path from the staging
-		// area, deleting the file when it is untracked
+		// Discard restores the working-tree state of path from the staging area, deleting the file
+		// when it is untracked
 		Discard(cwd, path string) error
 
 		// Ignore adds path to the ignore list of its repository
@@ -80,8 +78,8 @@ var (
 	_ view.VersionControl   = (*Session)(nil)
 )
 
-// Attach starts a version-control session for the editor, observing document
-// lifecycle events and serving diff state
+// Attach starts a version-control session for the editor, observing document lifecycle events and
+// serving diff state
 func Attach(e *view.Editor) *Session {
 	s := &Session{
 		editor:   e,
@@ -101,8 +99,8 @@ func Attach(e *view.Editor) *Session {
 	return s
 }
 
-// DiffHunks returns the current hunks for the document, loading its diff base
-// on first request for a buffer that was not open at startup
+// DiffHunks returns the current hunks for the document, loading its diff base on first request for
+// a buffer that was not open at startup
 func (s *Session) DiffHunks(doc *view.Document) []view.DiffHunk {
 	if d := s.differ(doc); d != nil {
 		return d.Hunks()
@@ -119,9 +117,9 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 	return "", false
 }
 
-// StagedDiffHunks computes hunks between the head and the staged contents of an
-// arbitrary workspace file. It reads both sides from the provider each call,
-// so it is intended for on-demand use such as picker previews
+// StagedDiffHunks computes hunks between the head and the staged contents of an arbitrary workspace
+// file. It reads both sides from the provider each call, so it is intended for on-demand use such
+// as picker previews
 func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
 	return view.Diff(view.DiffSides{
 		Base: core.NewRope(s.HeadText(path)),
@@ -129,8 +127,8 @@ func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
 	})
 }
 
-// UnstagedDiffHunks computes hunks between the staged and current contents of
-// a workspace file, preferring its open document over the copy on disk
+// UnstagedDiffHunks computes hunks between the staged and current contents of a workspace file,
+// preferring its open document over the copy on disk
 func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
 	if doc, ok := s.editor.DocumentByPath(path); ok {
 		return view.Diff(view.DiffSides{
@@ -148,9 +146,8 @@ func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
 	})
 }
 
-// HeadText returns the head text of an arbitrary workspace file. It reads from
-// the provider on every call, so it is intended for on-demand use such as
-// picker previews
+// HeadText returns the head text of an arbitrary workspace file. It reads from the provider on
+// every call, so it is intended for on-demand use such as picker previews
 func (s *Session) HeadText(path string) string {
 	if base, err := s.provider.DiffBase(path); err == nil {
 		return baseRope(base).String()
@@ -158,8 +155,8 @@ func (s *Session) HeadText(path string) string {
 	return ""
 }
 
-// IndexText returns the staged text of an arbitrary workspace file, falling
-// back to its head text when the file has no entry in the index
+// IndexText returns the staged text of an arbitrary workspace file, falling back to its head text
+// when the file has no entry in the index
 func (s *Session) IndexText(path string) string {
 	data, err := s.provider.IndexText(s.editor.Cwd(), path)
 	if err != nil {
@@ -176,8 +173,8 @@ func (s *Session) HeadName(doc *view.Document) (string, bool) {
 	return name, ok
 }
 
-// ChangedFiles lists workspace files that differ from the head, including an
-// open document with unsaved changes
+// ChangedFiles lists workspace files that differ from the head, including an open document with
+// unsaved changes
 func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 	changes, err := s.provider.ChangedFiles(s.editor.Cwd())
 	if err != nil {
@@ -226,8 +223,8 @@ func (s *Session) Unstage(path string) error {
 	return s.provider.Unstage(s.editor.Cwd(), path)
 }
 
-// Discard restores the working-tree state of path from the staging area,
-// deleting the file when version control does not track it
+// Discard restores the working-tree state of path from the staging area, deleting the file when
+// version control does not track it
 func (s *Session) Discard(path string) error {
 	return s.provider.Discard(s.editor.Cwd(), path)
 }
@@ -256,8 +253,7 @@ func (s *Session) Updates() <-chan struct{} {
 	return s.updates
 }
 
-// DocumentOpened fetches the diff base in the background and starts a differ
-// once it arrives
+// DocumentOpened fetches the diff base in the background and starts a differ once it arrives
 func (s *Session) DocumentOpened(doc *view.Document) {
 	s.ensureDiffBase(doc)
 }
@@ -269,8 +265,7 @@ func (s *Session) DocumentChanged(doc *view.Document, _ view.DocumentChange) {
 	}
 }
 
-// DocumentSaved refreshes the diff base. The head may have moved since the
-// document was opened
+// DocumentSaved refreshes the diff base. The head may have moved since the document was opened
 func (s *Session) DocumentSaved(doc *view.Document) {
 	path := doc.Path()
 	if path == "" {
@@ -350,9 +345,7 @@ func (s *Session) headMoved(doc *view.Document, path string) bool {
 	return ok && old != head
 }
 
-func (s *Session) loadDiffBase(
-	doc *view.Document, path string, text core.Rope,
-) {
+func (s *Session) loadDiffBase(doc *view.Document, path string, text core.Rope) {
 	base, err := s.provider.DiffBase(path)
 	if err != nil {
 		return

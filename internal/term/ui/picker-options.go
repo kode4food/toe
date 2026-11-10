@@ -2,8 +2,8 @@ package ui
 
 import "maps"
 
-// PickerLayoutOptions holds the per-overlay list/preview split ratios and size
-// scales, keyed by picker or prompt id
+// PickerLayoutOptions holds the per-overlay list/preview split ratios and size scales, keyed by
+// picker or prompt id
 type PickerLayoutOptions struct {
 	SplitRatios map[string]float64 `toml:"split"`
 	Scales      map[string]float64 `toml:"scales"`
@@ -37,15 +37,11 @@ func (o PickerLayoutOptions) heightScale(id string, def float64) float64 {
 	return o.scaleFor(id+heightScaleSuffix, def)
 }
 
-func (o PickerLayoutOptions) withWidthScale(
-	id string, scale float64,
-) PickerLayoutOptions {
+func (o PickerLayoutOptions) withWidthScale(id string, scale float64) PickerLayoutOptions {
 	return o.withScale(id+widthScaleSuffix, scale)
 }
 
-func (o PickerLayoutOptions) withHeightScale(
-	id string, scale float64,
-) PickerLayoutOptions {
+func (o PickerLayoutOptions) withHeightScale(id string, scale float64) PickerLayoutOptions {
 	return o.withScale(id+heightScaleSuffix, scale)
 }
 
@@ -56,9 +52,7 @@ func (o PickerLayoutOptions) scaleFor(key string, def float64) float64 {
 	return def
 }
 
-func (o PickerLayoutOptions) withScale(
-	key string, scale float64,
-) PickerLayoutOptions {
+func (o PickerLayoutOptions) withScale(key string, scale float64) PickerLayoutOptions {
 	out := o.clone()
 	if out.Scales == nil {
 		out.Scales = map[string]float64{}

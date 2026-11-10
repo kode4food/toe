@@ -32,8 +32,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('p')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
@@ -61,8 +60,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('p')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
@@ -88,8 +86,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('p')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
@@ -123,8 +120,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('p')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
@@ -190,9 +186,7 @@ func bufferPickerMRUModel(t *testing.T) (ui.Model, *view.Editor) {
 		"b.txt": "BBB",
 		"c.txt": "CCC",
 	} {
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, name), []byte(text), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(text), 0o644))
 	}
 
 	e := view.NewEditor(dir)
@@ -203,9 +197,7 @@ func bufferPickerMRUModel(t *testing.T) (ui.Model, *view.Editor) {
 	return openBufferPicker(t, e), e
 }
 
-func openBufferPicker(
-	t *testing.T, e *view.Editor, opts ...files.BufferPickerOptions,
-) ui.Model {
+func openBufferPicker(t *testing.T, e *view.Editor, opts ...files.BufferPickerOptions) ui.Model {
 	t.Helper()
 	cfg := files.BufferPickerOptions{
 		StartPosition: files.PickerStartTop,

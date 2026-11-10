@@ -38,8 +38,7 @@ func TestPickerRender(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -69,8 +68,7 @@ func TestPickerRender(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -83,9 +81,7 @@ func TestPickerRender(t *testing.T) {
 	})
 
 	t.Run("uses Mini icon catalog", func(t *testing.T) {
-		m := feedPickerModel(t, []string{
-			"README.md", "image.png", "component.tsx",
-		})
+		m := feedPickerModel(t, []string{"README.md", "image.png", "component.tsx"})
 		m = sendKeyAndFeed(m, 'p')
 		out := stripANSI(viewContent(m))
 
@@ -101,8 +97,7 @@ func TestPickerRender(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -120,8 +115,7 @@ func TestPickerRender(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('b')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 30)
@@ -146,9 +140,7 @@ func TestPickerRender(t *testing.T) {
 			core.TextChange(core.Span{From: 0, To: 0}, "// changed\n"),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-		)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(changes)))
 
 		m := openBufferPicker(t, e)
 		out := stripANSI(viewContent(m))
@@ -173,8 +165,7 @@ func TestPickerRender(t *testing.T) {
 			km := command.NewKeymaps()
 			m := ui.New(e, km)
 			bindNormalTestAction(
-				km, "buffer_picker", m.PickerAction(bufferPicker),
-				[]command.KeyEvent{char('p')},
+				km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('p')},
 			)
 			m = resize(m, 100, 30)
 			m = sendKey(m, 'p')
@@ -198,18 +189,14 @@ func TestPickerRender(t *testing.T) {
 		tmp := t.TempDir()
 		dir := filepath.Join(tmp, "project")
 		assert.NoError(t, os.MkdirAll(dir, 0o755))
-		assert.NoError(t,
-			os.WriteFile(filepath.Join(dir, "main.go"), []byte(""), 0o644),
-		)
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "main.go"), []byte(""), 0o644))
 		e := view.NewEditor(dir)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_explorer",
 			m.PickerAction(func(e *view.Editor) *ui.Picker {
-				return files.NewFileExplorer(
-					e, files.DefaultFileExplorerOptions(),
-				)
+				return files.NewFileExplorer(e, files.DefaultFileExplorerOptions())
 			}),
 			[]command.KeyEvent{char('e')},
 		)
@@ -314,12 +301,8 @@ func TestPickerRender(t *testing.T) {
 		wide := stripANSI(viewContent(m))
 
 		assert.Contains(t, wide, outlierPickerColumn)
-		assert.Contains(t, wide,
-			"internal/term/ui/picker-render-with-a-very-long-name.go",
-		)
-		assert.Contains(t, wide,
-			"non-primary columns clip before the primary one",
-		)
+		assert.Contains(t, wide, "internal/term/ui/picker-render-with-a-very-long-name.go")
+		assert.Contains(t, wide, "non-primary columns clip before the primary one")
 	})
 }
 
@@ -399,11 +382,7 @@ func (c columnPickerSource) Load() ui.PickerLoad {
 		for range 4 {
 			items = append(items, &ui.PickerItem{
 				Display: "outlier",
-				Columns: []string{
-					outlierPickerColumn,
-					"outlier.go",
-					"outlier",
-				},
+				Columns: []string{outlierPickerColumn, "outlier.go", "outlier"},
 			})
 		}
 	}

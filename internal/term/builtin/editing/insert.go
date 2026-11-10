@@ -80,9 +80,7 @@ func InsertModule() command.Module {
 				DocString: "Delete previous char",
 				Run:       kit.Runner(action.DeleteCharBackward),
 				Modes:     view.ModeInsert,
-				Keys: kit.Keys(
-					kit.Ctrl('h'), kit.Bksp, kit.Shift(kit.Bksp),
-				),
+				Keys:      kit.Keys(kit.Ctrl('h'), kit.Bksp, kit.Shift(kit.Bksp)),
 			},
 			{
 				Name:      actDeleteCharForward,

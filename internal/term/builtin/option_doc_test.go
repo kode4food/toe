@@ -28,8 +28,8 @@ func TestOptionDocStrings(t *testing.T) {
 		assert.Empty(t, undocumented)
 	})
 
-	// the popup shows the description beside the key, and a translation runs
-	// longer than the English it replaces
+	// the popup shows the description beside the key, and a translation runs longer than the
+	// English it replaces
 	t.Run("descriptions stay under the cap", func(t *testing.T) {
 		var tooLong []string
 		for _, o := range registeredOptions(t) {
@@ -56,8 +56,8 @@ func TestOptionDocStrings(t *testing.T) {
 		assert.NotEmpty(t, items)
 	})
 
-	// a module's locale files must win over the English an option is
-	// declared with, which they only do when the default is registered first
+	// a module's locale files must win over the English an option is declared with, which they only
+	// do when the default is registered first
 	t.Run("a locale file overrides the default", func(t *testing.T) {
 		km := command.NewKeymaps()
 		r := command.NewRegistry(km)

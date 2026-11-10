@@ -69,9 +69,7 @@ func (ec *EditorComponent) autoSizeCmd() tea.Cmd {
 		return nil
 	}
 	ec.autoSize.generation++
-	return tea.Batch(
-		autoSizeTickCmd(ec.autoSize.generation), ec.settlePaneResizeCmd(),
-	)
+	return tea.Batch(autoSizeTickCmd(ec.autoSize.generation), ec.settlePaneResizeCmd())
 }
 
 func (ec *EditorComponent) autoSizeWidthTarget(pane view.Pane) int {
@@ -117,9 +115,7 @@ func (ec *EditorComponent) cancelAutoSizeFor(msg tea.Msg) {
 	}
 }
 
-func (ec *EditorComponent) handleAutoSizeTick(
-	msg autoSizeTickMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleAutoSizeTick(msg autoSizeTickMsg) (EventResult, tea.Cmd) {
 	if msg.generation != ec.autoSize.generation ||
 		ec.autoSize.targetWidth == 0 {
 		return consumed(), nil
@@ -138,9 +134,7 @@ func (ec *EditorComponent) handleAutoSizeTick(
 		ec.cancelAutoSize()
 		return consumed(), nil
 	}
-	return consumed(), tea.Batch(
-		autoSizeTickCmd(msg.generation), ec.settlePaneResizeCmd(),
-	)
+	return consumed(), tea.Batch(autoSizeTickCmd(msg.generation), ec.settlePaneResizeCmd())
 }
 
 func autoSizeTickCmd(generation int) tea.Cmd {

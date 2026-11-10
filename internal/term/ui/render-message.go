@@ -7,9 +7,7 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-func renderCenteredMessage(
-	buf *tui.Buffer, area geom.Area, msg string, style tui.Style,
-) {
+func renderCenteredMessage(buf *tui.Buffer, area geom.Area, msg string, style tui.Style) {
 	if area.IsEmpty() {
 		return
 	}

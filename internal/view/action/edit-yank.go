@@ -13,8 +13,8 @@ const (
 	StatusYankedToClipboard i18n.Key = "status.yankedToClipboard"
 )
 
-// Yank copies the text of every selection range to the active register
-// (defaulting to the system clipboard) and exits select mode
+// Yank copies the text of every selection range to the active register (defaulting to the system
+// clipboard) and exits select mode
 func Yank(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -41,8 +41,8 @@ func PasteBefore(e *view.Editor) {
 	e.SetMode(view.ModeNormal)
 }
 
-// ReplaceWithYanked replaces each selection with the corresponding value from
-// the active register (default: system clipboard). Exits select mode
+// ReplaceWithYanked replaces each selection with the corresponding value from the active register
+// (default: system clipboard). Exits select mode
 func ReplaceWithYanked(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -73,8 +73,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 
-	// valueFor uses a sequential counter that advances only for non-empty
-	// ranges
+	// valueFor uses a sequential counter that advances only for non-empty ranges
 	valueIdx := 0
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {

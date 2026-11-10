@@ -1,6 +1,6 @@
-// Package syntax provides Tree-sitter based syntax highlighting. It tokenizes
-// source text using Tree-sitter grammars and highlight queries, returning
-// scope-named spans that map directly to theme scopes
+// Package syntax provides Tree-sitter based syntax highlighting. It tokenizes source text using
+// Tree-sitter grammars and highlight queries, returning scope-named spans that map directly to
+// theme scopes
 package syntax
 
 import (
@@ -47,8 +47,8 @@ func NewSyntaxCache() *Cache {
 	}
 }
 
-// Tokenize parses the source and returns highlight spans with theme scope
-// names. Tree-sitter is tried first, with Chroma as the fallback
+// Tokenize parses the source and returns highlight spans with theme scope names. Tree-sitter is
+// tried first, with Chroma as the fallback
 func (sc *Cache) Tokenize(src core.Source) []highlight.Span {
 	if spans := sc.treeTokenize(src); spans != nil {
 		return spans

@@ -93,9 +93,7 @@ func syntaxMatchBrackets(e *view.Editor) {
 	if !changed {
 		return
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }
@@ -141,9 +139,7 @@ func syntaxMoveParentNodeEnd(e *view.Editor) {
 	if !changed {
 		return
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }

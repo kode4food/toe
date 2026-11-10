@@ -863,14 +863,10 @@ func TestTreeTranspose(t *testing.T) {
 	t.Run("single view stays with toggled layout", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.VSplitNew()
-		layout1, ok := e.Tree().ContainerLayoutAt(
-			e.Tree().Focus(),
-		)
+		layout1, ok := e.Tree().ContainerLayoutAt(e.Tree().Focus())
 		assert.True(t, ok)
 		e.Tree().Transpose()
-		layout2, ok2 := e.Tree().ContainerLayoutAt(
-			e.Tree().Focus(),
-		)
+		layout2, ok2 := e.Tree().ContainerLayoutAt(e.Tree().Focus())
 		assert.True(t, ok2)
 		assert.NotEqual(t, layout1, layout2)
 	})
@@ -933,9 +929,7 @@ func TestTreeFindSplitInDirection(t *testing.T) {
 		v1 := e.FocusedView()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1.ID())
-		id, ok := e.Tree().FindSplitInDirection(
-			e.Tree().Focus(), view.DirectionRight,
-		)
+		id, ok := e.Tree().FindSplitInDirection(e.Tree().Focus(), view.DirectionRight)
 		assert.True(t, ok)
 		assert.NotEqual(t, v1.ID(), id)
 	})
@@ -943,9 +937,7 @@ func TestTreeFindSplitInDirection(t *testing.T) {
 	t.Run("no split in direction when only one view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		_, ok := e.Tree().FindSplitInDirection(
-			v.ID(), view.DirectionRight,
-		)
+		_, ok := e.Tree().FindSplitInDirection(v.ID(), view.DirectionRight)
 		assert.False(t, ok)
 	})
 }
@@ -1002,9 +994,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 40})
 		e.HSplitNew()
 		fv := e.FocusedView()
-		_, ok := e.Tree().FindSplitInDirection(
-			fv.ID(), view.DirectionUp,
-		)
+		_, ok := e.Tree().FindSplitInDirection(fv.ID(), view.DirectionUp)
 		assert.True(t, ok)
 	})
 
@@ -1018,9 +1008,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		allViews := e.Tree().Traverse()
 		assert.Equal(t, 3, len(allViews))
 		e.Tree().SetFocus(v1ID)
-		id, ok := e.Tree().FindSplitInDirection(
-			v1ID, view.DirectionRight,
-		)
+		id, ok := e.Tree().FindSplitInDirection(v1ID, view.DirectionRight)
 		assert.True(t, ok)
 		assert.NotEqual(t, v1ID, id)
 	})
@@ -1035,9 +1023,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		allViews := e.Tree().Traverse()
 		assert.Equal(t, 3, len(allViews))
 		e.Tree().SetFocus(v1ID)
-		id, ok := e.Tree().FindSplitInDirection(
-			v1ID, view.DirectionDown,
-		)
+		id, ok := e.Tree().FindSplitInDirection(v1ID, view.DirectionDown)
 		assert.True(t, ok)
 		assert.NotEqual(t, v1ID, id)
 	})

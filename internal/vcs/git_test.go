@@ -31,9 +31,7 @@ func TestGit(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\n"))
 		testutil.WriteFile(t, path, []byte("one\nchanged\n"))
-		testutil.RunGit(t,
-			repo, "config", "extensions.worktreeConfig", "true",
-		)
+		testutil.RunGit(t, repo, "config", "extensions.worktreeConfig", "true")
 
 		base, err := new(vcs.Git).DiffBase(path)
 		assert.NoError(t, err)
@@ -113,15 +111,9 @@ func TestGit(t *testing.T) {
 
 	t.Run("changed files reports status", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		modified := testutil.GitCommitFile(t,
-			repo, "modified.txt", []byte("one\n"),
-		)
-		deleted := testutil.GitCommitFile(t,
-			repo, "deleted.txt", []byte("gone\n"),
-		)
-		renamed := testutil.GitCommitFile(t,
-			repo, "renamed.txt", []byte("stable content\n"),
-		)
+		modified := testutil.GitCommitFile(t, repo, "modified.txt", []byte("one\n"))
+		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", []byte("gone\n"))
+		renamed := testutil.GitCommitFile(t, repo, "renamed.txt", []byte("stable content\n"))
 
 		testutil.WriteFile(t, modified, []byte("one\nmore\n"))
 		assert.NoError(t, os.Remove(deleted))
@@ -143,9 +135,7 @@ func TestGit(t *testing.T) {
 
 		for _, c := range changes {
 			if c.Kind == view.FileChangeRenamed {
-				assert.Equal(t,
-					filepath.Base(renamed), filepath.Base(c.FromPath),
-				)
+				assert.Equal(t, filepath.Base(renamed), filepath.Base(c.FromPath))
 			}
 		}
 	})
@@ -167,9 +157,7 @@ func TestGit(t *testing.T) {
 		testutil.RunGit(t, repo, "checkout", "main")
 		testutil.WriteFile(t, path, []byte("ours\n"))
 		testutil.RunGit(t, repo, "commit", "-am", "ours")
-		out, _ := exec.Command(
-			"git", "-C", repo, "merge", "other",
-		).CombinedOutput()
+		out, _ := exec.Command("git", "-C", repo, "merge", "other").CombinedOutput()
 		assert.Contains(t, string(out), "CONFLICT")
 
 		changes, err := new(vcs.Git).ChangedFiles(repo)
@@ -280,8 +268,8 @@ func TestGit(t *testing.T) {
 		assert.NoError(t, new(vcs.Git).Ignore(repo, path))
 		assert.NoError(t, new(vcs.Git).Ignore(repo, path))
 
-		// the existing line had no newline of its own, and the second call
-		// finds its pattern already there
+		// the existing line had no newline of its own, and the second call finds its pattern
+		// already there
 		data, err := os.ReadFile(filepath.Join(repo, ".gitignore"))
 		assert.NoError(t, err)
 		assert.Equal(t, "*.log\n/new.txt\n", string(data))

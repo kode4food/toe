@@ -14,9 +14,8 @@ type composeCtx struct {
 	out          ChangeSet
 }
 
-// Compose combines two changesets: if c transforms docA→docB and other
-// transforms docB→docC, the result transforms docA→docC. It errors when docB's
-// lengths disagree
+// Compose combines two changesets: if c transforms docA→docB and other transforms docB→docC,
+// the result transforms docA→docC. It errors when docB's lengths disagree
 func (c ChangeSet) Compose(other ChangeSet) (ChangeSet, error) {
 	if len(c.ops) == 0 {
 		return other, nil

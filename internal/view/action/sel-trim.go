@@ -7,9 +7,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// TrimSelections trims leading and trailing whitespace from each selection
-// range. Empty or all-whitespace ranges are dropped. When all ranges are
-// dropped the selection falls back to a single cursor at the primary position
+// TrimSelections trims leading and trailing whitespace from each selection range. Empty or
+// all-whitespace ranges are dropped. When all ranges are dropped the selection falls back to a
+// single cursor at the primary position
 func TrimSelections(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

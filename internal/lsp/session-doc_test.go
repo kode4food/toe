@@ -24,8 +24,8 @@ func TestDocumentOpenedPulls(t *testing.T) {
 	session := lsp.Attach(t.Context(), e)
 	defer func() { _ = session.Close() }()
 
-	// the first document roots the server at the workspace, which is what
-	// makes the second document out-of-workspace
+	// the first document roots the server at the workspace, which is what makes the second document
+	// out-of-workspace
 	inside := openPullDocument(t, e, dir)
 	assert.Eventually(t, func() bool {
 		return len(inside.Diagnostics()) > 0

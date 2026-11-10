@@ -93,11 +93,7 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 					},
 					LabelDetailsSupport: &yes,
 					ResolveSupport: protocol.ClientCompletionItemResolveOptions{
-						Properties: []string{
-							"documentation",
-							"detail",
-							"additionalTextEdits",
-						},
+						Properties: []string{"documentation", "detail", "additionalTextEdits"},
 					},
 				},
 			},
@@ -148,9 +144,7 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 }
 
 // OffsetEncoding resolves the preferred position encoding
-func OffsetEncoding(
-	capabilities protocol.ServerCapabilities,
-) protocol.PositionEncodingKind {
+func OffsetEncoding(capabilities protocol.ServerCapabilities) protocol.PositionEncodingKind {
 	switch capabilities.PositionEncoding {
 	case protocol.PositionEncodingKindUTF8,
 		protocol.PositionEncodingKindUTF16,
@@ -185,9 +179,7 @@ func clientName(name string) string {
 	return name
 }
 
-func dynamicRegistration(
-	enabled bool,
-) *protocol.DidChangeConfigurationClientCapabilities {
+func dynamicRegistration(enabled bool) *protocol.DidChangeConfigurationClientCapabilities {
 	return &protocol.DidChangeConfigurationClientCapabilities{
 		DynamicRegistration: &enabled,
 	}

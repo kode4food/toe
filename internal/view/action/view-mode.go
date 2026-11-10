@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// NormalMode returns to normal mode, running cleanup like stripping blank-line
-// auto-indent and moving the cursor off the past-end position
+// NormalMode returns to normal mode, running cleanup like stripping blank-line auto-indent and
+// moving the cursor off the past-end position
 func NormalMode(e *view.Editor) {
 	if e.Mode() == view.ModeNormal {
 		return
@@ -39,9 +39,7 @@ func NormalMode(e *view.Editor) {
 			}
 			ranges[i] = core.Range{Anchor: r.From(), Head: head}
 		}
-		if newSel, err := core.NewSelection(
-			ranges, sel.PrimaryIndex(),
-		); err == nil {
+		if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 			doc.SetSelectionFor(v.ID(), newSel)
 		}
 	}
@@ -49,16 +47,16 @@ func NormalMode(e *view.Editor) {
 	e.CommitInsertHistory()
 }
 
-// ExitSelectMode returns to normal mode from select mode without performing
-// the insert-mode cleanup that NormalMode does
+// ExitSelectMode returns to normal mode from select mode without performing the insert-mode cleanup
+// that NormalMode does
 func ExitSelectMode(e *view.Editor) {
 	if e.Mode() == view.ModeSelect {
 		e.SetMode(view.ModeNormal)
 	}
 }
 
-// SelectMode enters select mode, adjusting any empty end-of-document selection
-// to be one grapheme wide so it is always visible
+// SelectMode enters select mode, adjusting any empty end-of-document selection to be one grapheme
+// wide so it is always visible
 func SelectMode(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -81,9 +79,7 @@ func SelectMode(e *view.Editor) {
 		}
 	}
 	if changed {
-		if newSel, err := core.NewSelection(
-			ranges, sel.PrimaryIndex(),
-		); err == nil {
+		if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 			doc.SetSelectionFor(v.ID(), newSel)
 		}
 	}
@@ -106,16 +102,13 @@ func InsertMode(e *view.Editor) {
 		// Cursor lands at the start (from) of the selection
 		ranges[i] = core.PointRange(r.From())
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 		e.SetMode(view.ModeInsert)
 	}
 }
 
-// AppendMode enters insert mode with cursors one grapheme past the end of
-// each selection
+// AppendMode enters insert mode with cursors one grapheme past the end of each selection
 func AppendMode(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -140,24 +133,22 @@ func AppendMode(e *view.Editor) {
 			ranges[i] = core.Range{Anchor: r.From(), Head: head}
 		}
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 		doc.SetRestoreCursor(true)
 		e.SetMode(view.ModeInsert)
 	}
 }
 
-// InsertAtLineStart moves each cursor to the first non-whitespace char of
-// its current line and enters insert mode
+// InsertAtLineStart moves each cursor to the first non-whitespace char of its current line and
+// enters insert mode
 func InsertAtLineStart(e *view.Editor) {
 	MoveLineNonWhitespace(e)
 	InsertMode(e)
 }
 
-// AppendToLine moves each cursor to the end of its current line and enters
-// insert mode (append after last char)
+// AppendToLine moves each cursor to the end of its current line and enters insert mode (append
+// after last char)
 func AppendToLine(e *view.Editor) {
 	MoveLineEnd(e)
 	AppendMode(e)

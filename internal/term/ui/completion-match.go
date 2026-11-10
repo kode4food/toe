@@ -22,17 +22,15 @@ type (
 		order int
 	}
 
-	// completionItemKey identifies a completion item for restoring the cursor
-	// across a refresh, without allocating a concatenated string to compare
+	// completionItemKey identifies a completion item for restoring the cursor across a refresh,
+	// without allocating a concatenated string to compare
 	completionItemKey struct {
 		id                  string
 		label, insert, kind string
 	}
 )
 
-func filterCompletionItems(
-	items []*view.CompletionItem, query string,
-) []*view.CompletionItem {
+func filterCompletionItems(items []*view.CompletionItem, query string) []*view.CompletionItem {
 	if query == "" {
 		return slices.Clone(items)
 	}
@@ -62,9 +60,7 @@ func filterCompletionItems(
 	return out
 }
 
-func completionMatchScore(
-	item *view.CompletionItem, query string,
-) (int, bool) {
+func completionMatchScore(item *view.CompletionItem, query string) (int, bool) {
 	text := item.Filter
 	if text == "" {
 		text = item.Label

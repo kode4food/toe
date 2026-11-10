@@ -207,9 +207,7 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchForward(e, "foo")
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e),
-		)
+		assert.Equal(t, i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e))
 	})
 
 	t.Run("reports no forward match", func(t *testing.T) {
@@ -220,9 +218,7 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchForward(e, "bar")
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e),
-		)
+		assert.Equal(t, i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e))
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
@@ -233,9 +229,7 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchBackward(e, "foo")
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e),
-		)
+		assert.Equal(t, i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e))
 		assert.Equal(t, 8, testutil.CursorPos(t, e))
 	})
 }
@@ -266,9 +260,7 @@ func TestSearchPatterns(t *testing.T) {
 		err := action.SearchForward(e, "a*")
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e),
-		)
+		assert.Equal(t, i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e))
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 }
@@ -956,10 +948,7 @@ func TestCopyOnPrevLine(t *testing.T) {
 func TestCopyOnNextLineDuplicateHead(t *testing.T) {
 	t.Run("stops when target head already exists", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd")
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(1),
-			core.PointRange(4),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(4)}, 0)
 
 		action.CopyOnNextLine(e)
 

@@ -45,9 +45,7 @@ func (d *Document) DocumentLinks() []DocumentLink {
 }
 
 // SetDocumentHighlights stores the same-document highlight ranges for a view
-func (d *Document) SetDocumentHighlights(
-	vid Id, highlights []DocumentHighlight,
-) {
+func (d *Document) SetDocumentHighlights(vid Id, highlights []DocumentHighlight) {
 	if d.overlays.setMap(d.overlays.highlights, vid, highlights) {
 		d.markViewDirty(vid)
 	}
@@ -162,9 +160,7 @@ func (s *overlayState) getSlice[T any](field *[]T) []T {
 	return slices.Clone(*field)
 }
 
-func (s *overlayState) setMap[T comparable](
-	m map[Id][]T, vid Id, items []T,
-) bool {
+func (s *overlayState) setMap[T comparable](m map[Id][]T, vid Id, items []T) bool {
 	s.Lock()
 	defer s.Unlock()
 	if len(items) == 0 {

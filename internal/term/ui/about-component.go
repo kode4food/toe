@@ -38,9 +38,7 @@ const (
 var _ BufferOverlayComponent = (*aboutComponent)(nil)
 
 // HandleEvent dismisses the popup on any key or click
-func (a *aboutComponent) HandleEvent(
-	_ *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (a *aboutComponent) HandleEvent(_ *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.Code {
@@ -63,9 +61,7 @@ func (a *aboutComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 }
 
 // Layout centers the popup on the screen
-func (a *aboutComponent) Layout(
-	_ *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (a *aboutComponent) Layout(_ *Context, screen geom.Size) (geom.Area, bool) {
 	lines, size := measureTextPopup(geom.Size{
 		Width:  min(screen.Width, aboutMaxWidth),
 		Height: min(screen.Height, aboutMaxHeight),

@@ -98,9 +98,7 @@ func TestKeyModifiers(t *testing.T) {
 		base := kit.Tab
 		both := kit.AltKey(kit.Shift(base))
 
-		assert.Equal(t,
-			command.ModShift|command.ModAlt, both[0][0].Mods,
-		)
+		assert.Equal(t, command.ModShift|command.ModAlt, both[0][0].Mods)
 		assert.Equal(t, command.ModNone, base[0][0].Mods)
 	})
 

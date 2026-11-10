@@ -65,9 +65,7 @@ type (
 // PickerMaxPreview is the largest file size a picker will preview inline
 const PickerMaxPreview = 10 * 1024 * 1024
 
-func (p previewCache) doc(
-	sc *syntax.Cache, doc *view.Document,
-) *previewDocEntry {
+func (p previewCache) doc(sc *syntax.Cache, doc *view.Document) *previewDocEntry {
 	lang := doc.Lang()
 	rev := doc.Revision()
 	key := previewDocKey(doc.ID())
@@ -103,11 +101,10 @@ func (p previewCache) path(
 	return entry
 }
 
-// the index text is read through version control rather than off disk, so it is
-// highlighted and cached apart from the working file
+// the index text is read through version control rather than off disk, so it is highlighted and
+// cached apart from the working file
 func (p previewCache) indexText(
-	sc *syntax.Cache, registry *language.Registry, vc view.VersionControl,
-	path string,
+	sc *syntax.Cache, registry *language.Registry, vc view.VersionControl, path string,
 ) *previewDocEntry {
 	key := previewIndexKey(path)
 	if entry, ok := p[key].(*previewDocEntry); ok {
@@ -158,9 +155,7 @@ func previewIndexKey(path string) previewCacheKey {
 	return previewCacheKey{path: path, staged: true}
 }
 
-func loadPathPreview(
-	sc *syntax.Cache, registry *language.Registry, path string,
-) previewCacheEntry {
+func loadPathPreview(sc *syntax.Cache, registry *language.Registry, path string) previewCacheEntry {
 	info, err := os.Stat(path)
 	if err != nil {
 		return noPreviewEntry("<File not found>")

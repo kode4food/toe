@@ -26,8 +26,7 @@ const (
 // GotoDeclarationAction jumps to the declaration of the symbol at the cursor
 func (m Model) GotoDeclarationAction(*view.Editor) {
 	m.component.gotoLocation(
-		i18n.Text(statusNoDeclarationKey),
-		view.LanguageServerController.GotoDeclaration,
+		i18n.Text(statusNoDeclarationKey), view.LanguageServerController.GotoDeclaration,
 	)
 }
 
@@ -39,16 +38,14 @@ func (m Model) GotoDefinitionAction(*view.Editor) {
 // GotoTypeDefinitionAction jumps to the type of the symbol at the cursor
 func (m Model) GotoTypeDefinitionAction(*view.Editor) {
 	m.component.gotoLocation(
-		i18n.Text(statusNoTypeDefinitionKey),
-		view.LanguageServerController.GotoTypeDefinition,
+		i18n.Text(statusNoTypeDefinitionKey), view.LanguageServerController.GotoTypeDefinition,
 	)
 }
 
 // GotoImplementationAction jumps to implementations of the symbol at the cursor
 func (m Model) GotoImplementationAction(*view.Editor) {
 	m.component.gotoLocation(
-		i18n.Text(statusNoImplementationKey),
-		view.LanguageServerController.GotoImplementation,
+		i18n.Text(statusNoImplementationKey), view.LanguageServerController.GotoImplementation,
 	)
 }
 
@@ -87,8 +84,7 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 func (ec *EditorComponent) gotoDefinition() {
 	e := ec.context.Editor
 	if v := ec.gotoLocation(
-		i18n.Text(statusNoDefinitionKey),
-		view.LanguageServerController.GotoDefinition,
+		i18n.Text(statusNoDefinitionKey), view.LanguageServerController.GotoDefinition,
 	); v != nil {
 		doc := e.Document(v.DocID())
 		text := doc.Text()
@@ -98,9 +94,7 @@ func (ec *EditorComponent) gotoDefinition() {
 	}
 }
 
-func (ec *EditorComponent) gotoLocation(
-	notFound string, get locationGetter,
-) *view.View {
+func (ec *EditorComponent) gotoLocation(notFound string, get locationGetter) *view.View {
 	cx := ec.context
 	e := cx.Editor
 	doc := e.FocusedDocument()
@@ -126,9 +120,7 @@ func (ec *EditorComponent) gotoLocation(
 		e.SetStatusMsg(notFound)
 	case 1:
 		loc := locations[0]
-		landed, _ := GotoPath(
-			e, loc.Path, locationSelector(loc), PickerAcceptReplace,
-		)
+		landed, _ := GotoPath(e, loc.Path, locationSelector(loc), PickerAcceptReplace)
 		return landed
 	default:
 		opener := locationPickerLayer(func() ([]view.Location, error) {

@@ -14,9 +14,7 @@ func (s *Session) DocumentOpened(doc *view.Document) {
 }
 
 // DocumentChanged sends didChange notifications to attached servers
-func (s *Session) DocumentChanged(
-	doc *view.Document, change view.DocumentChange,
-) {
+func (s *Session) DocumentChanged(doc *view.Document, change view.DocumentChange) {
 	s.notifyChange(doc, change)
 	s.pullDocumentState(doc)
 }
@@ -79,9 +77,7 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 	return clients
 }
 
-func (s *Session) clientsForDocumentResult(
-	doc *view.Document,
-) ([]*Client, error) {
+func (s *Session) clientsForDocumentResult(doc *view.Document) ([]*Client, error) {
 	lang := s.languageForDocument(doc)
 	if lang == nil {
 		return nil, nil
@@ -110,9 +106,7 @@ func (s *Session) clientsForDocumentResult(
 	return out, startErr
 }
 
-func (s *Session) ensureDidOpen(
-	doc *view.Document, clients []*Client, lang *language.Language,
-) {
+func (s *Session) ensureDidOpen(doc *view.Document, clients []*Client, lang *language.Language) {
 	if len(clients) == 0 {
 		return
 	}
@@ -172,8 +166,8 @@ func (s *Session) clearDocumentHighlightsForServers(names []string) {
 	}
 }
 
-// a server rooted at the workspace cannot resolve documents outside it, so
-// pulling their state only costs time
+// a server rooted at the workspace cannot resolve documents outside it, so pulling their state only
+// costs time
 func (s *Session) pullDocumentState(doc *view.Document) {
 	if !s.inWorkspace(doc.Path()) {
 		return

@@ -211,9 +211,7 @@ func SettingsModule(r *command.Registry) command.Module {
 					e.Options().StatusLine.Edges = v
 					return nil
 				},
-				Complete: command.StaticCompleter(
-					view.StatusLineEdgeNames()...,
-				),
+				Complete: command.StaticCompleter(view.StatusLineEdgeNames()...),
 			},
 		},
 		Section: &command.Section{
@@ -226,21 +224,13 @@ func SettingsModule(r *command.Registry) command.Module {
 				opts.NerdFonts = kit.BoolOr(cfg.Editor.NerdFonts, true)
 				opts.Insecure = kit.BoolOr(cfg.Editor.Insecure, false)
 				opts.EditorConfig = kit.BoolOr(cfg.Editor.EditorConfig, true)
-				opts.AutoSession = kit.BoolOr(
-					cfg.Editor.AutoSession, true,
-				)
+				opts.AutoSession = kit.BoolOr(cfg.Editor.AutoSession, true)
 				opts.FileWatch = kit.BoolOr(cfg.Editor.FileWatch, true)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding
 				opts.CursorShape = view.CursorShape{
-					Normal: cmp.Or(
-						cfg.Editor.CursorShape.Normal, view.CursorKindBlock,
-					),
-					Insert: cmp.Or(
-						cfg.Editor.CursorShape.Insert, view.CursorKindBar,
-					),
-					Select: cmp.Or(
-						cfg.Editor.CursorShape.Select, view.CursorKindUnderline,
-					),
+					Normal: cmp.Or(cfg.Editor.CursorShape.Normal, view.CursorKindBlock),
+					Insert: cmp.Or(cfg.Editor.CursorShape.Insert, view.CursorKindBar),
+					Select: cmp.Or(cfg.Editor.CursorShape.Select, view.CursorKindUnderline),
 				}
 				opts.StatusLine = cfg.Editor.StatusLine
 			},
@@ -280,9 +270,7 @@ func optionCmds(r *command.Registry) []command.Command {
 			Aliases: []string{"get"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},
-				Completer: command.PositionalCompleter(
-					r.OptionCompleter(),
-				),
+				Completer:   command.PositionalCompleter(r.OptionCompleter()),
 			},
 		},
 		{
@@ -313,10 +301,8 @@ func optionCmds(r *command.Registry) []command.Command {
 				Positionals: command.Positionals{Min: 2, Max: 2},
 				RawAfter:    1,
 				Completer: command.Completer{
-					Positionals: []command.CompletionFunc{
-						r.OptionCompleter(),
-					},
-					Raw: r.OptionValueCompleter(),
+					Positionals: []command.CompletionFunc{r.OptionCompleter()},
+					Raw:         r.OptionValueCompleter(),
 				},
 			},
 		},
@@ -330,17 +316,13 @@ func optionCmds(r *command.Registry) []command.Command {
 			Aliases: []string{"toggle"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: -1},
-				Completer: command.PositionalCompleter(
-					r.BoolOptionCompleter(), nil,
-				),
+				Completer:   command.PositionalCompleter(r.BoolOptionCompleter(), nil),
 			},
 		},
 	}
 }
 
-func toggleOption(
-	e *view.Editor, r *command.Registry, args *command.Args,
-) command.Result {
+func toggleOption(e *view.Editor, r *command.Registry, args *command.Args) command.Result {
 	if args == nil || args.IsEmpty() {
 		return command.Result{Error: errUsageToggle}
 	}
@@ -368,9 +350,7 @@ func toggleOption(
 	}
 }
 
-func cycleOption(
-	e *view.Editor, o *command.Option, key string, values []string,
-) command.Result {
+func cycleOption(e *view.Editor, o *command.Option, key string, values []string) command.Result {
 	if o.Get == nil || o.Set == nil {
 		return command.Result{
 			Error: errInvalidOption.WithVars(i18n.Vars{"key": key}),

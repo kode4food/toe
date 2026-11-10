@@ -124,9 +124,7 @@ func TestHookInsertClose(t *testing.T) {
 	t.Run("skips with single-grapheme forward sel", func(t *testing.T) {
 		doc := core.NewRope(")x")
 		r := core.Range{Anchor: 0, Head: 1}
-		change, next, ok := core.HookInsert(
-			doc, r, ')', core.DefaultAutoPairs(),
-		)
+		change, next, ok := core.HookInsert(doc, r, ')', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, change.From)
 		assert.Equal(t, 0, change.To)
@@ -137,9 +135,7 @@ func TestHookInsertClose(t *testing.T) {
 	t.Run("skips with multi-char forward selection", func(t *testing.T) {
 		doc := core.NewRope("))x")
 		r := core.Range{Anchor: 0, Head: 2}
-		change, next, ok := core.HookInsert(
-			doc, r, ')', core.DefaultAutoPairs(),
-		)
+		change, next, ok := core.HookInsert(doc, r, ')', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 1, change.From)
 		assert.Equal(t, 1, change.To)
@@ -185,8 +181,7 @@ func TestHookInsertWhitespace(t *testing.T) {
 	t.Run("space never pairs in brackets or quotes", func(t *testing.T) {
 		for _, doc := range []string{"()", `""`, "ab", "(]"} {
 			_, _, ok := core.HookInsert(
-				core.NewRope(doc), core.PointRange(1), ' ',
-				core.DefaultAutoPairs(),
+				core.NewRope(doc), core.PointRange(1), ' ', core.DefaultAutoPairs(),
 			)
 			assert.False(t, ok)
 		}
@@ -195,9 +190,7 @@ func TestHookInsertWhitespace(t *testing.T) {
 	t.Run("closing quote skips after a space", func(t *testing.T) {
 		doc := core.NewRope(`" "`)
 		r := core.PointRange(2)
-		change, next, ok := core.HookInsert(
-			doc, r, '"', core.DefaultAutoPairs(),
-		)
+		change, next, ok := core.HookInsert(doc, r, '"', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, "", change.Text())
 		assert.Equal(t, 3, next.Head)

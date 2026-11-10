@@ -26,16 +26,12 @@ type (
 
 var _ BufferOverlayComponent = (*hoverComponent)(nil)
 
-func newHoverComponent(
-	ec *EditorComponent, anchor hoverAnchor, text string,
-) *hoverComponent {
+func newHoverComponent(ec *EditorComponent, anchor hoverAnchor, text string) *hoverComponent {
 	return &hoverComponent{editor: ec, anchor: anchor, text: text}
 }
 
 // HandleEvent dismisses the popup on any key or click
-func (h *hoverComponent) HandleEvent(
-	_ *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (h *hoverComponent) HandleEvent(_ *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	key, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return ignored(), nil
@@ -54,9 +50,7 @@ func (h *hoverComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 }
 
 // Layout places the popup near the cursor, inside the frame
-func (h *hoverComponent) Layout(
-	cx *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (h *hoverComponent) Layout(cx *Context, screen geom.Size) (geom.Area, bool) {
 	if !h.valid(cx) {
 		return geom.Area{}, false
 	}

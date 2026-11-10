@@ -23,8 +23,8 @@ var (
 	ErrInvalidRegister   = errors.New("invalid register")
 )
 
-// NewTokenExpander returns a TokenExpander that resolves percent-expansions
-// using the current editor state (selections, registers, variables, shell)
+// NewTokenExpander returns a TokenExpander that resolves percent-expansions using the current
+// editor state (selections, registers, variables, shell)
 func NewTokenExpander(e *view.Editor) command.TokenExpander {
 	return func(tok command.Token) (string, error) {
 		switch tok.Kind {

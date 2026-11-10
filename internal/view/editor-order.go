@@ -1,13 +1,12 @@
 package view
 
-// LastModifiedDocIDs returns the two most recently modified-and-left documents,
-// with the most recent first. Invalid entries have value InvalidDocumentId
+// LastModifiedDocIDs returns the two most recently modified-and-left documents, with the most
+// recent first. Invalid entries have value InvalidDocumentId
 func (e *Editor) LastModifiedDocIDs() [2]DocumentId {
 	return e.documents.lastModifiedIDs
 }
 
-// PopPrevDocID returns and removes the most recently accessed document for the
-// focused view
+// PopPrevDocID returns and removes the most recently accessed document for the focused view
 func (e *Editor) PopPrevDocID() (DocumentId, bool) {
 	v := e.FocusedView()
 	if v == nil {

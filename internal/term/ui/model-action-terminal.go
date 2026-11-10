@@ -23,8 +23,8 @@ func (m Model) TerminalAction(e *view.Editor) {
 	e.DisplacePane(e.Tree().Focus(), tp)
 }
 
-// TerminalSearchAction opens a prompt that jumps the focused terminal's
-// scrollback to the nearest match above the current view
+// TerminalSearchAction opens a prompt that jumps the focused terminal's scrollback to the nearest
+// match above the current view
 func (m Model) TerminalSearchAction(e *view.Editor) {
 	ec := m.component
 	tp, ok := e.Tree().Get(e.Tree().Focus()).(*TerminalPane)

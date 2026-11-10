@@ -7,8 +7,8 @@ import (
 )
 
 type (
-	// TokenExpander maps a raw token to its expanded string value. A nil
-	// expander uses the token content verbatim
+	// TokenExpander maps a raw token to its expanded string value. A nil expander uses the token
+	// content verbatim
 	TokenExpander func(Token) (string, error)
 
 	// SyntaxError is a tokenizer-level parse error
@@ -18,8 +18,7 @@ type (
 		Text  string
 	}
 
-	// Line is an input line split into the command name and the argument text
-	// that follows it
+	// Line is an input line split into the command name and the argument text that follows it
 	Line struct {
 		Name string
 		Rest string
@@ -100,9 +99,7 @@ func (s *SyntaxError) Error() string {
 		if s.Text == "" {
 			return "'%' was not properly escaped. Please use '%%'"
 		}
-		return fmt.Sprintf(
-			"missing a string delimiter after '%%%s'", s.Text,
-		)
+		return fmt.Sprintf("missing a string delimiter after '%%%s'", s.Text)
 	case SyntaxErrorUnknownExpansion:
 		return fmt.Sprintf("unknown expansion '%s'", s.Text)
 	default:
@@ -120,8 +117,8 @@ func (t *Tokenizer) Pos() int {
 	return t.pos
 }
 
-// Rest consumes everything left as one unterminated expansion token, for
-// commands taking a raw trailing argument
+// Rest consumes everything left as one unterminated expansion token, for commands taking a raw
+// trailing argument
 func (t *Tokenizer) Rest() (Token, bool) {
 	t.skipBlanks()
 	if t.pos == len(t.input) {
@@ -296,8 +293,8 @@ func (t *Tokenizer) peekEscapedToken() bool {
 	}
 }
 
-// SplitCommandLine separates the command name from its argument text. The
-// bool reports whether the name is still being typed
+// SplitCommandLine separates the command name from its argument text. The bool reports whether the
+// name is still being typed
 func SplitCommandLine(input string) (Line, bool) {
 	i := strings.IndexAny(input, " \t")
 	if i < 0 {

@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/toml"
 )
 
-// settingValueArgs is a value that a language definition may override, falling
-// back to the editor-wide settingValueArgs when the language leaves it unset
+// settingValueArgs is a value that a language definition may override, falling back to the
+// editor-wide settingValueArgs when the language leaves it unset
 type settingValueArgs[T any] struct {
 	lang   *T
 	editor *T

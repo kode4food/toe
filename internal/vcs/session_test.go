@@ -19,9 +19,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("serves hunks for an edited document", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			repo, "a.txt", []byte("one\ntwo\nthree\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\nthree\n"))
 		testutil.WriteFile(t, path, []byte("one\nchanged\nthree\n"))
 
 		e := view.NewEditor(repo)
@@ -93,8 +91,8 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, view.FileChangeUntracked, changes[0].Kind)
 	})
 
-	// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so
-	// every combination of the three is pinned here
+	// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so every combination of
+	// the three is pinned here
 	for _, tc := range []struct {
 		name         string
 		staged       bool
@@ -200,9 +198,7 @@ func TestSession(t *testing.T) {
 
 		rope := doc.Text()
 		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(
-				mustChangeSet(t, rope, "two\n"),
-			)),
+			e.Apply(core.NewTransaction(rope).WithChanges(mustChangeSet(t, rope, "two\n"))),
 		)
 
 		changes, err := s.ChangedFiles()
@@ -213,9 +209,7 @@ func TestSession(t *testing.T) {
 	t.Run("outside the workspace stays out", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		outside := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			outside, "a.txt", []byte("one\ntwo\nthree\n"),
-		)
+		path := testutil.GitCommitFile(t, outside, "a.txt", []byte("one\ntwo\nthree\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -264,9 +258,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("lifecycle flows through differ", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			repo, "a.txt", []byte("one\ntwo\nthree\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\nthree\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -311,9 +303,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("computes hunks for unopened paths", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			repo, "a.txt", []byte("one\ntwo\nthree\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\nthree\n"))
 		testutil.WriteFile(t, path, []byte("one\nCHANGED\nthree\n"))
 
 		e := view.NewEditor(repo)
@@ -330,9 +320,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("serves base text for unopened paths", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t,
-			repo, "a.txt", []byte("one\ntwo\nthree\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\nthree\n"))
 		testutil.WriteFile(t, path, []byte("one\nCHANGED\nthree\n"))
 
 		e := view.NewEditor(repo)
@@ -352,9 +340,7 @@ func TestSession(t *testing.T) {
 	})
 }
 
-func mustChangeSet(
-	t *testing.T, text core.Rope, replacement string,
-) core.ChangeSet {
+func mustChangeSet(t *testing.T, text core.Rope, replacement string) core.ChangeSet {
 	t.Helper()
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
 		core.TextChange(core.Span{From: 0, To: text.LenChars()}, replacement),
@@ -375,9 +361,7 @@ func waitDiffer(t *testing.T, s *vcs.Session, doc *view.Document) {
 	t.Fatal("timed out waiting for differ")
 }
 
-func waitBase(
-	t *testing.T, s *vcs.Session, doc *view.Document, want string,
-) string {
+func waitBase(t *testing.T, s *vcs.Session, doc *view.Document, want string) string {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
@@ -390,9 +374,7 @@ func waitBase(
 	return ""
 }
 
-func waitHunks(
-	t *testing.T, s *vcs.Session, doc *view.Document,
-) []view.DiffHunk {
+func waitHunks(t *testing.T, s *vcs.Session, doc *view.Document) []view.DiffHunk {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {

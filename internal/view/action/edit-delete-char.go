@@ -5,9 +5,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// DeleteCharBackward deletes the character before each cursor in insert mode
-// Dedents when the cursor is at the end of leading whitespace, otherwise
-// deletes an auto-pair if applicable, or one grapheme backward
+// DeleteCharBackward deletes the character before each cursor in insert mode Dedents when the
+// cursor is at the end of leading whitespace, otherwise deletes an auto-pair if applicable, or one
+// grapheme backward
 func DeleteCharBackward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -37,8 +37,7 @@ func DeleteCharBackward(e *view.Editor) {
 			continue
 		}
 		seen[pos] = true
-		// Dedent: if everything from line start to cursor is whitespace,
-		// delete one indent unit
+		// Dedent: if everything from line start to cursor is whitespace, delete one indent unit
 		del, ok := dedentDelete(dedentDeleteArgs{
 			text:        text,
 			rng:         r,

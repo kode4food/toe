@@ -56,9 +56,7 @@ func TestTerminalPane(t *testing.T) {
 		_ = m.View()
 
 		// mocha ui.background (30,30,46) darkened 50%
-		assert.Equal(t,
-			tui.ColorRGB(15, 15, 23), tp.Emulator().BackgroundColor(),
-		)
+		assert.Equal(t, tui.ColorRGB(15, 15, 23), tp.Emulator().BackgroundColor())
 	})
 
 	t.Run("second invocation is a no-op", func(t *testing.T) {
@@ -132,9 +130,7 @@ func TestTerminalPane(t *testing.T) {
 		t.Cleanup(func() { _ = tp.Stop() })
 
 		for _, sgr := range []string{"4", "4:2", "4:3", "4:4", "4:5"} {
-			_, err := tp.Emulator().Write(
-				fmt.Appendf(nil, "\x1b[%sma\x1b[0m", sgr),
-			)
+			_, err := tp.Emulator().Write(fmt.Appendf(nil, "\x1b[%sma\x1b[0m", sgr))
 			assert.NoError(t, err)
 		}
 
@@ -163,8 +159,8 @@ func TestTerminalPane(t *testing.T) {
 		m = m2.(ui.Model)
 		_ = m.View()
 
-		// the click was consumed by the shell, not the normal focus/select
-		// logic, so the terminal pane stays focused and mouse mode stays on
+		// the click was consumed by the shell, not the normal focus/select logic, so the terminal
+		// pane stays focused and mouse mode stays on
 		assert.Equal(t, termID, e.Tree().Focus())
 		assert.True(t, tp.MouseEnabled())
 	})
@@ -180,9 +176,7 @@ func TestTerminalPane(t *testing.T) {
 		t.Cleanup(func() { _ = tp.Stop() })
 		termDir := filepath.Join(dir, "term")
 		assert.NoError(t, os.Mkdir(termDir, 0o755))
-		tp.IngestOutput(
-			[]byte("\x1b]7;file://localhost" + termDir + "\x07"),
-		)
+		tp.IngestOutput([]byte("\x1b]7;file://localhost" + termDir + "\x07"))
 
 		sessionPath := filepath.Join(dir, "session.json")
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
@@ -281,9 +275,7 @@ func TestTerminalPane(t *testing.T) {
 
 		tp.IngestOutput([]byte("\x1b]777;notify;tests;all green\x07"))
 
-		assert.Equal(t,
-			[]string{"tests: all green"}, tp.ConsumeNotifications(),
-		)
+		assert.Equal(t, []string{"tests: all green"}, tp.ConsumeNotifications())
 	})
 
 	t.Run("OSC 777 accepts a title alone", func(t *testing.T) {
@@ -662,8 +654,8 @@ func TestTerminalPane(t *testing.T) {
 				{Code: command.KeyCode{Char: ch}},
 			}
 		}
-		// Terminal has the same canonical trie, filtered by terminal mode. Raw
-		// Space bypasses keymap dispatch while Ctrl-\ aliases the Space node
+		// Terminal has the same canonical trie, filtered by terminal mode. Raw Space bypasses
+		// keymap dispatch while Ctrl-\ aliases the Space node
 		for _, ch := range []rune{'f', 'b'} {
 			nor, ok := km.Lookup(view.ModeNormal, space(ch))
 			assert.True(t, ok)
@@ -691,8 +683,8 @@ func TestTerminalPane(t *testing.T) {
 
 	t.Run("ctrl-backslash opens space menu", func(t *testing.T) {
 		tmp := t.TempDir()
-		// a workspace marker roots the picker at tmp, so it never escapes to a
-		// .toe/.git an ancestor of the temp dir happens to carry
+		// a workspace marker roots the picker at tmp, so it never escapes to a .toe/.git an
+		// ancestor of the temp dir happens to carry
 		assert.NoError(t, os.Mkdir(filepath.Join(tmp, ".git"), 0o755))
 		path := filepath.Join(tmp, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
@@ -838,8 +830,8 @@ func TestTerminalPane(t *testing.T) {
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
-		// pick a scrollback line and scroll so it lands on the top content
-		// row, using the same window math the renderer uses
+		// pick a scrollback line and scroll so it lands on the top content row, using the same
+		// window math the renderer uses
 		sb := tp.Emulator().Scrollback()
 		target := sb.Len() - 5
 		area := tp.Area()
@@ -922,8 +914,8 @@ func TestTerminalPane(t *testing.T) {
 			}
 		})
 
-		// drag the separator to resize the terminal pane, then let the
-		// debounced emulator resize apply while the shell stays silent
+		// drag the separator to resize the terminal pane, then let the debounced emulator resize
+		// apply while the shell stays silent
 		m2, _ := m.Update(tea.MouseClickMsg{
 			X: sepX, Y: 5, Button: tea.MouseLeft,
 		})
@@ -987,8 +979,8 @@ func TestTerminalResize(t *testing.T) {
 
 		tp.SetArea(geom.Area{Width: 30, Height: 12})
 
-		// no debounce: the emulator matches the new area at once, reserving
-		// the bottom row for the status line
+		// no debounce: the emulator matches the new area at once, reserving the bottom row for the
+		// status line
 		assert.Equal(t, 30, tp.Emulator().Width())
 		assert.Equal(t, 11, tp.Emulator().Height())
 	})
@@ -1054,8 +1046,7 @@ func TestTerminalResize(t *testing.T) {
 			m = m2.(ui.Model)
 		}
 
-		// the pane narrows, but the shell keeps its size until the drag
-		// settles
+		// the pane narrows, but the shell keeps its size until the drag settles
 		assert.Less(t, tp.Area().Width, before)
 		assert.Equal(t, before, tp.Emulator().Width())
 		m2, _ = m.Update(tea.MouseReleaseMsg{

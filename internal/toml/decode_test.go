@@ -94,9 +94,7 @@ func TestStringSlices(t *testing.T) {
 	})
 
 	t.Run("slice", func(t *testing.T) {
-		assert.Equal(t, []string{"go", "mod"}, toml.StringOrSlice(
-			[]any{"go", "mod"},
-		))
+		assert.Equal(t, []string{"go", "mod"}, toml.StringOrSlice([]any{"go", "mod"}))
 	})
 
 	t.Run("drops non-strings", func(t *testing.T) {

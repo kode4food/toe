@@ -21,9 +21,9 @@ func newTerminalPane(t *testing.T) (ui.Model, *ui.TerminalPane) {
 	return m, tp
 }
 
-// TestTerminalPaneTitleUTF8 guards a charmbracelet/x/ansi parser bug (fixed
-// via the go.mod replace to kode4food/x/ansi): C1 bytes ended OSC/DCS
-// strings unconditionally, even mid-UTF-8, corrupting title glyphs like ✳
+// TestTerminalPaneTitleUTF8 guards a charmbracelet/x/ansi parser bug (fixed via the go.mod replace
+// to kode4food/x/ansi): C1 bytes ended OSC/DCS strings unconditionally, even mid-UTF-8, corrupting
+// title glyphs like ✳
 func TestTerminalPaneTitleUTF8(t *testing.T) {
 	t.Run("ascii output renders normally", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
@@ -41,9 +41,7 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 	t.Run("OSC 0 title with dangerous glyph", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		// ✳ = E2 9C B3, and 0x9C is also the 8-bit ST control code
-		tp.IngestOutput(
-			[]byte("\x1b]0;\xe2\x9c\xb3 Pick a choice\x07hello\r\n"),
-		)
+		tp.IngestOutput([]byte("\x1b]0;\xe2\x9c\xb3 Pick a choice\x07hello\r\n"))
 		assert.Equal(t, "✳ Pick a choice", tp.Title())
 		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
@@ -62,9 +60,7 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 
 	t.Run("8-bit OSC introducer is also captured", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
-		tp.IngestOutput(
-			[]byte("\x9d0;\xe2\x9c\xb3 title\x9c\xe2\x9c\xb3 after\r\n"),
-		)
+		tp.IngestOutput([]byte("\x9d0;\xe2\x9c\xb3 title\x9c\xe2\x9c\xb3 after\r\n"))
 		assert.Equal(t, "✳ title", tp.Title())
 		assert.Contains(t, stripANSI(viewContent(m)), "✳ after")
 	})
@@ -130,9 +126,7 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 	t.Run("CJK title with C1 byte has no loss", func(t *testing.T) {
 		_, tp := newTerminalPane(t)
 		// 日/本 have C1-range bytes, but titles are decoded, not forwarded
-		tp.IngestOutput(
-			[]byte("\x1b]0;\xe6\x97\xa5\xe6\x9c\xac title\x07after"),
-		)
+		tp.IngestOutput([]byte("\x1b]0;\xe6\x97\xa5\xe6\x9c\xac title\x07after"))
 		assert.Equal(t, "日本 title", tp.Title())
 	})
 }

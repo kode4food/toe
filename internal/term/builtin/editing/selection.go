@@ -120,39 +120,29 @@ func SelectionModule(model ui.Model) command.Module {
 			{
 				Name:      actSelectWithinRegex,
 				DocString: "Select all regex matches inside selections",
-				Run: kit.Runner(model.RegexAction(
-					promptSelectKey,
-					action.SelectWithinRegex,
-				)),
-				Modes: command.DocNormalModes,
-				Keys:  kit.Keys(kit.Char('s')),
+				Run:       kit.Runner(model.RegexAction(promptSelectKey, action.SelectWithinRegex)),
+				Modes:     command.DocNormalModes,
+				Keys:      kit.Keys(kit.Char('s')),
 			},
 			{
 				Name:      actSplitSelectionByRegex,
 				DocString: "Split selections on regex matches",
-				Run: kit.Runner(model.RegexAction(
-					promptSplitKey,
-					action.SplitSelectionByRegex,
-				)),
-				Modes: command.DocNormalModes,
-				Keys:  kit.Keys(kit.Char('S')),
+				Run:       kit.Runner(model.RegexAction(promptSplitKey, action.SplitSelectionByRegex)),
+				Modes:     command.DocNormalModes,
+				Keys:      kit.Keys(kit.Char('S')),
 			},
 			{
 				Name:      actKeepSelectionsMatching,
 				DocString: "Keep selections matching regex",
-				Run: kit.Runner(model.RegexAction(
-					promptKeepKey,
-					action.KeepSelectionsMatching,
-				)),
-				Modes: command.DocNormalModes,
-				Keys:  kit.Keys(kit.Char('K')),
+				Run:       kit.Runner(model.RegexAction(promptKeepKey, action.KeepSelectionsMatching)),
+				Modes:     command.DocNormalModes,
+				Keys:      kit.Keys(kit.Char('K')),
 			},
 			{
 				Name:      actRemoveSelectionsMatching,
 				DocString: "Remove selections matching regex",
 				Run: kit.Runner(model.RegexAction(
-					promptRemoveKey,
-					action.RemoveSelectionsMatching,
+					promptRemoveKey, action.RemoveSelectionsMatching,
 				)),
 				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Alt('K')),
@@ -333,25 +323,15 @@ func SelectionModule(model ui.Model) command.Module {
 			},
 		},
 		Labels: []command.PrefixLabel{
-			kit.Label(
-				"Match", kit.Char('m'), command.DocNormalModes,
-			),
-			kit.Label(
-				"Match around", m(kit.Char('a')), command.DocNormalModes,
-			),
-			kit.Label(
-				"Match inside", m(kit.Char('i')), command.DocNormalModes,
-			),
+			kit.Label("Match", kit.Char('m'), command.DocNormalModes),
+			kit.Label("Match around", m(kit.Char('a')), command.DocNormalModes),
+			kit.Label("Match inside", m(kit.Char('i')), command.DocNormalModes),
 		},
 	}
 	for _, e := range textObjectEntries {
 		mod.Labels = append(mod.Labels,
-			kit.Label(e.label,
-				kit.Seq(m(kit.Char('a')), kit.Char(e.char)),
-				command.DocNormalModes),
-			kit.Label(e.label,
-				kit.Seq(m(kit.Char('i')), kit.Char(e.char)),
-				command.DocNormalModes),
+			kit.Label(e.label, kit.Seq(m(kit.Char('a')), kit.Char(e.char)), command.DocNormalModes),
+			kit.Label(e.label, kit.Seq(m(kit.Char('i')), kit.Char(e.char)), command.DocNormalModes),
 		)
 	}
 	for _, e := range pairLabels() {

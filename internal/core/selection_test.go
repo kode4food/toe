@@ -112,10 +112,7 @@ func TestSelection(t *testing.T) {
 		_, err := core.PointSelection(1).Replace(3, core.PointRange(2))
 		assert.True(t, errors.Is(err, core.ErrRangeIndexNotFound))
 
-		s, err := core.NewSelection([]core.Range{
-			core.PointRange(1),
-			core.PointRange(3),
-		}, 0)
+		s, err := core.NewSelection([]core.Range{core.PointRange(1), core.PointRange(3)}, 0)
 		assert.NoError(t, err)
 
 		_, err = s.Remove(3)
@@ -140,10 +137,7 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("sets primary index", func(t *testing.T) {
-		s, err := core.NewSelection([]core.Range{
-			core.PointRange(1),
-			core.PointRange(3),
-		}, 0)
+		s, err := core.NewSelection([]core.Range{core.PointRange(1), core.PointRange(3)}, 0)
 		assert.NoError(t, err)
 
 		s, err = s.SetPrimaryIndex(1)

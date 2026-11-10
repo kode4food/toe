@@ -9,8 +9,8 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-// One typed character in a Go document, the per-keystroke insert path that
-// consults the document's language for auto-pairs
+// One typed character in a Go document, the per-keystroke insert path that consults the document's
+// language for auto-pairs
 func BenchmarkInsertChar(b *testing.B) {
 	b.Setenv("XDG_CONFIG_HOME", b.TempDir())
 	dir := b.TempDir()

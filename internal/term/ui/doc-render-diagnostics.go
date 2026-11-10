@@ -108,9 +108,7 @@ func currentDiagnosticPopupKey(cx *Context) diagPopupKey {
 	return diagPopupKey{severity: diag.Severity, text: text}
 }
 
-func diagnosticPopupStyle(
-	cx *Context, severity view.DiagnosticSeverity,
-) tui.Style {
+func diagnosticPopupStyle(cx *Context, severity view.DiagnosticSeverity) tui.Style {
 	bg := cx.Theme().Get("ui.popup").BgColor()
 	if severity <= 0 || int(severity) >= len(diagnosticPopupScopes) {
 		return cx.Theme().Get("ui.popup")
@@ -124,9 +122,7 @@ func diagnosticPopupStyle(
 	return tui.Style{}.Fg(fg).Bg(bg)
 }
 
-func diagnosticAtCursor(
-	doc *view.Document, v *view.View,
-) (view.Diagnostic, bool) {
+func diagnosticAtCursor(doc *view.Document, v *view.View) (view.Diagnostic, bool) {
 	cursor := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
 	var best view.Diagnostic
 	ok := false
@@ -166,8 +162,8 @@ func diagnosticPopupText(diag view.Diagnostic) string {
 	return diag.Source + ": " + msg
 }
 
-// DiagnosticMessageText flattens a server's message onto one line and
-// shortens the qualified names in it
+// DiagnosticMessageText flattens a server's message onto one line and shortens the qualified names
+// in it
 func DiagnosticMessageText(message string) string {
 	lines := strings.FieldsFunc(message, func(r rune) bool {
 		return r == '\n' || r == '\r'
@@ -183,9 +179,7 @@ func shortenQualifiedNames(message string) string {
 	)
 }
 
-func diagnosticSpans(
-	diags []view.Diagnostic, styles *styles,
-) []diagnosticSpan {
+func diagnosticSpans(diags []view.Diagnostic, styles *styles) []diagnosticSpan {
 	if len(diags) == 0 {
 		return nil
 	}
@@ -215,18 +209,14 @@ func diagnosticSpans(
 	return out
 }
 
-func lineDiagnosticSpans(
-	diags []diagnosticSpan, s core.Span,
-) []diagnosticSpan {
+func lineDiagnosticSpans(diags []diagnosticSpan, s core.Span) []diagnosticSpan {
 	return filterLineItems(diags, lineItemBounds[diagnosticSpan]{
 		before: func(d diagnosticSpan) bool { return d.to <= s.From },
 		after:  func(d diagnosticSpan) bool { return d.from > s.To },
 	})
 }
 
-func diagnosticStyle(
-	severity view.DiagnosticSeverity, styles *styles,
-) tui.Style {
+func diagnosticStyle(severity view.DiagnosticSeverity, styles *styles) tui.Style {
 	switch severity {
 	case view.DiagnosticSeverityError:
 		return styles.diagnosticError

@@ -7,8 +7,8 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-// Options holds the editor's typed runtime config values. Fields are exported
-// so module Apply functions can write to them directly
+// Options holds the editor's typed runtime config values. Fields are exported so module Apply
+// functions can write to them directly
 type Options struct {
 	Theme       string
 	ScrollOff   int

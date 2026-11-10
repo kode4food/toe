@@ -64,9 +64,7 @@ func TestLSPCommands(t *testing.T) {
 
 		res := test.RunCmdArgs(t, km, e, "lsp-workspace-command", "test {}")
 
-		assert.Equal(t,
-			"error: workspace command unavailable: test", res.Message,
-		)
+		assert.Equal(t, "error: workspace command unavailable: test", res.Message)
 	})
 
 	t.Run("workspace command executes", func(t *testing.T) {
@@ -109,8 +107,8 @@ func TestLSPCommands(t *testing.T) {
 
 		res := test.RunCmdArgs(t, km, e, "goto_reference", "")
 
-		// the request runs behind the picker, so the controller has not
-		// necessarily been called by the time the command returns
+		// the request runs behind the picker, so the controller has not necessarily been called by
+		// the time the command returns
 		assert.Empty(t, res.Message)
 	})
 
@@ -270,9 +268,7 @@ func (c *fakeLanguageServerController) ExecuteWorkspaceCommand(
 	return c.err
 }
 
-func (c *fakeLanguageServerController) WorkspaceCommands(
-	*view.Document,
-) []string {
+func (c *fakeLanguageServerController) WorkspaceCommands(*view.Document) []string {
 	return []string{"test"}
 }
 
@@ -337,9 +333,7 @@ func (c *fakeLanguageServerController) ApplyCodeAction(
 	return c.err
 }
 
-func (c *fakeLanguageServerController) DocumentSymbols(
-	*view.Document,
-) ([]view.Symbol, error) {
+func (c *fakeLanguageServerController) DocumentSymbols(*view.Document) ([]view.Symbol, error) {
 	return c.symbols, c.err
 }
 

@@ -40,9 +40,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.Contains(t, line, "│................│")
 		assert.NotContains(t, line, "|")
 		raw := rawLineContaining(t, viewContent(m), "00000000")
-		assert.Contains(t, raw,
-			"\x1b[38;2;69;71;90m\x1b[48;2;30;30;46m00000000",
-		)
+		assert.Contains(t, raw, "\x1b[38;2;69;71;90m\x1b[48;2;30;30;46m00000000")
 		assert.Contains(t, raw, "\x1b[38;2;250;179;135m00 01")
 		assert.Contains(t, raw, "\x1b[38;2;166;227;161m................")
 	})
@@ -89,11 +87,7 @@ func TestBinaryPane(t *testing.T) {
 
 		m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 
-		assert.NotEmpty(t,
-			dumpLine(
-				strings.Split(stripANSI(viewContent(m)), "\n"),
-				"00000010",
-			))
+		assert.NotEmpty(t, dumpLine(strings.Split(stripANSI(viewContent(m)), "\n"), "00000010"))
 	})
 
 	t.Run("restores path and offset", func(t *testing.T) {
@@ -116,11 +110,7 @@ func TestBinaryPane(t *testing.T) {
 
 		_, ok := next.FocusedPane().(*ui.BinaryPane)
 		assert.True(t, ok)
-		assert.NotEmpty(t,
-			dumpLine(
-				strings.Split(stripANSI(viewContent(nm)), "\n"),
-				"00000010",
-			))
+		assert.NotEmpty(t, dumpLine(strings.Split(stripANSI(viewContent(nm)), "\n"), "00000010"))
 	})
 }
 

@@ -172,9 +172,7 @@ func (h *clientHandler) Configuration(
 }
 
 // WorkspaceFolders answers the server's request for the open folders
-func (h *clientHandler) WorkspaceFolders(
-	context.Context,
-) ([]protocol.WorkspaceFolder, error) {
+func (h *clientHandler) WorkspaceFolders(context.Context) ([]protocol.WorkspaceFolder, error) {
 	return h.session.workspaceFolders(), nil
 }
 
@@ -202,24 +200,18 @@ func (h *clientHandler) WorkDoneProgressCreate(
 }
 
 // Progress receives a progress update from the server
-func (h *clientHandler) Progress(
-	_ context.Context, params *protocol.ProgressParams,
-) error {
+func (h *clientHandler) Progress(_ context.Context, params *protocol.ProgressParams) error {
 	h.session.updateProgress(h.name, params)
 	return nil
 }
 
 // LogTrace receives a server trace message
-func (h *clientHandler) LogTrace(
-	context.Context, *protocol.LogTraceParams,
-) error {
+func (h *clientHandler) LogTrace(context.Context, *protocol.LogTraceParams) error {
 	return nil
 }
 
 // ShowMessage receives a message the server wants displayed
-func (h *clientHandler) ShowMessage(
-	context.Context, *protocol.ShowMessageParams,
-) error {
+func (h *clientHandler) ShowMessage(context.Context, *protocol.ShowMessageParams) error {
 	return nil
 }
 
@@ -231,9 +223,7 @@ func (h *clientHandler) ShowMessageRequest(
 }
 
 // LogMessage receives a message the server wants logged
-func (h *clientHandler) LogMessage(
-	context.Context, *protocol.LogMessageParams,
-) error {
+func (h *clientHandler) LogMessage(context.Context, *protocol.LogMessageParams) error {
 	return nil
 }
 

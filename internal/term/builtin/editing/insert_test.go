@@ -41,9 +41,7 @@ func TestCompletionCommands(t *testing.T) {
 			res := test.RunCmd(t, km, e, tt.name)
 			assert.Empty(t, res.Message)
 
-			lookup, ok := km.Lookup(
-				view.ModeCompletion, []command.KeyEvent{tt.key},
-			)
+			lookup, ok := km.Lookup(view.ModeCompletion, []command.KeyEvent{tt.key})
 			assert.True(t, ok)
 			assert.False(t, lookup.Prefix)
 			assert.Nil(t, lookup.Action(e).Continuation)

@@ -10,8 +10,8 @@ import (
 // DefaultCommentToken is used for line comments when no token is configured
 const DefaultCommentToken = "#"
 
-// GetCommentToken returns the longest token matching the start of the
-// non-whitespace content on the given line
+// GetCommentToken returns the longest token matching the start of the non-whitespace content on the
+// given line
 func GetCommentToken(text Rope, tokens []string, lineNum int) (string, bool) {
 	line, err := text.Line(lineNum)
 	if err != nil {
@@ -38,11 +38,9 @@ func GetCommentToken(text Rope, tokens []string, lineNum int) (string, bool) {
 	return best, true
 }
 
-// ToggleLineComments builds a transaction that toggles line comments on every
-// non-blank line in sel using token (DefaultCommentToken when empty)
-func ToggleLineComments(
-	doc Rope, sel Selection, token string,
-) (Transaction, error) {
+// ToggleLineComments builds a transaction that toggles line comments on every non-blank line in sel
+// using token (DefaultCommentToken when empty)
+func ToggleLineComments(doc Rope, sel Selection, token string) (Transaction, error) {
 	if token == "" {
 		token = DefaultCommentToken
 	}
@@ -93,8 +91,8 @@ func ToggleLineComments(
 	return NewTransaction(doc).WithChanges(cs), nil
 }
 
-// SplitLinesOfSelection returns a new selection where each range covers exactly
-// one line within the original selection spans
+// SplitLinesOfSelection returns a new selection where each range covers exactly one line within the
+// original selection spans
 func SplitLinesOfSelection(text Rope, sel Selection) (Selection, error) {
 	var ranges []Range
 	for _, r := range sel.Ranges() {

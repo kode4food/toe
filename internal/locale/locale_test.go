@@ -21,31 +21,23 @@ func TestEnvironment(t *testing.T) {
 			all:      "de_CH.UTF-8",
 			messages: "fr_CH",
 			lang:     "it_CH",
-			expected: []locale.Locale{
-				"de-CH", "de", locale.EnUS, locale.En,
-			},
+			expected: []locale.Locale{"de-CH", "de", locale.EnUS, locale.En},
 		},
 		{
 			name:     "LC_MESSAGES before LANG",
 			messages: "fr_CH",
 			lang:     "it_CH",
-			expected: []locale.Locale{
-				"fr-CH", "fr", locale.EnUS, locale.En,
-			},
+			expected: []locale.Locale{"fr-CH", "fr", locale.EnUS, locale.En},
 		},
 		{
-			name: "LANG fallback",
-			lang: "it_CH@euro",
-			expected: []locale.Locale{
-				"it-CH", "it", locale.EnUS, locale.En,
-			},
+			name:     "LANG fallback",
+			lang:     "it_CH@euro",
+			expected: []locale.Locale{"it-CH", "it", locale.EnUS, locale.En},
 		},
 		{
-			name: "strips English region",
-			lang: "en_GB.UTF-8",
-			expected: []locale.Locale{
-				"en-GB", locale.En, locale.EnUS,
-			},
+			name:     "strips English region",
+			lang:     "en_GB.UTF-8",
+			expected: []locale.Locale{"en-GB", locale.En, locale.EnUS},
 		},
 		{
 			name:     "US English uses baked default",

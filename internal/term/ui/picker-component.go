@@ -42,17 +42,13 @@ func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
 		cx.Editor, wantsFileWatchTree(p.source) || cx.hasCachedFilePicker(),
 	)
 	return &PickerComponent{
-		styles: buildStylesWithBackground(
-			th, view.ModeNormal, th.Get("ui.popup").BgColor(),
-		),
-		state: p,
+		styles: buildStylesWithBackground(th, view.ModeNormal, th.Get("ui.popup").BgColor()),
+		state:  p,
 	}
 }
 
 // HandleEvent drives filtering, selection, and acceptance
-func (p *PickerComponent) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (p *PickerComponent) HandleEvent(cx *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case externalFileChangedMsg:
 		return p.handleExternalFileChange(msg)
@@ -75,9 +71,7 @@ func (p *PickerComponent) HandleEvent(
 }
 
 // Layout centers the picker, sizing the preview to the space left
-func (p *PickerComponent) Layout(
-	cx *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (p *PickerComponent) Layout(cx *Context, screen geom.Size) (geom.Area, bool) {
 	p.screen = screen
 	size := pickerOverlaySize(cx, screen, p.state.source.ID())
 	if size.Width < 4 || size.Height < 4 {
@@ -101,9 +95,7 @@ func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 }
 
 // Cursor returns the caret position within the filter input
-func (p *PickerComponent) Cursor(
-	cx *Context, _ geom.Size,
-) (cur tea.Cursor, ok bool) {
+func (p *PickerComponent) Cursor(cx *Context, _ geom.Size) (cur tea.Cursor, ok bool) {
 	if p.bounds.IsEmpty() {
 		return tea.Cursor{}, false
 	}
@@ -231,8 +223,8 @@ func (p *PickerComponent) handleMouseClick(
 	p.markDirty()
 	clickPt := geom.Point{X: msg.X, Y: msg.Y}
 	primary := msg.Button == tea.MouseLeft
-	// the divider's ends sit on the frame border, and dragging the split is
-	// the more likely intent there
+	// the divider's ends sit on the frame border, and dragging the split is the more likely intent
+	// there
 	if primary && p.splitBounds.Contains(clickPt) {
 		p.dragSplit = true
 		p.updateSplitRatio(cx, msg.X)
@@ -275,9 +267,7 @@ func (p *PickerComponent) handleMouseMotion(
 	return consumed(), nil
 }
 
-func (p *PickerComponent) handleMouseRelease(
-	msg tea.MouseReleaseMsg,
-) (EventResult, tea.Cmd) {
+func (p *PickerComponent) handleMouseRelease(msg tea.MouseReleaseMsg) (EventResult, tea.Cmd) {
 	if msg.Button != tea.MouseLeft {
 		return consumed(), nil
 	}
@@ -291,8 +281,8 @@ func (p *PickerComponent) handleMouseRelease(
 	return consumed(), nil
 }
 
-// held still for the duration of a border drag, so the preview reflows once
-// on release instead of on every cell crossed
+// held still for the duration of a border drag, so the preview reflows once on release instead of
+// on every cell crossed
 func (p *PickerComponent) previewWrapWidth(innerW int) int {
 	if p.dragEdge.active() && p.dragWrap > 0 {
 		return p.dragWrap
@@ -310,9 +300,7 @@ func (p *PickerComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
 		return false
 	}
 	p.dragEdge = drag
-	p.dragWrap = previewInnerWidth(
-		p.previewBounds.Width, p.state.editor.Options().Scrollbar,
-	)
+	p.dragWrap = previewInnerWidth(p.previewBounds.Width, p.state.editor.Options().Scrollbar)
 	return true
 }
 
@@ -396,9 +384,7 @@ func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {
 	p.state.list.wheel(button, step)
 }
 
-func (p *PickerComponent) scrollPreviewByWheel(
-	button tea.MouseButton, step int,
-) {
+func (p *PickerComponent) scrollPreviewByWheel(button tea.MouseButton, step int) {
 	// clamped by the renderer, which knows the document extents
 	switch button {
 	case tea.MouseWheelUp:

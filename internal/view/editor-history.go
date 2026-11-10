@@ -62,8 +62,8 @@ func (e *Editor) ApplyToDocument(doc *Document, tx core.Transaction) error {
 	return nil
 }
 
-// CommitInsertHistory flushes any pending insert-mode history accumulation on
-// the focused document into a single history revision
+// CommitInsertHistory flushes any pending insert-mode history accumulation on the focused document
+// into a single history revision
 func (e *Editor) CommitInsertHistory() {
 	v := e.FocusedView()
 	if v == nil {

@@ -11,8 +11,8 @@ import (
 )
 
 type (
-	// Screen tracks the frame the terminal last showed, so each new frame
-	// writes only the cells that changed
+	// Screen tracks the frame the terminal last showed, so each new frame writes only the cells
+	// that changed
 	Screen struct {
 		prev    *Frame
 		pool    sync.Pool
@@ -21,15 +21,15 @@ type (
 		blank   []Cell
 	}
 
-	// Frame is an immutable snapshot of a Buffer, written to the terminal by
-	// the Screen that took it
+	// Frame is an immutable snapshot of a Buffer, written to the terminal by the Screen that took
+	// it
 	Frame struct {
 		screen *Screen
 		buf    Buffer
 	}
 
-	// scrollMatch is a run of new rows top..bottom that equal the previous
-	// frame's rows shifted by shift
+	// scrollMatch is a run of new rows top..bottom that equal the previous frame's rows shifted by
+	// shift
 	scrollMatch struct {
 		top    int
 		bottom int
@@ -64,8 +64,8 @@ func (s *Screen) Snapshot(b *Buffer) *Frame {
 	return &Frame{screen: s, buf: Buffer{cells: cells, Size: b.Size}}
 }
 
-// WriteFrame writes the cells that differ from the last frame written, or
-// every cell when nothing valid was written before
+// WriteFrame writes the cells that differ from the last frame written, or every cell when nothing
+// valid was written before
 func (f *Frame) WriteFrame(w io.Writer) error {
 	s := f.screen
 	prev := s.prev
@@ -107,8 +107,7 @@ func (f *Frame) WriteFrame(w io.Writer) error {
 	return err
 }
 
-// Invalidate forgets what the terminal shows, so the next write covers every
-// cell
+// Invalidate forgets what the terminal shows, so the next write covers every cell
 func (f *Frame) Invalidate() {
 	f.screen.prev = nil
 }
@@ -131,8 +130,8 @@ func (s *Screen) resetBase(prev *Frame) {
 	}
 }
 
-// scroll finds rows the terminal already shows elsewhere and moves them with a
-// scroll region, leaving s.base matching what the terminal then displays
+// scroll finds rows the terminal already shows elsewhere and moves them with a scroll region,
+// leaving s.base matching what the terminal then displays
 func (s *Screen) scroll(sb *strings.Builder, f *Frame) {
 	first := 0
 	for first < f.buf.Height && s.unchanged(f, first) {
@@ -148,8 +147,8 @@ func (s *Screen) scroll(sb *strings.Builder, f *Frame) {
 	if last-first+1 < minScrollGain {
 		return
 	}
-	// a scroll worth doing spans most of the changed rows, so one of these
-	// anchors lands inside it even when a status or tab line changed too
+	// a scroll worth doing spans most of the changed rows, so one of these anchors lands inside it
+	// even when a status or tab line changed too
 	best := scrollMatch{bottom: -1}
 	for _, y := range [...]int{first, (first + last) / 2, last} {
 		if y >= best.top && y <= best.bottom {
@@ -164,8 +163,8 @@ func (s *Screen) scroll(sb *strings.Builder, f *Frame) {
 	}
 }
 
-// bestScroll tries each old row equal to new row y as part of a shifted run,
-// walking up to where that run starts
+// bestScroll tries each old row equal to new row y as part of a shifted run, walking up to where
+// that run starts
 func (s *Screen) bestScroll(f *Frame, y int) scrollMatch {
 	row := bufferRow(&f.buf, y)
 	best := scrollMatch{}
@@ -187,8 +186,8 @@ func (s *Screen) bestScroll(f *Frame, y int) scrollMatch {
 	return best
 }
 
-// scrollRun extends seed down over new rows matching old rows shift away,
-// crediting rows it recovers and charging unchanged rows the scroll blanks
+// scrollRun extends seed down over new rows matching old rows shift away, crediting rows it
+// recovers and charging unchanged rows the scroll blanks
 func (s *Screen) scrollRun(f *Frame, seed scrollMatch) scrollMatch {
 	m := seed
 	m.bottom = m.top - 1
@@ -251,8 +250,8 @@ func writeCursorPosition(sb *strings.Builder, p geom.Point) {
 	sb.WriteByte(csiCursorPosition)
 }
 
-// writeScroll limits scrolling to the rows m moves, scrolls them by its shift,
-// then restores the full-screen scroll region
+// writeScroll limits scrolling to the rows m moves, scrolls them by its shift, then restores the
+// full-screen scroll region
 func writeScroll(sb *strings.Builder, m scrollMatch) {
 	top := m.top
 	bottom := m.bottom + m.shift

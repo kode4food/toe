@@ -126,8 +126,7 @@ func TestGotoChange(t *testing.T) {
 		testutil.SetCursor(t, e, 0)
 		action.GotoNextChange(e)
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
-		assert.Equal(t,
-			i18n.Text(action.StatusDiffUnavailable), testutil.StatusMsg(e))
+		assert.Equal(t, i18n.Text(action.StatusDiffUnavailable), testutil.StatusMsg(e))
 	})
 
 	t.Run("count jumps over hunks", func(t *testing.T) {

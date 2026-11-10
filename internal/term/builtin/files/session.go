@@ -16,8 +16,8 @@ const (
 //go:embed i18n/session.*.json
 var sessionFS embed.FS
 
-// SessionModule provides explicit commands for saving and restoring sessions
-// with the registry's current runtime options
+// SessionModule provides explicit commands for saving and restoring sessions with the registry's
+// current runtime options
 func SessionModule(r *command.Registry) command.Module {
 	return command.Module{
 		Translations: i18n.LoadTranslations(sessionFS),

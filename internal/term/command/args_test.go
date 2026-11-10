@@ -201,9 +201,7 @@ func TestParseErrorMessages(t *testing.T) {
 	})
 
 	t.Run("unknown flag message", func(t *testing.T) {
-		_, err := command.ParseArgs("--nope",
-			command.Signature{}, true, nil,
-		)
+		_, err := command.ParseArgs("--nope", command.Signature{}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "unknown flag")
 	})

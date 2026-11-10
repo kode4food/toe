@@ -61,8 +61,7 @@ func TestModelLifecycle(t *testing.T) {
 
 	t.Run("initial picker mounts on resize", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(files.NewFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePicker)
 		m = resize(m, 80, 24)
 		assert.NotEmpty(t, viewContent(m))
 	})
@@ -117,10 +116,7 @@ func TestCommandPaletteAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestAction(
-			km, "palette", m.CommandPaletteAction,
-			[]command.KeyEvent{char('f')},
-		)
+		bindNormalTestAction(km, "palette", m.CommandPaletteAction, []command.KeyEvent{char('f')})
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'f')
 		out := stripANSI(viewContent(m))
@@ -133,9 +129,7 @@ func TestLastPickerAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestAction(
-			km, "last", m.LastPickerAction, []command.KeyEvent{char('l')},
-		)
+		bindNormalTestAction(km, "last", m.LastPickerAction, []command.KeyEvent{char('l')})
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'l')
 		assert.NotEmpty(t, viewContent(m))
@@ -145,13 +139,8 @@ func TestLastPickerAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestAction(
-			km, "palette", m.CommandPaletteAction,
-			[]command.KeyEvent{char('f')},
-		)
-		bindNormalTestAction(
-			km, "last", m.LastPickerAction, []command.KeyEvent{char('l')},
-		)
+		bindNormalTestAction(km, "palette", m.CommandPaletteAction, []command.KeyEvent{char('f')})
+		bindNormalTestAction(km, "last", m.LastPickerAction, []command.KeyEvent{char('l')})
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'f')
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})

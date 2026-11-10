@@ -13,14 +13,12 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-func (ec *EditorComponent) handleKeyPress(
-	msg tea.KeyPressMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleKeyPress(msg tea.KeyPressMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
 	k := FromTeaKey(msg)
-	// a raw-input pane (terminal) forwards keystrokes to its child, so let the
-	// keymap claim anything bound in the current mode before the pane sees it
+	// a raw-input pane (terminal) forwards keystrokes to its child, so let the keymap claim
+	// anything bound in the current mode before the pane sees it
 	if pi, ok := p.(PaneInput); ok && !ec.keymapClaims(k) {
 		if result, handled := pi.HandleEvent(cx, msg); handled {
 			return result, nil
@@ -127,9 +125,7 @@ func (ec *EditorComponent) keymapClaims(k command.KeyEvent) bool {
 	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
 		return false
 	}
-	lookup, ok := cx.Keymaps.Lookup(
-		cx.Editor.Mode(), []command.KeyEvent{k},
-	)
+	lookup, ok := cx.Keymaps.Lookup(cx.Editor.Mode(), []command.KeyEvent{k})
 	return ok || lookup.Prefix
 }
 
@@ -274,9 +270,7 @@ func (ec *EditorComponent) clearInput() {
 	ec.setCount(0)
 }
 
-func (ec *EditorComponent) handleContinuation(
-	mode view.Mode, k command.KeyEvent,
-) {
+func (ec *EditorComponent) handleContinuation(mode view.Mode, k command.KeyEvent) {
 	next, step := ec.keys.continuation(ec.context.Editor, k)
 	switch step {
 	case command.ContinuationStay:
@@ -297,8 +291,7 @@ func (ec *EditorComponent) handleContinuation(
 }
 
 func (ec *EditorComponent) pushContinuation(
-	mode view.Mode, k command.KeyEvent,
-	next command.Continuation,
+	mode view.Mode, k command.KeyEvent, next command.Continuation,
 ) {
 	ec.keys.frames = append(ec.keys.frames, ec.keys.continuation)
 	ec.keys.input = append(ec.keys.input, keyInput{})

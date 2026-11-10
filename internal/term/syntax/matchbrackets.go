@@ -6,18 +6,11 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-var brackets = [][2]rune{
-	{'(', ')'},
-	{'{', '}'},
-	{'[', ']'},
-}
+var brackets = [][2]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 
-// FindMatchingBracket returns the char position of the bracket matching the
-// one at cursorPos, using the parse tree so string/comment brackets don't
-// falsely match
-func FindMatchingBracket(
-	source core.Source, cursorPos int,
-) (int, bool) {
+// FindMatchingBracket returns the char position of the bracket matching the one at cursorPos, using
+// the parse tree so string/comment brackets don't falsely match
+func FindMatchingBracket(source core.Source, cursorPos int) (int, bool) {
 	text := source.Text
 	runes := []rune(text)
 	if cursorPos < 0 || cursorPos >= len(runes) {

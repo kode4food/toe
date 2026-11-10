@@ -52,8 +52,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -92,9 +91,7 @@ func TestPickerFiles(t *testing.T) {
 		path = filepath.Join(tmp, ".hidden.go")
 		err = os.WriteFile(path, []byte("package hidden\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(tmp, "archive.zip"), []byte("PK"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(tmp, "archive.zip"), []byte("PK"), 0o644)
 		assert.NoError(t, err)
 		path = filepath.Join(tmp, "config_ignored.go")
 		err = os.WriteFile(path, []byte("package c\n"), 0o644)
@@ -116,8 +113,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -140,28 +136,18 @@ func TestPickerFiles(t *testing.T) {
 		err := os.MkdirAll(root, 0o755)
 		assert.NoError(t, err)
 		err = os.WriteFile(
-			filepath.Join(parent, ".gitignore"),
-			[]byte("child/parent_ignored.go\n"),
-			0o644,
+			filepath.Join(parent, ".gitignore"), []byte("child/parent_ignored.go\n"), 0o644,
 		)
 		assert.NoError(t, err)
 		err = os.WriteFile(
-			filepath.Join(root, "parent_ignored.go"),
-			[]byte("package ignored\n"),
-			0o644,
+			filepath.Join(root, "parent_ignored.go"), []byte("package ignored\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(root, "visible.go"),
-			[]byte("package visible\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(root, "visible.go"), []byte("package visible\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(root)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(root),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(root))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -176,29 +162,18 @@ func TestPickerFiles(t *testing.T) {
 		gitConfig := filepath.Join(tmp, "gitconfig")
 		err := os.WriteFile(global, []byte("global_ignored.go\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			gitConfig,
-			[]byte("[core]\n\texcludesfile = "+global+"\n"),
-			0o644,
-		)
+		err = os.WriteFile(gitConfig, []byte("[core]\n\texcludesfile = "+global+"\n"), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("GIT_CONFIG_GLOBAL", gitConfig)
 		err = os.WriteFile(
-			filepath.Join(tmp, "global_ignored.go"),
-			[]byte("package ignored\n"),
-			0o644,
+			filepath.Join(tmp, "global_ignored.go"), []byte("package ignored\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(tmp, "visible.go"), []byte("package visible\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(tmp, "visible.go"), []byte("package visible\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(tmp),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(tmp))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -215,21 +190,16 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 		err = os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(work, "root.go"), []byte("package root\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(cwd)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker", m.PickerAction(files.NewFilePicker),
-			[]command.KeyEvent{char('p')},
+			km, "file_picker", m.PickerAction(files.NewFilePicker), []command.KeyEvent{char('p')},
 		)
 
 		m = resize(m, 100, 30)
@@ -248,13 +218,9 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 		err = os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(work, "root.go"), []byte("package root\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(cwd)
@@ -282,13 +248,9 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 		err = os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(work, "root.go"), []byte("package root\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(cwd)
@@ -312,14 +274,9 @@ func TestPickerFiles(t *testing.T) {
 		cwd := filepath.Join(tmp, ".config", "toe")
 		err := os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(cwd)
@@ -345,14 +302,9 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 		err = os.MkdirAll(filepath.Join(cwd, ".git"), 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"), 0o644)
 		assert.NoError(t, err)
 
 		e := view.NewEditor(cwd)
@@ -375,14 +327,9 @@ func TestPickerFiles(t *testing.T) {
 		target := filepath.Join(tmp, ".dotfiles", "config", "toe")
 		err := os.MkdirAll(target, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(target, "languages.toml"), []byte("[[language]]\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(target, "languages.toml"), []byte("[[language]]\n"), 0o644)
 		assert.NoError(t, err)
 		link := filepath.Join(tmp, ".config", "toe")
 		err = os.MkdirAll(filepath.Dir(link), 0o755)
@@ -411,14 +358,9 @@ func TestPickerFiles(t *testing.T) {
 		target := filepath.Join(tmp, ".dotfiles", "config", "toe")
 		err := os.MkdirAll(target, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(target, "languages.toml"), []byte("[[language]]\n"),
-			0o644,
-		)
+		err = os.WriteFile(filepath.Join(target, "languages.toml"), []byte("[[language]]\n"), 0o644)
 		assert.NoError(t, err)
 		link := filepath.Join(tmp, ".config", "toe")
 		err = os.MkdirAll(filepath.Dir(link), 0o755)
@@ -427,9 +369,7 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 
 		e := view.NewEditor(link)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(link),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(link))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -447,17 +387,14 @@ func TestPickerFiles(t *testing.T) {
 		err = os.MkdirAll(root, 0o755)
 		assert.NoError(t, err)
 		err = os.WriteFile(
-			filepath.Join(external, "outside.go"),
-			[]byte("package outside\n"), 0o644,
+			filepath.Join(external, "outside.go"), []byte("package outside\n"), 0o644,
 		)
 		assert.NoError(t, err)
 		err = os.Symlink(external, filepath.Join(root, "linked"))
 		assert.NoError(t, err)
 
 		e := view.NewEditor(root)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(root),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(root))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -470,17 +407,13 @@ func TestPickerFiles(t *testing.T) {
 		target := filepath.Join(tmp, "target")
 		err := os.MkdirAll(target, 0o755)
 		assert.NoError(t, err)
-		err = os.WriteFile(
-			filepath.Join(target, "inside.go"), []byte("package in\n"), 0o644,
-		)
+		err = os.WriteFile(filepath.Join(target, "inside.go"), []byte("package in\n"), 0o644)
 		assert.NoError(t, err)
 		err = os.Symlink(target, filepath.Join(tmp, "linked"))
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(tmp),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(tmp))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -496,9 +429,7 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(link),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(link))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -516,9 +447,7 @@ func TestPickerFiles(t *testing.T) {
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			files.NewFilePickerInDir(link),
-		)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePickerInDir(link))
 
 		m = resize(m, 100, 30)
 		out := stripANSI(viewContent(m))
@@ -607,8 +536,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('b')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 16)
@@ -661,7 +589,5 @@ func (c *controlledDynamicSource) Load() ui.PickerLoad {
 	return ui.PickerLoad{Feed: c.ch, Stop: func() {}}
 }
 
-func (c *controlledDynamicSource) Accept(
-	_ *ui.PickerItem, _ ui.PickerAcceptAction,
-) {
+func (c *controlledDynamicSource) Accept(_ *ui.PickerItem, _ ui.PickerAcceptAction) {
 }

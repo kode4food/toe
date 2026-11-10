@@ -86,9 +86,7 @@ func (t *Tokenizer) parseDelimited(delims delimiterPair) (string, bool) {
 	start := t.pos
 	level := 1
 	for t.pos < len(t.input) {
-		idx := strings.IndexAny(
-			t.input[t.pos:], string([]byte{open, delims.close}),
-		)
+		idx := strings.IndexAny(t.input[t.pos:], string([]byte{open, delims.close}))
 		if idx < 0 {
 			break
 		}

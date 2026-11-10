@@ -818,9 +818,7 @@ func TestGotoFile(t *testing.T) {
 
 	t.Run("relative path resolved via cwd", func(t *testing.T) {
 		dir := t.TempDir()
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "rel.txt"), []byte("x"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "rel.txt"), []byte("x"), 0o644))
 
 		e := testutil.EditorWithText(t, "rel.txt")
 		assert.NoError(t, e.Chdir(dir))
@@ -898,15 +896,9 @@ func TestGotoFile(t *testing.T) {
 func TestAlignSelections(t *testing.T) {
 	t.Run("pads shorter cursors to match longest", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x\nyyy")
-		// cursors sit at pos 1 (col 1) and pos 4 (col 2), so maxCol is 2 and
-		// line 0 gains one pad space
-		testutil.SetSelection(t, e,
-			[]core.Range{
-				core.PointRange(1),
-				core.PointRange(4),
-			},
-			0,
-		)
+		// cursors sit at pos 1 (col 1) and pos 4 (col 2), so maxCol is 2 and line 0 gains one pad
+		// space
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(4)}, 0)
 
 		action.AlignSelections(e)
 

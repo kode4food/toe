@@ -51,9 +51,7 @@ func PickerModule(model ui.Model) command.Module {
 	cfg := new(pickerSection)
 	reset := func() {
 		*cfg = pickerSection{}
-		cfg.Editor.FileExplorer = fileExplorerConfig(
-			DefaultFileExplorerOptions(),
-		)
+		cfg.Editor.FileExplorer = fileExplorerConfig(DefaultFileExplorerOptions())
 	}
 	reset()
 
@@ -79,9 +77,7 @@ func PickerModule(model ui.Model) command.Module {
 				DocString: "Open file explorer at workspace root",
 				Run: kit.Runner(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
-						return NewFileExplorer(
-							e, FileExplorerOptions(cfg.Editor.FileExplorer),
-						)
+						return NewFileExplorer(e, FileExplorerOptions(cfg.Editor.FileExplorer))
 					},
 				)),
 				Modes: command.PaneModes,
@@ -105,9 +101,7 @@ func PickerModule(model ui.Model) command.Module {
 				DocString: "Open buffer picker",
 				Run: kit.Runner(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
-						return NewBufferPicker(
-							e, bufferPickerOptions(cfg.Editor.BufferPicker),
-						)
+						return NewBufferPicker(e, bufferPickerOptions(cfg.Editor.BufferPicker))
 					},
 				)),
 				Modes: command.PaneModes,
@@ -115,28 +109,21 @@ func PickerModule(model ui.Model) command.Module {
 			},
 		},
 		Options: []command.Option{
-			bufferPickerStartOption(
-				&cfg.Editor.BufferPicker.StartPosition,
-			),
+			bufferPickerStartOption(&cfg.Editor.BufferPicker.StartPosition),
 			fileExplorerBoolOption(
-				"file-explorer.hidden",
-				&cfg.Editor.FileExplorer.Hidden,
+				"file-explorer.hidden", &cfg.Editor.FileExplorer.Hidden,
 			).WithDoc("Show hidden entries"),
 			fileExplorerBoolOption(
-				"file-explorer.follow-symlinks",
-				&cfg.Editor.FileExplorer.FollowSymlinks,
+				"file-explorer.follow-symlinks", &cfg.Editor.FileExplorer.FollowSymlinks,
 			).WithDoc("Follow symlinks"),
 			fileExplorerBoolOption(
-				"file-explorer.parents",
-				&cfg.Editor.FileExplorer.Parents,
+				"file-explorer.parents", &cfg.Editor.FileExplorer.Parents,
 			).WithDoc("Show parent directories"),
 			fileExplorerBoolOption(
-				"file-explorer.ignore-files",
-				&cfg.Editor.FileExplorer.IgnoreFiles,
+				"file-explorer.ignore-files", &cfg.Editor.FileExplorer.IgnoreFiles,
 			).WithDoc("Honor ignore files"),
 			fileExplorerBoolOption(
-				"file-explorer.flatten-dirs",
-				&cfg.Editor.FileExplorer.FlattenDirs,
+				"file-explorer.flatten-dirs", &cfg.Editor.FileExplorer.FlattenDirs,
 			).WithDoc("Collapse single-child directories"),
 		},
 		Section: &command.Section{
@@ -146,9 +133,8 @@ func PickerModule(model ui.Model) command.Module {
 	}
 }
 
-// DiagnosticsModule returns diagnostic and workspace search picker commands
-// separately from PickerModule, allowing independent placement in the
-// space-leader menu
+// DiagnosticsModule returns diagnostic and workspace search picker commands separately from
+// PickerModule, allowing independent placement in the space-leader menu
 func DiagnosticsModule(model ui.Model) command.Module {
 	return command.Module{
 		Translations: i18n.LoadTranslations(diagnosticsFS),
@@ -163,20 +149,16 @@ func DiagnosticsModule(model ui.Model) command.Module {
 			{
 				Name:      actWorkspaceDiagnostics,
 				DocString: "Open workspace diagnostic picker",
-				Run: kit.Runner(
-					model.PickerAction(NewWorkspaceDiagnosticPicker),
-				),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('D'),
+				Run:       kit.Runner(model.PickerAction(NewWorkspaceDiagnosticPicker)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('D'),
 			},
 			{
 				Name:      actGlobalSearch,
 				DocString: "Global search in workspace folder",
-				Run: kit.Runner(
-					model.PickerAction(NewGlobalSearchPicker),
-				),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('/'),
+				Run:       kit.Runner(model.PickerAction(NewGlobalSearchPicker)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('/'),
 			},
 		},
 	}
@@ -200,9 +182,7 @@ func bufferPickerStartOption(value *PickerStartPosition) command.Option {
 			*value = next
 			return nil
 		},
-		Complete: command.StaticCompleter(
-			PickerStartTop, PickerStartPrevious,
-		),
+		Complete: command.StaticCompleter(PickerStartTop, PickerStartPrevious),
 	}
 }
 

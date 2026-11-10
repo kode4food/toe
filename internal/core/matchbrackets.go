@@ -8,8 +8,8 @@ type BracketPair struct {
 	Close rune
 }
 
-// MaxPlaintextScan bounds how far a bracket search runs in either direction,
-// so an unmatched bracket cannot walk the whole of a large file
+// MaxPlaintextScan bounds how far a bracket search runs in either direction, so an unmatched
+// bracket cannot walk the whole of a large file
 const MaxPlaintextScan = 10000
 
 var (
@@ -27,17 +27,14 @@ var (
 	}
 
 	bracketPairTable = append(
-		slices.Clone(bracketTable),
-		[2]rune{'"', '"'},
-		[2]rune{'\'', '\''},
-		[2]rune{'`', '`'},
+		slices.Clone(bracketTable), [2]rune{'"', '"'}, [2]rune{'\'', '\''}, [2]rune{'`', '`'},
 		[2]rune{'|', '|'},
 	)
 )
 
-// FindMatchingBracket returns the position of the bracket matching the one at
-// cursorPos, scanning at most MaxPlaintextScan characters. Returns (pos, true)
-// on success, (0, false) if not found or not on a bracket
+// FindMatchingBracket returns the position of the bracket matching the one at cursorPos, scanning
+// at most MaxPlaintextScan characters. Returns (pos, true) on success, (0, false) if not found or
+// not on a bracket
 func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 	if cursorPos >= doc.LenChars() {
 		return 0, false
@@ -91,8 +88,8 @@ func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 	return 0, false
 }
 
-// GetPair returns the open and close characters for a bracket pair. If ch is
-// not in any pair, both sides are ch
+// GetPair returns the open and close characters for a bracket pair. If ch is not in any pair, both
+// sides are ch
 func GetPair(ch rune) BracketPair {
 	for _, p := range bracketPairTable {
 		if p[0] == ch || p[1] == ch {

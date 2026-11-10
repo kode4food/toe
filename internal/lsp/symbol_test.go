@@ -118,16 +118,10 @@ func TestSymbol(t *testing.T) {
 		secondPath := filepath.Join(secondDir, "first.test.two")
 		assert.NoError(t, os.MkdirAll(filepath.Dir(rootless), 0o755))
 		assert.NoError(t, os.Mkdir(secondDir, 0o755))
-		for _, path := range []string{
-			firstPath,
-			rootless,
-			secondPath,
-		} {
+		for _, path := range []string{firstPath, rootless, secondPath} {
 			assert.NoError(t, os.WriteFile(path, []byte("target\n"), 0o644))
 		}
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(secondDir, "project.root"), nil, 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(secondDir, "project.root"), nil, 0o644))
 		marker := writeAllWorkspaceSymbolLanguages(t, exe)
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(firstPath)
@@ -228,9 +222,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -253,9 +245,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -295,9 +285,7 @@ file-types = ["two"]
 roots = ["project.root"]
 language-servers = ["session-test-two"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 	return marker
 }
@@ -322,9 +310,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -347,8 +333,6 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }

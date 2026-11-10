@@ -175,9 +175,7 @@ func TestSessionMethods(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		err = session.ExecuteWorkspaceCommand(
-			doc, "session.afterCompletion", nil,
-		)
+		err = session.ExecuteWorkspaceCommand(doc, "session.afterCompletion", nil)
 
 		assert.False(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
@@ -292,9 +290,7 @@ func TestSessionMethods(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		_, err = session.RestartLanguageServers(
-			doc, []string{"unknown-server"},
-		)
+		_, err = session.RestartLanguageServers(doc, []string{"unknown-server"})
 
 		assert.ErrorIs(t, err, view.ErrUnknownLanguageServer)
 	})
@@ -346,9 +342,7 @@ func TestSessionMethods(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		err = session.ExecuteWorkspaceCommand(
-			doc, "session.afterCompletion", []string{"arg1"},
-		)
+		err = session.ExecuteWorkspaceCommand(doc, "session.afterCompletion", []string{"arg1"})
 
 		assert.False(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
@@ -490,9 +484,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		err := session.ApplyWorkspaceEdit(
-			"nonexistent", protocol.WorkspaceEdit{},
-		)
+		err := session.ApplyWorkspaceEdit("nonexistent", protocol.WorkspaceEdit{})
 		assert.ErrorIs(t, err, view.ErrUnknownLanguageServer)
 	})
 
@@ -727,9 +719,7 @@ func TestSessionPullDiagnostics(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.nolsp")
-		assert.NoError(t, os.WriteFile(
-			path, []byte("hello\n"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
@@ -974,8 +964,8 @@ func TestFileWatching(t *testing.T) {
 		// Trigger initialization, server registers file watcher
 		_, _ = session.Completions(doc, v.ID())
 
-		// Saving resends didChangeWatchedFiles each attempt, so the poll
-		// succeeds as soon as the async watch registration lands
+		// Saving resends didChangeWatchedFiles each attempt, so the poll succeeds as soon as the
+		// async watch registration lands
 		doc.SetSelectionFor(v.ID(), doc.SelectionFor(v.ID()))
 		assert.Eventually(t, func() bool {
 			session.DocumentSaved(doc)
@@ -1006,8 +996,8 @@ func TestFileWatching(t *testing.T) {
 
 		_, _ = session.Completions(doc, v.ID())
 
-		// the server watches the gopls shape "**/*.{session,go}" from the
-		// workspace root, so a file in a new subdirectory has to reach it
+		// the server watches the gopls shape "**/*.{session,go}" from the workspace root, so a file
+		// in a new subdirectory has to reach it
 		created := filepath.Join(nested, "extracted.session")
 		assert.Eventually(t, func() bool {
 			assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))
@@ -1081,8 +1071,8 @@ func TestFileWatching(t *testing.T) {
 
 		_, _ = session.Completions(doc, v.ID())
 
-		// Rewriting the file each attempt raises a fresh fsnotify event, so
-		// the poll succeeds as soon as the directory watch is established
+		// Rewriting the file each attempt raises a fresh fsnotify event, so the poll succeeds as
+		// soon as the directory watch is established
 		created := filepath.Join(dir, "created.session")
 		assert.Eventually(t, func() bool {
 			assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))
@@ -1262,8 +1252,8 @@ func TestSessionAllOperationsError(t *testing.T) {
 	})
 }
 
-// an unattached session skipped lsp.Attach, so the editor never registered it
-// as a controller or document observer
+// an unattached session skipped lsp.Attach, so the editor never registered it as a controller or
+// document observer
 func TestSessionUnattached(t *testing.T) {
 	exe, err := os.Executable()
 	assert.NoError(t, err)
@@ -1280,9 +1270,7 @@ func TestSessionUnattached(t *testing.T) {
 	})
 
 	t.Run("publish diagnostics is a no-op", func(t *testing.T) {
-		err := session.PublishDiagnostics(
-			t.Context(), &protocol.PublishDiagnosticsParams{},
-		)
+		err := session.PublishDiagnostics(t.Context(), &protocol.PublishDiagnosticsParams{})
 		assert.NoError(t, err)
 	})
 
@@ -1320,9 +1308,7 @@ func TestSessionMultiServer(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		err = session.ExecuteWorkspaceCommand(
-			doc, "session.afterCompletion", nil,
-		)
+		err = session.ExecuteWorkspaceCommand(doc, "session.afterCompletion", nil)
 
 		assert.True(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
@@ -1410,9 +1396,7 @@ func TestSessionBareServer(t *testing.T) {
 		}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
-		assert.ErrorIs(t,
-			session.FormatSelection(doc, v.ID()), view.ErrFormatSelection,
-		)
+		assert.ErrorIs(t, session.FormatSelection(doc, v.ID()), view.ErrFormatSelection)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 	})
 	t.Run("document symbols unsupported", func(t *testing.T) {
@@ -1506,9 +1490,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerDidOpenFileEnv, marker)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1530,9 +1512,7 @@ file-types = ["ts"]
 roots = ["package.json"]
 language-servers = ["typescript-language-server"]
 `, exe, testServerEnv, testServerInitializationOptionsEnv, marker)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1555,9 +1535,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1579,9 +1557,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1604,9 +1580,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1629,9 +1603,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1654,9 +1626,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1679,9 +1649,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1703,9 +1671,7 @@ file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchEnv,
 		testServerFileWatchNotifyEnv, notifyFile)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1727,9 +1693,7 @@ file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchNestedEnv,
 		testServerFileWatchNotifyEnv, notifyFile)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1751,9 +1715,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1775,9 +1737,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1810,9 +1770,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1834,9 +1792,7 @@ file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerDidOpenFileEnv, marker,
 		testServerWorkspaceFoldersEnv)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1864,9 +1820,7 @@ language-servers = ["session-test-a", "session-test-b"]
 `, exe, testServerEnv, testServerCompletionEnv, testServerWorkspaceFoldersEnv,
 		exe, testServerEnv, testServerCompletionEnv,
 		testServerWorkspaceFoldersEnv)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1887,9 +1841,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test", "session-test"]
 `, exe, testServerEnv, testServerCompletionEnv)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1910,9 +1862,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -1920,9 +1870,7 @@ func waitForWorkspaceServer(t *testing.T, session *lsp.Session) {
 	t.Helper()
 	assert.Eventually(t, func() bool {
 		return !errors.Is(
-			session.ApplyWorkspaceEdit(
-				"session-test", protocol.WorkspaceEdit{},
-			),
+			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
 			view.ErrUnknownLanguageServer,
 		)
 	}, 2*time.Second, 5*time.Millisecond)

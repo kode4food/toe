@@ -18,8 +18,8 @@ type (
 	// SessionKind identifies a leaf pane's restorer in a saved session
 	SessionKind string
 
-	// sessRef is a path recorded in a session, alongside the session's base
-	// directory that relative paths resolve against
+	// sessRef is a path recorded in a session, alongside the session's base directory that relative
+	// paths resolve against
 	sessRef struct {
 		base string
 		path string
@@ -117,8 +117,8 @@ var (
 	ErrSessionUnsupported = errors.New("session version unsupported")
 )
 
-// SaveSession stores restorable workspace state in path. Runtime option
-// strings are supplied by the command registry that owns the option handlers
+// SaveSession stores restorable workspace state in path. Runtime option strings are supplied by the
+// command registry that owns the option handlers
 func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	s := e.prepareSession(sessionBase(path), opts)
 	if s == nil {
@@ -127,9 +127,8 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	return writeSession(path, s)
 }
 
-// RestoreSession restores file-backed documents and view state from path. It
-// returns any runtime option strings stored in the session for the caller to
-// apply through the command registry
+// RestoreSession restores file-backed documents and view state from path. It returns any runtime
+// option strings stored in the session for the caller to apply through the command registry
 func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	s, err := readSession(path)
 	if s == nil {
@@ -257,9 +256,7 @@ func WorkspaceSessionFile(dir string) string {
 }
 
 // collects restorable state, nil when there is nothing worth saving
-func (e *Editor) prepareSession(
-	base string, opts map[string]string,
-) *sessEditor {
+func (e *Editor) prepareSession(base string, opts map[string]string) *sessEditor {
 	docIndex := map[DocumentId]int{}
 	e.panes.tree.compactFocusSeq()
 	s := &sessEditor{

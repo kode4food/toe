@@ -54,9 +54,7 @@ const (
 	mouseAutoScrollMinInterval = 50 * time.Millisecond
 )
 
-func (ec *EditorComponent) continueAxisScroll(
-	axis *mouseAutoScrollAxis, toLow bool,
-) tea.Cmd {
+func (ec *EditorComponent) continueAxisScroll(axis *mouseAutoScrollAxis, toLow bool) tea.Cmd {
 	cx := ec.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
@@ -75,9 +73,7 @@ func (ec *EditorComponent) continueAxisScroll(
 	return axis.tick(toLow, axis.schedule)
 }
 
-func (a *mouseAutoScrollAxis) schedule(
-	toLow bool, gen int, interval time.Duration,
-) tea.Cmd {
+func (a *mouseAutoScrollAxis) schedule(toLow bool, gen int, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		return mouseAxisScrollMsg{gen: gen, axis: a, toLow: toLow}
 	})
@@ -114,9 +110,7 @@ func (a *axisTicker) update(bounds dragBounds) edgeState {
 	return edge
 }
 
-func (a *axisTicker) trigger(
-	edge edgeState, fixed int, schedule axisTickSchedule,
-) tea.Cmd {
+func (a *axisTicker) trigger(edge edgeState, fixed int, schedule axisTickSchedule) tea.Cmd {
 	if !edge.atLow && !edge.atHigh {
 		a.stop()
 		return nil

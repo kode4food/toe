@@ -31,9 +31,7 @@ func (c *completionComponent) width() int {
 	return w + 2
 }
 
-func (c *completionComponent) rowWidth(
-	item *view.CompletionItem, selected bool,
-) int {
+func (c *completionComponent) rowWidth(item *view.CompletionItem, selected bool) int {
 	return runewidth.StringWidth(c.rowLeft(item, selected))
 }
 
@@ -109,9 +107,7 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	})
 }
 
-func (c *completionComponent) rowLeft(
-	item *view.CompletionItem, selected bool,
-) string {
+func (c *completionComponent) rowLeft(item *view.CompletionItem, selected bool) string {
 	return completionRowText(c.rowParts(item, selected))
 }
 

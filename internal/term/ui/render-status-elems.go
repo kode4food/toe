@@ -230,13 +230,9 @@ func statusElemMacroRecording(s *statusElemCtx) statusElem {
 	if !s.recording {
 		return statusElem{}
 	}
-	text := fmt.Sprintf(
-		"%s %c", i18n.Text(i18n.StatusMacroRecording), s.macroReg,
-	)
+	text := fmt.Sprintf("%s %c", i18n.Text(i18n.StatusMacroRecording), s.macroReg)
 	if s.blinkFrame%2 == 1 {
-		return statusBadge(
-			strings.Repeat(" ", runewidth.StringWidth(text)), s.baseTUI,
-		)
+		return statusBadge(strings.Repeat(" ", runewidth.StringWidth(text)), s.baseTUI)
 	}
 	return statusBadge(text, s.macroSt)
 }

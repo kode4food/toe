@@ -13,8 +13,8 @@ import (
 )
 
 type (
-	// EditorConfig is the settings an .editorconfig file contributes, each nil
-	// field left to the editor's own configuration
+	// EditorConfig is the settings an .editorconfig file contributes, each nil field left to the
+	// editor's own configuration
 	EditorConfig struct {
 		IndentStyle            *core.IndentStyle
 		TabWidth               *int
@@ -154,17 +154,13 @@ func editorConfigFromPairs(pairs map[string]string) *EditorConfig {
 	cfg.TabWidth = tabWidth
 	cfg.IndentStyle = editorConfigIndentStyle(pairs, tabWidth)
 	cfg.LineEnding = editorConfigLineEnding(pairs["end_of_line"])
-	cfg.TrimTrailingWhitespace = editorConfigBool(
-		pairs["trim_trailing_whitespace"],
-	)
+	cfg.TrimTrailingWhitespace = editorConfigBool(pairs["trim_trailing_whitespace"])
 	cfg.InsertFinalNewline = editorConfigBool(pairs["insert_final_newline"])
 	cfg.MaxLineLength = parsePositiveEditorConfigInt(pairs["max_line_length"])
 	return &cfg
 }
 
-func editorConfigIndentStyle(
-	pairs map[string]string, tabWidth *int,
-) *core.IndentStyle {
+func editorConfigIndentStyle(pairs map[string]string, tabWidth *int) *core.IndentStyle {
 	switch pairs["indent_style"] {
 	case "tab":
 		return new(core.Tabs())
@@ -172,9 +168,7 @@ func editorConfigIndentStyle(
 		width := 4
 		if pairs["indent_size"] == "tab" && tabWidth != nil {
 			width = *tabWidth
-		} else if n := parsePositiveEditorConfigInt(
-			pairs["indent_size"],
-		); n != nil {
+		} else if n := parsePositiveEditorConfigInt(pairs["indent_size"]); n != nil {
 			width = *n
 		}
 		return new(core.Spaces(uint8(width)))

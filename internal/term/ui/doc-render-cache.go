@@ -51,23 +51,23 @@ type (
 		focused bool
 	}
 
-	// docStyleSet bundles a theme's derived style tables so a focused and a
-	// dimmed variant are always selected as one unit, never field by field
+	// docStyleSet bundles a theme's derived style tables so a focused and a dimmed variant are
+	// always selected as one unit, never field by field
 	docStyleSet struct {
 		styles    *styles
 		highlight func(string) tui.Style
 		hlCache   map[string]tui.Style
 	}
 
-	// diagPopupKey identifies the diagnostic popup's rendered content, so a
-	// change (including disappearing) can be detected across frames
+	// diagPopupKey identifies the diagnostic popup's rendered content, so a change (including
+	// disappearing) can be detected across frames
 	diagPopupKey struct {
 		severity view.DiagnosticSeverity
 		text     string
 	}
 
-	// infoPopupKey identifies the pending-key popup's rendered content, so a
-	// change (including disappearing) can be detected across frames
+	// infoPopupKey identifies the pending-key popup's rendered content, so a change (including
+	// disappearing) can be detected across frames
 	infoPopupKey struct {
 		head  string
 		title string
@@ -170,8 +170,8 @@ func newRenderCache() *renderCache {
 	}
 }
 
-// styleSet returns the derived styles for a pane's own mode and focus,
-// rebuilding every variant when the theme changes
+// styleSet returns the derived styles for a pane's own mode and focus, rebuilding every variant
+// when the theme changes
 func (r *renderCache) styleSet(cx *Context, key styleSetKey) docStyleSet {
 	th := cx.ThemeFor(key.focused)
 	if gen := cx.StyleGen(); r.styleGen != gen {
@@ -284,9 +284,7 @@ type ensureHighlightArgs struct {
 	rawText string
 }
 
-func (d *docRenderCache) ensureHightlight(
-	args ensureHighlightArgs,
-) []highlight.Span {
+func (d *docRenderCache) ensureHightlight(args ensureHighlightArgs) []highlight.Span {
 	lang := args.lang
 	rev := args.rev
 	if lang != view.DefaultLanguage && (d.hlRev != rev || d.hlLang != lang) {
@@ -344,9 +342,7 @@ func (d *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
 	}
 }
 
-func (d *docRenderCache) ensureLineIndex(
-	rev int, rawText string,
-) []lineIndexEntry {
+func (d *docRenderCache) ensureLineIndex(rev int, rawText string) []lineIndexEntry {
 	if d.liRev == rev && d.lineIndex != nil {
 		return d.lineIndex
 	}
@@ -376,9 +372,7 @@ func (d *docRenderCache) ensureLineIndex(
 	return idx
 }
 
-func (d *docRenderCache) ensureLinePrefix(
-	req *linePrefixRequest,
-) linePrefixScan {
+func (d *docRenderCache) ensureLinePrefix(req *linePrefixRequest) linePrefixScan {
 	if d.prefixRev != req.rev || d.prefixHOff != req.horzOff ||
 		d.prefixTabWidth != req.tabWidth {
 		d.prefixRev = req.rev
@@ -394,9 +388,7 @@ func (d *docRenderCache) ensureLinePrefix(
 	return res
 }
 
-func (d *docRenderCache) visualRows(
-	text core.Rope, vf *core.VisualMoveFormat, line int,
-) int {
+func (d *docRenderCache) visualRows(text core.Rope, vf *core.VisualMoveFormat, line int) int {
 	if d.lineRows == nil || d.rowsRev != d.rawTextRev || d.rowsFormat != *vf {
 		d.rowsRev = d.rawTextRev
 		d.rowsFormat = *vf

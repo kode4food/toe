@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// ExtendLineBelow selects the current line(s) inclusive of the trailing
-// newline. If the range already spans the full line, extends one more line
+// ExtendLineBelow selects the current line(s) inclusive of the trailing newline. If the range
+// already spans the full line, extends one more line
 func ExtendLineBelow(e *view.Editor) {
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		b, ok := resolveLineBounds(doc, r)
@@ -30,14 +30,14 @@ func ExtendLineBelow(e *view.Editor) {
 	})
 }
 
-// SelectLineBelow selects current line(s) extending downward, direction-aware:
-// forward selections grow at the head, backward selections shrink at it
+// SelectLineBelow selects current line(s) extending downward, direction-aware: forward selections
+// grow at the head, backward selections shrink at it
 func SelectLineBelow(e *view.Editor) {
 	selectLineImpl(e, false)
 }
 
-// SelectLineAbove selects current line(s) extending upward, direction-aware:
-// backward selections grow at the head, forward selections shrink at it
+// SelectLineAbove selects current line(s) extending upward, direction-aware: backward selections
+// grow at the head, forward selections shrink at it
 func SelectLineAbove(e *view.Editor) {
 	selectLineImpl(e, true)
 }
@@ -47,9 +47,7 @@ type resolveLineBoundsRes struct {
 	start, end         int
 }
 
-func resolveLineBounds(
-	doc core.Rope, r core.Range,
-) (resolveLineBoundsRes, bool) {
+func resolveLineBounds(doc core.Rope, r core.Range) (resolveLineBoundsRes, bool) {
 	lr, err := r.LineSpan(doc)
 	if err != nil {
 		return resolveLineBoundsRes{}, false
@@ -151,9 +149,7 @@ func selectLineImpl(e *view.Editor, above bool) {
 		}
 		ranges[i] = core.Range{Anchor: anchor, Head: head}
 	}
-	if newSel, err := core.NewSelection(
-		ranges, sel.PrimaryIndex(),
-	); err == nil {
+	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }

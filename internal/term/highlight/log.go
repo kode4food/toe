@@ -7,9 +7,8 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-// LogError, LogWarning, LogInfo, LogCommand and LogTerminal are the tags the
-// message log writes at the start of each line, naming the severity or the
-// source, LogSeparator the rule drawn after them
+// LogError, LogWarning, LogInfo, LogCommand and LogTerminal are the tags the message log writes at
+// the start of each line, naming the severity or the source, LogSeparator the rule drawn after them
 const (
 	LogError     = "ERR"
 	LogWarning   = "WAR"

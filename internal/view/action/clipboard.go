@@ -9,8 +9,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// TTYWriter writes text via OSC 52 to a bound device. Returns true if the write
-// succeeded
+// TTYWriter writes text via OSC 52 to a bound device. Returns true if the write succeeded
 type TTYWriter func(text string, primary bool) bool
 
 const (
@@ -60,14 +59,12 @@ func YankToPrimaryClipboard(e *view.Editor) {
 	e.SetMode(view.ModeNormal)
 }
 
-// PastePrimaryClipboardAfter reads the primary clipboard and pastes after each
-// selection
+// PastePrimaryClipboardAfter reads the primary clipboard and pastes after each selection
 func PastePrimaryClipboardAfter(e *view.Editor) {
 	withPrimaryClipboard(e, PasteAfter)
 }
 
-// PastePrimaryClipboardBefore reads the primary clipboard and pastes before
-// each selection
+// PastePrimaryClipboardBefore reads the primary clipboard and pastes before each selection
 func PastePrimaryClipboardBefore(e *view.Editor) {
 	withPrimaryClipboard(e, PasteBefore)
 }

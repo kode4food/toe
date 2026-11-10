@@ -35,9 +35,7 @@ const (
 )
 
 // DidOpen sends a textDocument/didOpen notification when supported
-func (c *Client) DidOpen(
-	ctx context.Context, doc DocumentSnapshot,
-) (bool, error) {
+func (c *Client) DidOpen(ctx context.Context, doc DocumentSnapshot) (bool, error) {
 	if !c.openCloseEnabled() {
 		return false, nil
 	}
@@ -53,9 +51,7 @@ func (c *Client) DidOpen(
 }
 
 // DidChange sends a textDocument/didChange notification when supported
-func (c *Client) DidChange(
-	ctx context.Context, doc DocumentSnapshot,
-) (bool, error) {
+func (c *Client) DidChange(ctx context.Context, doc DocumentSnapshot) (bool, error) {
 	return c.DidChangeDocument(ctx, doc, view.DocumentChange{})
 }
 
@@ -82,8 +78,7 @@ func (c *Client) DidChangeDocument(
 		next := core.NewRope(doc.Text)
 		var err error
 		changes, err = incrementalChanges(
-			editedText{before: change.Before, after: next},
-			change.Changes, c.OffsetEncoding(),
+			editedText{before: change.Before, after: next}, change.Changes, c.OffsetEncoding(),
 		)
 		if err != nil {
 			return false, err
@@ -104,9 +99,7 @@ func (c *Client) DidChangeDocument(
 }
 
 // DidSave sends a textDocument/didSave notification when supported
-func (c *Client) DidSave(
-	ctx context.Context, doc DocumentSnapshot,
-) (bool, error) {
+func (c *Client) DidSave(ctx context.Context, doc DocumentSnapshot) (bool, error) {
 	mode := c.saveMode()
 	if mode == saveDisabled {
 		return false, nil
@@ -123,9 +116,7 @@ func (c *Client) DidSave(
 }
 
 // DidClose sends a textDocument/didClose notification when supported
-func (c *Client) DidClose(
-	ctx context.Context, doc DocumentSnapshot,
-) (bool, error) {
+func (c *Client) DidClose(ctx context.Context, doc DocumentSnapshot) (bool, error) {
 	if !c.openCloseEnabled() {
 		return false, nil
 	}
@@ -306,9 +297,7 @@ type partialChangeArgs struct {
 	encoding protocol.PositionEncodingKind
 }
 
-func partialChange(
-	args partialChangeArgs,
-) (protocol.TextDocumentContentChangeEvent, error) {
+func partialChange(args partialChangeArgs) (protocol.TextDocumentContentChangeEvent, error) {
 	start, err := lspPosition(args.edited.after, args.newFrom, args.encoding)
 	if err != nil {
 		return nil, err

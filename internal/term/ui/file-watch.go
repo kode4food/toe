@@ -52,8 +52,8 @@ type (
 	}
 )
 
-// external tools write a file in bursts of small edits, so a quiet gap
-// collapses the burst into one reload and one VCS refresh
+// external tools write a file in bursts of small edits, so a quiet gap collapses the burst into one
+// reload and one VCS refresh
 const (
 	fileWatchQuiet    = 120 * time.Millisecond
 	fileWatchMaxDelay = 750 * time.Millisecond

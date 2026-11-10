@@ -30,9 +30,7 @@ func SetEditorText(t *testing.T, e *view.Editor, text string) {
 		core.TextChange(core.Span{From: 0, To: 0}, text),
 	})
 	assert.NoError(t, err)
-	tx := core.NewTransaction(rope).
-		WithChanges(cs).
-		WithSelection(core.PointSelection(0))
+	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))
 	assert.NoError(t, e.Apply(tx))
 }
 
@@ -58,9 +56,7 @@ func SetCursor(t *testing.T, e *view.Editor, pos int) {
 }
 
 // SetSelection replaces the focused view's selection
-func SetSelection(
-	t *testing.T, e *view.Editor, ranges []core.Range, primary int,
-) {
+func SetSelection(t *testing.T, e *view.Editor, ranges []core.Range, primary int) {
 	t.Helper()
 	v := e.FocusedView()
 	assert.NotNil(t, v)

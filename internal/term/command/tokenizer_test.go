@@ -109,9 +109,7 @@ func TestSyntaxErrorMessages(t *testing.T) {
 	t.Run("missing delimiter after named expansion", func(t *testing.T) {
 		_, err := commandTokens("%sh", true)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
-		assert.Contains(t,
-			err.Error(), "missing a string delimiter after '%sh'",
-		)
+		assert.Contains(t, err.Error(), "missing a string delimiter after '%sh'")
 	})
 
 	t.Run("bare percent not escaped", func(t *testing.T) {

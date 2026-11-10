@@ -38,17 +38,14 @@ const (
 	explorerFileRank
 )
 
-// NewFileExplorer opens a file explorer rooted at the editor's working
-// directory
+// NewFileExplorer opens a file explorer rooted at the editor's working directory
 func NewFileExplorer(e *view.Editor, opts FileExplorerOptions) *ui.Picker {
 	return ui.NewPicker(e, newFileExplorerSource(e, e.Cwd(), opts))
 }
 
-// NewFocusedPaneDirExplorer opens a file explorer rooted at the focused pane's
-// path directory, falling back to the working directory
-func NewFocusedPaneDirExplorer(
-	e *view.Editor, opts FileExplorerOptions,
-) *ui.Picker {
+// NewFocusedPaneDirExplorer opens a file explorer rooted at the focused pane's path directory,
+// falling back to the working directory
+func NewFocusedPaneDirExplorer(e *view.Editor, opts FileExplorerOptions) *ui.Picker {
 	return ui.NewPicker(e, newFileExplorerSource(e, focusedPaneDir(e), opts))
 }
 
@@ -84,9 +81,7 @@ func (f *fileExplorerSource) Items() ([]*ui.PickerItem, bool) {
 }
 
 // Accept opens the chosen file, or descends into a directory
-func (f *fileExplorerSource) Accept(
-	item *ui.PickerItem, action ui.PickerAcceptAction,
-) {
+func (f *fileExplorerSource) Accept(item *ui.PickerItem, action ui.PickerAcceptAction) {
 	path := item.Location.Target.Path
 	if path == "" {
 		return
@@ -177,9 +172,7 @@ func (f *fileExplorerSource) makeDirItem(args makeDirItemArgs) *ui.PickerItem {
 	})
 }
 
-func (f *fileExplorerSource) makeFileItem(
-	slab *ui.PickerItemSlab, path string,
-) *ui.PickerItem {
+func (f *fileExplorerSource) makeFileItem(slab *ui.PickerItemSlab, path string) *ui.PickerItem {
 	name := filepath.Base(path)
 	return slab.Add(ui.PickerItem{
 		Display:  name,
@@ -206,9 +199,7 @@ func explorerIgnoreOptions(cfg FileExplorerOptions) ui.PickerIgnoreOptions {
 	}
 }
 
-func pickerDirEntryIsDir(
-	entry os.DirEntry, path string, followSymlinks bool,
-) bool {
+func pickerDirEntryIsDir(entry os.DirEntry, path string, followSymlinks bool) bool {
 	if entry.IsDir() {
 		return true
 	}

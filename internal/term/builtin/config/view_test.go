@@ -240,24 +240,19 @@ func TestViewOptionsExtra(t *testing.T) {
 
 	t.Run("toggle indent-guides.render", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "toggle_option", "indent-guides.render")
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "indent-guides.render")
 		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("toggle soft-wrap.wrap-at-text-width", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(
-			t, km, e, "toggle_option", "soft-wrap.wrap-at-text-width",
-		)
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "soft-wrap.wrap-at-text-width")
 		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("rejects invalid whitespace render", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "set_option", "whitespace.render.space bogus",
-		)
+		res := test.RunCmdArgs(t, km, e, "set_option", "whitespace.render.space bogus")
 		assert.Contains(t, res.Message, "error")
 	})
 

@@ -42,9 +42,7 @@ func writeCommandLanguages(t *testing.T, text string) {
 	dir := filepath.Join(root, loader.DirName)
 	err := os.MkdirAll(dir, 0o755)
 	assert.NoError(t, err)
-	err = os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	)
+	err = os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644)
 	assert.NoError(t, err)
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
@@ -62,9 +60,7 @@ func writeLanguagesFile(t *testing.T, path, text string) {
 	assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
 }
 
-func newSelection(
-	t *testing.T, ranges []core.Range, primary int,
-) core.Selection {
+func newSelection(t *testing.T, ranges []core.Range, primary int) core.Selection {
 	t.Helper()
 	sel, err := core.NewSelection(ranges, primary)
 	assert.NoError(t, err)

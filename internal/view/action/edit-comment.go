@@ -6,8 +6,8 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-// ToggleComments toggles the most appropriate comment style for the language:
-// block comments if already block-commented, line comments otherwise
+// ToggleComments toggles the most appropriate comment style for the language: block comments if
+// already block-commented, line comments otherwise
 func ToggleComments(e *view.Editor) {
 	doc := e.FocusedDocument()
 	if doc == nil {
@@ -74,9 +74,7 @@ func ToggleLineComments(e *view.Editor) {
 		if v == nil {
 			return
 		}
-		sel, err := core.SplitLinesOfSelection(
-			doc.Text(), doc.SelectionFor(v.ID()),
-		)
+		sel, err := core.SplitLinesOfSelection(doc.Text(), doc.SelectionFor(v.ID()))
 		if err != nil {
 			return
 		}
@@ -122,9 +120,7 @@ func toggleLineCommentsWithToken(e *view.Editor, token string) {
 	if doc.ReadOnly() {
 		return
 	}
-	tx, err := core.ToggleLineComments(
-		doc.Text(), doc.SelectionFor(v.ID()), token,
-	)
+	tx, err := core.ToggleLineComments(doc.Text(), doc.SelectionFor(v.ID()), token)
 	if err != nil {
 		return
 	}
@@ -133,9 +129,7 @@ func toggleLineCommentsWithToken(e *view.Editor, token string) {
 	}
 }
 
-func toggleBlockCommentsWithTokens(
-	e *view.Editor, tokens []core.BlockCommentToken,
-) {
+func toggleBlockCommentsWithTokens(e *view.Editor, tokens []core.BlockCommentToken) {
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return
@@ -155,9 +149,7 @@ func toggleBlockCommentsSelection(
 	if doc.ReadOnly() {
 		return
 	}
-	tx, err := core.ToggleBlockComments(
-		doc.Text(), sel, tokens,
-	)
+	tx, err := core.ToggleBlockComments(doc.Text(), sel, tokens)
 	if err != nil {
 		return
 	}

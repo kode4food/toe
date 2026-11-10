@@ -11,8 +11,8 @@ type Overlay[T any] struct {
 	Over T
 }
 
-// MergeValues overlays Over onto Base, merging maps only while depth remains.
-// Below that Over replaces Base outright
+// MergeValues overlays Over onto Base, merging maps only while depth remains. Below that Over
+// replaces Base outright
 func MergeValues(values Overlay[any], depth int) any {
 	right := values.Over
 	switch l := values.Base.(type) {
@@ -55,9 +55,7 @@ func MergeValues(values Overlay[any], depth int) any {
 }
 
 // LoadMergedWithBase merges TOML files onto an already decoded base map
-func LoadMergedWithBase(
-	base map[string]any, paths []string, depth int,
-) (map[string]any, bool) {
+func LoadMergedWithBase(base map[string]any, paths []string, depth int) (map[string]any, bool) {
 	merged := any(base)
 	loaded := base != nil
 	for _, path := range paths {

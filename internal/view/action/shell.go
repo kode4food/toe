@@ -17,10 +17,12 @@ type shellRun struct {
 	input   string
 }
 
-var ErrShellCommand = errors.New("shell command failed")
+var (
+	ErrShellCommand = errors.New("shell command failed")
+)
 
-// ShellPipe pipes each selection through a shell command, replacing the
-// selection with the command's stdout
+// ShellPipe pipes each selection through a shell command, replacing the selection with the
+// command's stdout
 func ShellPipe(e *view.Editor, cmdStr string) error {
 	v := e.FocusedView()
 	if v == nil {
@@ -93,20 +95,18 @@ func ShellPipeTo(e *view.Editor, cmdStr string) error {
 	return nil
 }
 
-// ShellInsertOutput runs a shell command and inserts its output before each
-// cursor position
+// ShellInsertOutput runs a shell command and inserts its output before each cursor position
 func ShellInsertOutput(e *view.Editor, cmdStr string) error {
 	return shellOutputAt(e, cmdStr, core.Range.From)
 }
 
-// ShellAppendOutput runs a shell command and appends its output after each
-// selection
+// ShellAppendOutput runs a shell command and appends its output after each selection
 func ShellAppendOutput(e *view.Editor, cmdStr string) error {
 	return shellOutputAt(e, cmdStr, core.Range.To)
 }
 
-// ShellKeepPipe pipes each selection through a shell command and keeps only
-// selections for which the command exits with status 0
+// ShellKeepPipe pipes each selection through a shell command and keeps only selections for which
+// the command exits with status 0
 func ShellKeepPipe(e *view.Editor, cmdStr string) error {
 	v := e.FocusedView()
 	if v == nil {

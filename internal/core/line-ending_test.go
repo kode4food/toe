@@ -32,9 +32,7 @@ func TestLineEnding(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, core.LineEndingLF, e)
 
-		for _, ch := range []rune{
-			'\r', '\v', '\f', '\u0085', '\u2028', '\u2029',
-		} {
+		for _, ch := range []rune{'\r', '\v', '\f', '\u0085', '\u2028', '\u2029'} {
 			e, ok = core.LineEndingFromChar(ch)
 			assert.True(t, ok)
 			assert.Equal(t, core.LineEndingLF, e)

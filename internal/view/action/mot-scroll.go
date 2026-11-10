@@ -119,9 +119,8 @@ func GotoWindowCenter(e *view.Editor) {
 	gotoWindowImpl(e, 1)
 }
 
-// ScrollViewLines scrolls a specific view by n lines, not moving the cursor.
-// Used for mouse-wheel events. The view remains free-scrolled until that view
-// receives cursor-moving keyboard input
+// ScrollViewLines scrolls a specific view by n lines, not moving the cursor. Used for mouse-wheel
+// events. The view remains free-scrolled until that view receives cursor-moving keyboard input
 func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	doc := e.Document(v.DocID())
 	if doc == nil {
@@ -158,9 +157,7 @@ func ScrollViewToLine(e *view.Editor, v *view.View, line int) {
 		return
 	}
 	text := doc.Text()
-	anchor, err := text.LineToChar(
-		min(max(line, 0), max(text.LenLines()-1, 0)),
-	)
+	anchor, err := text.LineToChar(min(max(line, 0), max(text.LenLines()-1, 0)))
 	if err != nil {
 		return
 	}
@@ -170,8 +167,8 @@ func ScrollViewToLine(e *view.Editor, v *view.View, line int) {
 	v.SetOffset(offset)
 }
 
-// ScrollViewColumns scrolls a view horizontally by n columns without moving
-// the cursor. Scrolling right is clamped to keep one column of content visible
+// ScrollViewColumns scrolls a view horizontally by n columns without moving the cursor. Scrolling
+// right is clamped to keep one column of content visible
 func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
 	doc := e.Document(v.DocID())
 	if doc == nil {
@@ -332,9 +329,7 @@ func scrollViewBy(args scrollViewByArgs) {
 		if err != nil {
 			return
 		}
-		newSel := clampSelectionToLine(
-			text, sel, topChar, args.editor.Mode() == view.ModeSelect,
-		)
+		newSel := clampSelectionToLine(text, sel, topChar, args.editor.Mode() == view.ModeSelect)
 		doc.SetSelectionFor(args.view.ID(), newSel)
 	}
 }

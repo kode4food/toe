@@ -33,8 +33,7 @@ type (
 
 // Completion requests completion items from the server at the given position
 func (c *Client) Completion(
-	ctx context.Context, doc DocumentSnapshot, pos int,
-	compCtx protocol.CompletionContext,
+	ctx context.Context, doc DocumentSnapshot, pos int, compCtx protocol.CompletionContext,
 ) (CompletionList, bool, error) {
 	if !c.SupportsFeature(FeatureCompletion) {
 		return CompletionList{}, false, nil
@@ -58,9 +57,7 @@ func (c *Client) Completion(
 }
 
 // Completions requests an invoked completion list at the cursor
-func (s *Session) Completions(
-	doc *view.Document, viewID view.Id,
-) (view.CompletionResult, error) {
+func (s *Session) Completions(doc *view.Document, viewID view.Id) (view.CompletionResult, error) {
 	ctx := protocol.CompletionContext{
 		TriggerKind: protocol.CompletionTriggerKindInvoked,
 	}
@@ -194,9 +191,7 @@ func (s *Session) completionError(client *Client, err error) error {
 	return fmt.Errorf("%w: %s: %w", ErrLanguageServerRequest, name, err)
 }
 
-func (s *Session) completionTrigger(
-	doc *view.Document, viewID view.Id,
-) (string, bool) {
+func (s *Session) completionTrigger(doc *view.Document, viewID view.Id) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
 	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})

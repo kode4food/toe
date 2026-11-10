@@ -81,9 +81,7 @@ func pickerSelMatchStyle(cx *Context) tui.Style {
 	return pickerSelStyle(cx).Fg(s.FgColor()).Mod(tui.ModifierBold)
 }
 
-func completionIconStyle(
-	cx *Context, kind string, selected bool,
-) tui.Style {
+func completionIconStyle(cx *Context, kind string, selected bool) tui.Style {
 	base := completionBaseStyle(cx, selected)
 	icon := cx.Theme().Get("ui.text.inactive")
 	if style, ok := cx.Theme().TryGet(completionKindStyleScope(kind)); ok {

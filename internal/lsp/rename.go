@@ -63,9 +63,7 @@ func (c *Client) RenameSymbol(
 }
 
 // RenameSymbolPrefill returns the initial rename prompt text
-func (s *Session) RenameSymbolPrefill(
-	doc *view.Document, viewID view.Id,
-) (string, error) {
+func (s *Session) RenameSymbolPrefill(doc *view.Document, viewID view.Id) (string, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return "", nil
@@ -99,9 +97,7 @@ func (s *Session) RenameSymbolPrefill(
 }
 
 // RenameSymbol applies a language-server rename edit for the current symbol
-func (s *Session) RenameSymbol(
-	doc *view.Document, viewID view.Id, name string,
-) error {
+func (s *Session) RenameSymbol(doc *view.Document, viewID view.Id, name string) error {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return nil
@@ -148,14 +144,11 @@ func documentCursor(doc *view.Document, viewID view.Id) int {
 }
 
 func renamePrefillFromResult(
-	doc *view.Document, viewID view.Id, client *Client,
-	result protocol.PrepareRenameResult,
+	doc *view.Document, viewID view.Id, client *Client, result protocol.PrepareRenameResult,
 ) (string, error) {
 	switch r := result.(type) {
 	case *protocol.Range:
-		if cr, ok := lspRangeToChars(
-			doc, *r, client.OffsetEncoding(),
-		); ok {
+		if cr, ok := lspRangeToChars(doc, *r, client.OffsetEncoding()); ok {
 			return doc.Text().SliceString(cr.Span())
 		}
 		return "", ErrWorkspaceEditRange

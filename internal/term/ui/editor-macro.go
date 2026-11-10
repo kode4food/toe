@@ -18,12 +18,9 @@ type macroSlot struct {
 	hasReplay   bool
 }
 
-// MacroRecordAction starts or stops macro recording. When not recording,
-// prompts for a register key and begins recording. When already recording,
-// stops and saves the macro to the chosen register
-func (ec *EditorComponent) MacroRecordAction(
-	ed *view.Editor,
-) command.Continuation {
+// MacroRecordAction starts or stops macro recording. When not recording, prompts for a register key
+// and begins recording. When already recording, stops and saves the macro to the chosen register
+func (ec *EditorComponent) MacroRecordAction(ed *view.Editor) command.Continuation {
 	ms := ec.macroSlot
 	if ms.recording {
 		if len(ms.keys) > 0 {
@@ -43,11 +40,8 @@ func (ec *EditorComponent) MacroRecordAction(
 	})
 }
 
-// MacroReplayAction prompts for a register key and replays the macro stored
-// there count times
-func (ec *EditorComponent) MacroReplayAction(
-	_ *view.Editor,
-) command.Continuation {
+// MacroReplayAction prompts for a register key and replays the macro stored there count times
+func (ec *EditorComponent) MacroReplayAction(_ *view.Editor) command.Continuation {
 	ms := ec.macroSlot
 	if ms.recording {
 		return nil

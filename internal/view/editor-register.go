@@ -15,8 +15,8 @@ const (
 	RegisterBlackHole        = '_'
 )
 
-// YankRegister returns the explicit register or the system clipboard for
-// yank, delete, change, and paste operations
+// YankRegister returns the explicit register or the system clipboard for yank, delete, change, and
+// paste operations
 func (e *Editor) YankRegister() rune {
 	if reg := e.ActiveRegister(); reg != 0 {
 		return reg
@@ -24,8 +24,7 @@ func (e *Editor) YankRegister() rune {
 	return RegisterClipboard
 }
 
-// ReadRegister returns regular and computed register contents for the current
-// editor state
+// ReadRegister returns regular and computed register contents for the current editor state
 func (e *Editor) ReadRegister(name rune) []string {
 	switch name {
 	case RegisterBlackHole:
@@ -52,8 +51,8 @@ func (e *Editor) FirstRegister(name rune) (string, bool) {
 	return vals[0], true
 }
 
-// WriteRegister stores regular register contents, syncing special clipboard
-// registers to the system clipboard provider
+// WriteRegister stores regular register contents, syncing special clipboard registers to the system
+// clipboard provider
 func (e *Editor) WriteRegister(name rune, values []string) {
 	switch name {
 	case RegisterBlackHole:

@@ -59,9 +59,8 @@ type (
 	// Align describes vertical scroll alignment
 	Align int
 
-	// CursorScroll carries the viewport inputs that keep the cursor visible.
-	// Height and Visual drive vertical scrolling, Width and TabWidth drive
-	// horizontal scrolling
+	// CursorScroll carries the viewport inputs that keep the cursor visible. Height and Visual
+	// drive vertical scrolling, Width and TabWidth drive horizontal scrolling
 	CursorScroll struct {
 		Doc       core.Rope
 		Selection core.Selection
@@ -93,9 +92,8 @@ type (
 	}
 )
 
-// ModeAny is the zero value and not a pane mode. It is the wildcard key in a
-// Command's per-mode Keys map, applying to every mode the command supports
-// unless a specific mode overrides it
+// ModeAny is the zero value and not a pane mode. It is the wildcard key in a Command's per-mode
+// Keys map, applying to every mode the command supports unless a specific mode overrides it
 const ModeAny Mode = 0
 
 // the bottom row of a view's area draws its status line, not text
@@ -110,8 +108,8 @@ const (
 	ModeImage                     // IMG
 	ModeBinary                    // BIN
 
-	// ModeCompletion is not a pane mode. It is the keymap dispatch bucket used
-	// only while the completion popup owns key handling
+	// ModeCompletion is not a pane mode. It is the keymap dispatch bucket used only while the
+	// completion popup owns key handling
 	ModeCompletion // COM
 )
 
@@ -169,8 +167,8 @@ func (v *View) Discard() {
 func (v *View) Shutdown() {
 }
 
-// OnDisplace marks this view as stashed behind another pane. A view holds no
-// heavy resources of its own, so there is nothing to release
+// OnDisplace marks this view as stashed behind another pane. A view holds no heavy resources of its
+// own, so there is nothing to release
 func (v *View) OnDisplace() {}
 
 // OnRevert marks this view as returned to the foreground. Nothing to reacquire
@@ -181,21 +179,20 @@ func (v *View) ContentHeight() int {
 	return max(v.area.Height-viewStatusRows, 0)
 }
 
-// ContentWidth returns the view's columns for text, excluding its gutter, as
-// last reported by the renderer
+// ContentWidth returns the view's columns for text, excluding its gutter, as last reported by the
+// renderer
 func (v *View) ContentWidth() int {
 	return v.contentWidth
 }
 
-// SetContentWidth sets the text columns available to this view (called by the
-// renderer once it has measured the gutter)
+// SetContentWidth sets the text columns available to this view (called by the renderer once it has
+// measured the gutter)
 func (v *View) SetContentWidth(w int) {
 	v.contentWidth = w
 }
 
-// GoalColumns returns the column each of ranges selections is aiming for, or
-// nil when an edit, a horizontal motion, or a change of wrapping mode broke the
-// run
+// GoalColumns returns the column each of ranges selections is aiming for, or nil when an edit, a
+// horizontal motion, or a change of wrapping mode broke the run
 func (v *View) GoalColumns(rev int, visual bool, ranges int) []int {
 	g := v.goalCols
 	if g.rev != rev || g.visual != visual || len(g.cols) != ranges {
@@ -204,8 +201,8 @@ func (v *View) GoalColumns(rev int, visual bool, ranges int) []int {
 	return g.cols
 }
 
-// SetGoalColumns records the columns a vertical move is aiming for, so the next
-// move in the run can return to them after a short line clamps the cursor
+// SetGoalColumns records the columns a vertical move is aiming for, so the next move in the run can
+// return to them after a short line clamps the cursor
 func (v *View) SetGoalColumns(rev int, visual bool, cols []int) {
 	v.goalCols = goalColumnRun{rev: rev, visual: visual, cols: cols}
 }
@@ -233,8 +230,7 @@ func (v *View) MarkDirty() {
 	v.dirty = true
 }
 
-// ConsumeDirty reports whether the view has changed since the last call,
-// clearing the flag
+// ConsumeDirty reports whether the view has changed since the last call, clearing the flag
 func (v *View) ConsumeDirty() bool {
 	d := v.dirty
 	v.dirty = false
@@ -282,9 +278,8 @@ func (v *View) FreeScroll() bool {
 	return v.freeScroll.active
 }
 
-// BeginFreeScroll decouples the viewport from the cursor. The revision and
-// selection snapshot the document state at this moment. Free scroll ends
-// automatically when either changes
+// BeginFreeScroll decouples the viewport from the cursor. The revision and selection snapshot the
+// document state at this moment. Free scroll ends automatically when either changes
 func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
 	v.freeScroll = freeScrollState{active: true, rev: rev, sel: sel}
 }
@@ -298,8 +293,8 @@ func (v *View) EndFreeScroll() {
 	v.freeScroll = freeScrollState{}
 }
 
-// SyncFreeScroll ends free scroll when the document revision or selection
-// changed since BeginFreeScroll, and reports whether it remains active
+// SyncFreeScroll ends free scroll when the document revision or selection changed since
+// BeginFreeScroll, and reports whether it remains active
 func (v *View) SyncFreeScroll(rev int, sel core.Selection) bool {
 	if !v.freeScroll.active {
 		return false
@@ -316,9 +311,9 @@ func (v *View) PushJump(docID DocumentId, anchor int, sel core.Selection) {
 	v.jumps.Push(docID, anchor, sel)
 }
 
-// JumpBackward moves to the previous position in the jump list, recording
-// the current position first when there is nothing ahead of it, so a
-// following JumpForward returns to where the jump started
+// JumpBackward moves to the previous position in the jump list, recording the current position
+// first when there is nothing ahead of it, so a following JumpForward returns to where the jump
+// started
 func (v *View) JumpBackward() (DocumentId, int, bool) {
 	if v.jumps.head == len(v.jumps.items) {
 		v.pushCurrentJump()
@@ -341,9 +336,8 @@ func (v *View) Jumps() []JumpEntry {
 	return v.jumps.Entries()
 }
 
-// EnsureCursorVisible scrolls so the cursor is visible within Height rows,
-// respecting ScrollOff. Measured in visual rows when Visual has active
-// soft-wrap
+// EnsureCursorVisible scrolls so the cursor is visible within Height rows, respecting ScrollOff.
+// Measured in visual rows when Visual has active soft-wrap
 func (v *View) EnsureCursorVisible(cs *CursorScroll) {
 	if cs.Height <= 0 {
 		return
@@ -355,9 +349,8 @@ func (v *View) EnsureCursorVisible(cs *CursorScroll) {
 	v.ensureCursorVisibleByLine(cs)
 }
 
-// EnsureCursorVisibleHorizontal scrolls so the cursor's visual column stays
-// within Width content columns (gutter excluded). Width <= 0 disables
-// horizontal scrolling and resets the offset to 0
+// EnsureCursorVisibleHorizontal scrolls so the cursor's visual column stays within Width content
+// columns (gutter excluded). Width <= 0 disables horizontal scrolling and resets the offset to 0
 func (v *View) EnsureCursorVisibleHorizontal(cs *CursorScroll) {
 	defer v.trackOffsetChange()()
 	if cs.Width <= 0 {
@@ -460,8 +453,8 @@ func (v *View) cachedVisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	return col
 }
 
-// Scope returns the theme scope suffix for the pane's status line and, for
-// document panes, the cursor style: e.g. normal, insert, terminal, binary
+// Scope returns the theme scope suffix for the pane's status line and, for document panes, the
+// cursor style: e.g. normal, insert, terminal, binary
 func (m Mode) Scope() string {
 	if s, ok := modeScopes[m]; ok {
 		return s
@@ -469,8 +462,8 @@ func (m Mode) Scope() string {
 	return modeScopes[ModeNormal]
 }
 
-// Split decomposes an ORed set of modes into its constituent single-bit
-// values, in declaration order
+// Split decomposes an ORed set of modes into its constituent single-bit values, in declaration
+// order
 func (m Mode) Split() []Mode {
 	out := make([]Mode, 0, len(allModes))
 	for _, v := range allModes {
@@ -481,8 +474,8 @@ func (m Mode) Split() []Mode {
 	return out
 }
 
-// ParseMode returns the Mode for a short name (NOR, INS, …), defaulting to
-// ModeNormal for anything unrecognized
+// ParseMode returns the Mode for a short name (NOR, INS, …), defaulting to ModeNormal for
+// anything unrecognized
 func ParseMode(name string) Mode {
 	for _, m := range allModes {
 		if m.String() == name {
@@ -525,8 +518,8 @@ func (j *JumpList) Push(docID DocumentId, anchor int, sel core.Selection) {
 	})
 }
 
-// GoTo moves the head to the entry at i and returns it, so navigating to a
-// listed entry keeps the history either side of it
+// GoTo moves the head to the entry at i and returns it, so navigating to a listed entry keeps the
+// history either side of it
 func (j *JumpList) GoTo(i int) (JumpEntry, bool) {
 	if i < 0 || i >= len(j.items) {
 		return JumpEntry{}, false
@@ -570,9 +563,9 @@ func (j *JumpList) push(item JumpEntry) {
 	j.head = len(j.items)
 }
 
-// RuneWidth returns the display width of ch at the given tab stop, expanding
-// tabs to the next boundary. The ASCII fast path avoids a per-rune string
-// allocation in the render and cursor-positioning hot paths
+// RuneWidth returns the display width of ch at the given tab stop, expanding tabs to the next
+// boundary. The ASCII fast path avoids a per-rune string allocation in the render and
+// cursor-positioning hot paths
 func RuneWidth(ch rune, at core.TabStop) int {
 	if uint32(ch)-0x20 < 0x5f {
 		return 1
@@ -659,8 +652,7 @@ func (v *View) ensureCursorVisibleVisual(cs *CursorScroll) {
 		vOff = res.Row
 	case fromTop > cs.Height-1-soBottom:
 		res := cs.Visual.VisualScrollUp(
-			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow},
-			cs.Height-1-soBottom,
+			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow}, cs.Height-1-soBottom,
 		)
 		anchorLine = res.Line
 		vOff = res.Row
@@ -673,9 +665,9 @@ func (v *View) ensureCursorVisibleVisual(cs *CursorScroll) {
 	}
 }
 
-// VisualColumn returns the display column of the span's end, measured from
-// its start, expanding tabs to the next tabW boundary. It folds rune widths
-// over the span directly, allocating no intermediate substring
+// VisualColumn returns the display column of the span's end, measured from its start, expanding
+// tabs to the next tabW boundary. It folds rune widths over the span directly, allocating no
+// intermediate substring
 func VisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	col := 0
 	doc.ForEachSegment(s, func(seg string) {

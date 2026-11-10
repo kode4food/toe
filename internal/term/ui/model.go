@@ -153,8 +153,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = tea.Batch(cmd, feedCmd, m.pushNextLayer())
 		cx.fileWatcher.sync(cx.Editor)
 		return m, tea.Batch(
-			cmd, m.component.autoSizeCmd(), m.imageDisplayFrameCmd(),
-			cellSizeQueryCmd(msg),
+			cmd, m.component.autoSizeCmd(), m.imageDisplayFrameCmd(), cellSizeQueryCmd(msg),
 		)
 	}
 }
@@ -223,9 +222,7 @@ func (m Model) imageDisplayFrameCmd() tea.Cmd {
 		return nil
 	}
 	m.context.images.beginFrame()
-	return tea.Batch(
-		m.imageDisplayCmd(), m.pickerImageCmd(), m.scrollbarImageCmd(),
-	)
+	return tea.Batch(m.imageDisplayCmd(), m.pickerImageCmd(), m.scrollbarImageCmd())
 }
 
 func (m Model) hasImageSurface() bool {

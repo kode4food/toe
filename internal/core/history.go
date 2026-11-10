@@ -50,8 +50,8 @@ func (h *History) AtRoot() bool {
 	return h.current == 0
 }
 
-// CommitRevision records tx as a new revision branching from the current one,
-// storing its inverse for undo
+// CommitRevision records tx as a new revision branching from the current one, storing its inverse
+// for undo
 func (h *History) CommitRevision(tx Transaction, st State) error {
 	inv, err := tx.Invert(st.Doc)
 	if err != nil {
@@ -99,14 +99,12 @@ func (h *History) Redo() (Transaction, bool) {
 	return h.revisions[h.current].transaction, true
 }
 
-// Earlier returns the transactions that walk back by kind, without applying
-// them
+// Earlier returns the transactions that walk back by kind, without applying them
 func (h *History) Earlier(kind UndoKind) []Transaction {
 	return h.jumpBackward(kind.steps)
 }
 
-// Later returns the transactions that walk forward by kind, without applying
-// them
+// Later returns the transactions that walk forward by kind, without applying them
 func (h *History) Later(kind UndoKind) []Transaction {
 	return h.jumpForward(kind.steps)
 }

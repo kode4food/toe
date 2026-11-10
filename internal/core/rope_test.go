@@ -11,15 +11,13 @@ import (
 )
 
 func TestRopeSliceString(t *testing.T) {
-	// build a rope large enough to span multiple leaves, including multi-byte
-	// runes, then check SliceString matches Slice().String() across ranges
+	// build a rope large enough to span multiple leaves, including multi-byte runes, then check
+	// SliceString matches Slice().String() across ranges
 	src := strings.Repeat("abcdé\tfghij\n", 500)
 	r := core.NewRope(src)
 	n := r.LenChars()
 
-	ranges := [][2]int{
-		{0, 0}, {0, n}, {0, 7}, {3, 9}, {n - 10, n}, {n / 2, n/2 + 5},
-	}
+	ranges := [][2]int{{0, 0}, {0, n}, {0, 7}, {3, 9}, {n - 10, n}, {n / 2, n/2 + 5}}
 	for _, rg := range ranges {
 		from, to := rg[0], rg[1]
 		want, err := r.Slice(core.Span{From: from, To: to})
@@ -307,8 +305,8 @@ func TestRope(t *testing.T) {
 	})
 
 	t.Run("left-rotate rebalances right-heavy tree", func(t *testing.T) {
-		// 4097 chars builds a depth-4 rope. Inserting at 0 makes diff=2 >
-		// maxRopeDepthSkew=1, which triggers rotateRopeLeft
+		// 4097 chars builds a depth-4 rope. Inserting at 0 makes diff=2 > maxRopeDepthSkew=1, which
+		// triggers rotateRopeLeft
 		base := strings.Repeat("a", 4097)
 		r := core.NewRope(base)
 		next, err := r.Insert(0, "x")

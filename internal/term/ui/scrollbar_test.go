@@ -171,9 +171,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("redraw adds no allocations", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		v := e.FocusedView()
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		redraw := func() {
 			v.MarkDirty()
 			_ = viewContent(m)
@@ -187,9 +185,7 @@ func TestScrollbar(t *testing.T) {
 	})
 
 	t.Run("hidden unless enabled", func(t *testing.T) {
-		cells := scrollbarCells(t,
-			scrollbarEditor(t, 200, false), scrollbarRows,
-		)
+		cells := scrollbarCells(t, scrollbarEditor(t, 200, false), scrollbarRows)
 
 		for _, cell := range cells {
 			assert.NotEqual(t, scrollbarThumbBg, cell.style.bg)
@@ -227,9 +223,7 @@ func TestScrollbar(t *testing.T) {
 				assert.NoError(t, e.Apply(core.NewTransaction(doc.Text()).
 					WithSelection(core.PointSelection(at)),
 				))
-				m := resize(ui.New(e, command.NewKeymaps()),
-					scrollbarWidth, scrollbarHeight,
-				)
+				m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 				cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -241,9 +235,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("thumb follows the scroll position", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		doc := e.FocusedDocument()
@@ -256,9 +248,7 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
-		assert.Equal(t,
-			[]int{scrollbarRows - 2, scrollbarRows - 1}, thumbRows(cells),
-		)
+		assert.Equal(t, []int{scrollbarRows - 2, scrollbarRows - 1}, thumbRows(cells))
 	})
 
 	t.Run("marks a single diagnostic with a rule", func(t *testing.T) {
@@ -272,9 +262,7 @@ func TestScrollbar(t *testing.T) {
 			Range:    core.Span{From: at, To: at + 1},
 			Severity: view.DiagnosticSeverityError,
 		}})
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -300,9 +288,7 @@ func TestScrollbar(t *testing.T) {
 			})
 		}
 		doc.ReplaceDiagnostics("test", diags)
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -322,9 +308,7 @@ func TestScrollbar(t *testing.T) {
 			VersionControl: s,
 			hunks:          []view.DiffHunk{{From: 0, To: 60}},
 		})
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -345,9 +329,7 @@ func TestScrollbar(t *testing.T) {
 			VersionControl: s,
 			hunks:          []view.DiffHunk{{From: 102, To: 145}},
 		})
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -400,9 +382,7 @@ func TestScrollbar(t *testing.T) {
 		assert.NotNil(t, doc)
 		doc.ShowSearchHighlights(v.ID())
 		e.Registers().Set('/', "line 150")
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 
 		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
@@ -414,9 +394,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("clicking the bar scrolls there", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		m = mouse(m, tea.MouseClickMsg{
@@ -433,9 +411,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("dragging the bar keeps scrolling", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		m = mouse(m, tea.MouseClickMsg{
@@ -455,9 +431,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("clicking the bar leaves the cursor alone", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		before := cursorLineOf(t, e)
@@ -473,9 +447,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("thumb holds every visible line's mark", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
@@ -501,9 +473,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("clicking centers the thumb on the row", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
@@ -522,9 +492,7 @@ func TestScrollbar(t *testing.T) {
 	t.Run("thumb keeps its length while scrolling", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		_ = viewContent(m)
 
 		var lengths []int
@@ -547,9 +515,7 @@ func TestScrollbar(t *testing.T) {
 		wide := strings.Repeat("x", 200) + "\n"
 		e := editorWithText(t, wide)
 		e.Options().Scrollbar = false
-		m := resize(
-			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-		)
+		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 		before := strings.Count(firstLine(viewContent(m)), "x")
 
 		e.Options().Scrollbar = true
@@ -621,9 +587,7 @@ func scrollbarEditor(t *testing.T, lines int, bar bool) string {
 	t.Helper()
 	e := editorWithText(t, numberedLines(lines))
 	e.Options().Scrollbar = bar
-	m := resize(
-		ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-	)
+	m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 	return viewContent(m)
 }
 
@@ -682,9 +646,7 @@ func scrollbarMarkGlyph(t *testing.T, line int) string {
 		Range:    core.Span{From: at, To: at + 1},
 		Severity: view.DiagnosticSeverityError,
 	}})
-	m := resize(
-		ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
-	)
+	m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
 	cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 	marked := markRows(cells)
 	assert.Len(t, marked, 2)

@@ -164,9 +164,7 @@ func TestMoveSeparator(t *testing.T) {
 		res, _ := tree.SeparatorAt(geom.Point{X: sepX})
 
 		// move separator 10 columns to the left
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, sepX-10,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, sepX-10)
 
 		vs2 := e.Views()
 		assert.Less(t, vs2[0].View.Area().Width, origLeft)
@@ -188,9 +186,7 @@ func TestMoveSeparator(t *testing.T) {
 		res, _ := tree.SeparatorAt(geom.Point{Y: sepY})
 
 		// move separator 3 rows up
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, sepY-3,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, sepY-3)
 
 		vs2 := e.Views()
 		assert.Less(t, vs2[0].View.Area().Height, origTop)
@@ -435,9 +431,7 @@ func TestMoveSeparatorEdges(t *testing.T) {
 		res, ok := tree.SeparatorAt(geom.Point{X: sepX})
 		assert.True(t, ok)
 
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, view.LayoutHorizontal, sepX-5,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, view.LayoutHorizontal, sepX-5)
 
 		after := e.Views()[0].View.Area().Width
 		assert.Equal(t, before, after)
@@ -472,9 +466,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		res, ok := tree.SeparatorAt(geom.Point{Y: sepY})
 		assert.True(t, ok)
 		before := e.Views()[0].View.Area().Height
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, view.LayoutVertical, 0,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, view.LayoutVertical, 0)
 		assert.Equal(t, before, e.Views()[0].View.Area().Height)
 	})
 
@@ -500,9 +492,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		tree := e.Tree()
 		res, ok := tree.SeparatorAt(geom.Point{})
 		if ok {
-			tree.MoveSeparator(
-				res.ContainerID, res.ChildIdx, res.Layout, 0,
-			)
+			tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 0)
 		}
 		assert.Equal(t, 2, len(e.Views()))
 	})
@@ -515,9 +505,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		tree := e.Tree()
 		res, ok := tree.SeparatorAt(geom.Point{})
 		if ok {
-			tree.MoveSeparator(
-				res.ContainerID, res.ChildIdx, res.Layout, 0,
-			)
+			tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 0)
 		}
 		assert.Equal(t, 2, len(e.Views()))
 	})
@@ -534,9 +522,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		res, ok := tree.SeparatorAt(geom.Point{X: sepX})
 		assert.True(t, ok)
 		assert.Equal(t, 1, res.ChildIdx)
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, sepX-5,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, sepX-5)
 		assert.Equal(t, 3, len(e.Views()))
 	})
 
@@ -552,9 +538,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		res, ok := tree.SeparatorAt(geom.Point{Y: sepY})
 		assert.True(t, ok)
 		assert.Equal(t, 1, res.ChildIdx)
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, sepY-2,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, sepY-2)
 		assert.Equal(t, 3, len(e.Views()))
 	})
 
@@ -598,9 +582,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		})
 		res, ok := tree.SeparatorAt(vSep.Point)
 		assert.True(t, ok)
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, vSep.X-5,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, vSep.X-5)
 		assert.Equal(t, 3, len(e.Views()))
 	})
 
@@ -620,9 +602,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		})
 		res, ok := tree.SeparatorAt(hSep.Point)
 		assert.True(t, ok)
-		tree.MoveSeparator(
-			res.ContainerID, res.ChildIdx, res.Layout, hSep.Y-2,
-		)
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, hSep.Y-2)
 		assert.Equal(t, 3, len(e.Views()))
 	})
 }

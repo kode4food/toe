@@ -21,14 +21,14 @@ type (
 	}
 )
 
-// JoinSelections joins the lines within each selected line range by replacing
-// each line ending (and surrounding whitespace) with nothing
+// JoinSelections joins the lines within each selected line range by replacing each line ending (and
+// surrounding whitespace) with nothing
 func JoinSelections(e *view.Editor) {
 	joinSelectionsImpl(e, false)
 }
 
-// JoinSelectionsSpace joins the lines within each selected line range by
-// replacing each line ending (and surrounding whitespace) with a single space
+// JoinSelectionsSpace joins the lines within each selected line range by replacing each line ending
+// (and surrounding whitespace) with a single space
 func JoinSelectionsSpace(e *view.Editor) {
 	joinSelectionsImpl(e, true)
 }
@@ -79,8 +79,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 		})
 		currentToken := commentTokenAt(text, commentTokens, firstPos)
 		for l := lr.From; l < endLine; l++ {
-			span, token, ok := joinLinePair(
-				text, commentTokens, currentToken, l)
+			span, token, ok := joinLinePair(text, commentTokens, currentToken, l)
 			if !ok {
 				continue
 			}

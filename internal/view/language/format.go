@@ -1,7 +1,7 @@
 package language
 
-// TextFormat is the resolved layout of a document's text: the width to wrap at,
-// how tabs measure, and how wrapped rows are indicated
+// TextFormat is the resolved layout of a document's text: the width to wrap at, how tabs measure,
+// and how wrapped rows are indicated
 type TextFormat struct {
 	ViewportWidth       int
 	TabWidth            int
@@ -21,9 +21,7 @@ const (
 )
 
 // TextFormatForConfig builds the render format for a language and width
-func TextFormatForConfig(
-	lang *Language, textWidth *int, softWrap SoftWrap, w int,
-) *TextFormat {
+func TextFormatForConfig(lang *Language, textWidth *int, softWrap SoftWrap, w int) *TextFormat {
 	tw := settingValue(settingValueArgs[int]{
 		editor: textWidth,
 	}, DefaultTextWidth)
@@ -68,8 +66,8 @@ func DefaultTextFormat(w int) *TextFormat {
 	}
 }
 
-// WrapIndicatorPrefix is the indicator plus its gap, as drawn at the start of
-// a soft-wrapped continuation row
+// WrapIndicatorPrefix is the indicator plus its gap, as drawn at the start of a soft-wrapped
+// continuation row
 func (t *TextFormat) WrapIndicatorPrefix() string {
 	if t.WrapIndicator == "" {
 		return ""

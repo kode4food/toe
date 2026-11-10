@@ -5,8 +5,7 @@ import (
 	"github.com/kode4food/toe/internal/loader"
 )
 
-// ProcessExternalFileChange updates any open document whose backing file
-// changed outside the editor
+// ProcessExternalFileChange updates any open document whose backing file changed outside the editor
 func (e *Editor) ProcessExternalFileChange(path string) bool {
 	e.languages.FileChanged(path)
 	target := loader.CanonicalPath(path)

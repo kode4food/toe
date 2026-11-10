@@ -7,9 +7,8 @@ type insertAccum struct {
 	changes  core.ChangeSet
 }
 
-// BeginInsertGroup starts insert-mode change accumulation for vid if not
-// already active. Subsequent Apply calls accumulate into a single history
-// revision until CommitInsertHistory is called
+// BeginInsertGroup starts insert-mode change accumulation for vid if not already active. Subsequent
+// Apply calls accumulate into a single history revision until CommitInsertHistory is called
 func (d *Document) BeginInsertGroup(vid Id) {
 	if d.edits.insertAcc != nil {
 		return
@@ -23,23 +22,22 @@ func (d *Document) BeginInsertGroup(vid Id) {
 	}
 }
 
-// CommitInsertHistory flushes any accumulated insert-mode changes as one
-// history revision. It is a no-op when no accumulation is active
+// CommitInsertHistory flushes any accumulated insert-mode changes as one history revision. It is a
+// no-op when no accumulation is active
 func (d *Document) CommitInsertHistory(vid Id) {
 	acc := d.edits.insertAcc
 	d.edits.insertAcc = nil
 	if acc == nil || acc.changes.IsEmpty() {
 		return
 	}
-	tx := core.NewTransaction(acc.oldState.Doc).
-		WithChanges(acc.changes).
+	tx := core.NewTransaction(acc.oldState.Doc).WithChanges(acc.changes).
 		WithSelection(d.SelectionFor(vid))
 	_ = d.edits.history.CommitRevision(tx, acc.oldState)
 }
 
-// Apply applies a transaction to the document, recording in history. While an
-// insert group is active (BeginInsertGroup was called), changes are accumulated
-// and a single revision is committed by CommitInsertHistory
+// Apply applies a transaction to the document, recording in history. While an insert group is
+// active (BeginInsertGroup was called), changes are accumulated and a single revision is committed
+// by CommitInsertHistory
 func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	d.ensureLoaded()
 	newText, err := tx.Apply(d.content.text)

@@ -28,15 +28,14 @@ func StringPtr(value any) *string {
 	return nil
 }
 
-// StringValue returns the string at key, or the empty string when the key is
-// missing or holds another type
+// StringValue returns the string at key, or the empty string when the key is missing or holds
+// another type
 func StringValue(m map[string]any, key string) string {
 	v, _ := m[key].(string)
 	return v
 }
 
-// IntValue returns the int at key, falling back when the key is missing or
-// holds another type
+// IntValue returns the int at key, falling back when the key is missing or holds another type
 func IntValue(m map[string]any, key string, fallback int) int {
 	if n := IntPtr(m[key]); n != nil {
 		return *n

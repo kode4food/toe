@@ -15,8 +15,8 @@ var colorEnvKeys = []string{
 	"ALACRITTY_WINDOW_ID", "KONSOLE_VERSION", "WT_SESSION",
 }
 
-// renders assert rgb escapes, so the package must not inherit whatever the
-// terminal running the tests happens to advertise
+// renders assert rgb escapes, so the package must not inherit whatever the terminal running the
+// tests happens to advertise
 func TestMain(m *testing.M) {
 	for _, k := range colorEnvKeys {
 		_ = os.Unsetenv(k)

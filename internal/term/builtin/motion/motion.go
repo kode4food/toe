@@ -282,11 +282,9 @@ func CursorModule() command.Module {
 			{
 				Name:      actTillPrevChar,
 				DocString: "Move till previous occurrence of char",
-				Run: kit.Continuation(
-					findCharAction(findCharActionArgs{}),
-				),
-				Modes: view.ModeNormal,
-				Keys:  kit.Keys(kit.Char('T')),
+				Run:       kit.Continuation(findCharAction(findCharActionArgs{})),
+				Modes:     view.ModeNormal,
+				Keys:      kit.Keys(kit.Char('T')),
 			},
 			{
 				Name:      actGotoLine,
@@ -669,19 +667,11 @@ func CursorModule() command.Module {
 			Reset:  func() { *cfg = motionSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.ScrollOff = kit.IntOr(
-					cfg.Editor.ScrollOff, view.DefaultScrollOff,
-				)
-				opts.ScrollLines = kit.IntOr(
-					cfg.Editor.ScrollLines, view.DefaultScrollLines,
-				)
+				opts.ScrollOff = kit.IntOr(cfg.Editor.ScrollOff, view.DefaultScrollOff)
+				opts.ScrollLines = kit.IntOr(cfg.Editor.ScrollLines, view.DefaultScrollLines)
 			},
 		},
-		Labels: []command.PrefixLabel{
-			kit.Label(
-				"Goto", kit.Char('g'), command.CmdKeyModes,
-			),
-		},
+		Labels: []command.PrefixLabel{kit.Label("Goto", kit.Char('g'), command.CmdKeyModes)},
 	}
 }
 

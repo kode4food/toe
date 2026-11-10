@@ -36,9 +36,7 @@ func (ec *EditorComponent) settlePaneResizeCmd() tea.Cmd {
 	})
 }
 
-func (ec *EditorComponent) handleResizeSettle(
-	msg resizeSettleMsg,
-) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleResizeSettle(msg resizeSettleMsg) (EventResult, tea.Cmd) {
 	if msg.generation != ec.resizeHold.generation {
 		return consumed(), nil
 	}

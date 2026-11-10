@@ -412,19 +412,12 @@ func EditModule() command.Module {
 				ap, ok := cfg.Editor.AutoPairs.OrDefault()
 				opts.AutoPairMap = ap
 				opts.HasAutoPairs = ok
-				opts.ContinueComments = kit.BoolOr(
-					cfg.Editor.ContinueComments, true,
-				)
+				opts.ContinueComments = kit.BoolOr(cfg.Editor.ContinueComments, true)
 				opts.AtomicSave = kit.BoolOr(cfg.Editor.AtomicSave, true)
-				opts.AutoSaveFocusLost = kit.BoolOr(
-					cfg.Editor.AutoSave.FocusLost, false,
-				)
-				opts.AutoSaveAfterDelay = kit.BoolOr(
-					cfg.Editor.AutoSave.AfterDelay.Enable, false,
-				)
+				opts.AutoSaveFocusLost = kit.BoolOr(cfg.Editor.AutoSave.FocusLost, false)
+				opts.AutoSaveAfterDelay = kit.BoolOr(cfg.Editor.AutoSave.AfterDelay.Enable, false)
 				opts.AutoSaveDelayTimeout = kit.IntOr(
-					cfg.Editor.AutoSave.AfterDelay.Timeout,
-					view.DefaultAutoSaveDelay,
+					cfg.Editor.AutoSave.AfterDelay.Timeout, view.DefaultAutoSaveDelay,
 				)
 			},
 		},

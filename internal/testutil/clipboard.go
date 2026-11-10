@@ -2,8 +2,8 @@ package testutil
 
 import "github.com/kode4food/toe/internal/view"
 
-// FakeClipboard is an in-memory view.Clipboard for hermetic tests, keeping the
-// system and PRIMARY selections in separate buffers
+// FakeClipboard is an in-memory view.Clipboard for hermetic tests, keeping the system and PRIMARY
+// selections in separate buffers
 type FakeClipboard struct {
 	System  string
 	Primary string

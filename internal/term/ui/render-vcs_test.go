@@ -29,9 +29,7 @@ func TestDiffGutter(t *testing.T) {
 	testutil.RequireGit(t)
 
 	t.Run("marks changed and added lines", func(t *testing.T) {
-		e, s := repoEditor(t,
-			"one\ntwo\nthree\n", "one\nCHANGED\nthree\nadded\n",
-		)
+		e, s := repoEditor(t, "one\ntwo\nthree\n", "one\nCHANGED\nthree\nadded\n")
 		defer s.Close()
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
@@ -113,8 +111,8 @@ func TestVersionControlFileWatch(t *testing.T) {
 			return ok && base == "one\n"
 		}, time.Second, 5*time.Millisecond)
 
-		// the watcher must already be registered before the external
-		// change happens, exactly as it would in a running editor
+		// the watcher must already be registered before the external change happens, exactly as it
+		// would in a running editor
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		m2, _ := m.Update(tea.BlurMsg{})
 		m = m2.(ui.Model)
@@ -197,15 +195,9 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("lists changed files with kinds", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "modified.txt", []byte("one\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "modified.txt"), []byte("two\n"),
-		)
-		testutil.WriteFile(t,
-			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
-		)
-		testutil.WriteFile(t,
-			filepath.Join(repo, "staged.txt"), []byte("new\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "modified.txt"), []byte("two\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "untracked.txt"), []byte("new\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "staged.txt"), []byte("new\n"))
 		testutil.RunGit(t, repo, "add", "staged.txt")
 
 		m := changedFilePicker(t, repo)
@@ -223,9 +215,7 @@ func TestChangedFilePicker(t *testing.T) {
 		testutil.GitCommitFile(t, repo, "both.txt", []byte("one\n"))
 		testutil.WriteFile(t, filepath.Join(repo, "both.txt"), []byte("two\n"))
 		testutil.RunGit(t, repo, "add", "both.txt")
-		testutil.WriteFile(t,
-			filepath.Join(repo, "both.txt"), []byte("three\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "both.txt"), []byte("three\n"))
 
 		m := changedFilePicker(t, repo)
 
@@ -258,14 +248,12 @@ func TestChangedFilePicker(t *testing.T) {
 		committed := strings.Join(lines, "")
 		testutil.GitCommitFile(t, repo, "deep.txt", []byte(committed))
 		lines[49] = "CHANGED-DEEP\n"
-		testutil.WriteFile(t,
-			filepath.Join(repo, "deep.txt"), []byte(strings.Join(lines, "")),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "deep.txt"), []byte(strings.Join(lines, "")))
 
 		m := changedFilePicker(t, repo)
 
-		// line 50 sits below the preview fold, showing only when the preview
-		// anchors on the first hunk, removed and added lines sign-marked
+		// line 50 sits below the preview fold, showing only when the preview anchors on the first
+		// hunk, removed and added lines sign-marked
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "+ CHANGED-DEEP")
 		assert.Contains(t, out, "- line")
@@ -297,9 +285,7 @@ func TestChangedFilePicker(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				repo := testutil.GitRepo(t)
-				path := testutil.GitCommitFile(t, repo, "mixed.txt",
-					[]byte(tc.base),
-				)
+				path := testutil.GitCommitFile(t, repo, "mixed.txt", []byte(tc.base))
 				testutil.WriteFile(t, path, []byte(tc.working))
 				content := viewContent(changedFilePicker(t, repo))
 				at := previewBarAt(t, content)
@@ -326,9 +312,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("diff rows retain indent guides", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "indent.txt", []byte("\t\told\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "indent.txt"), []byte("\t\tnew\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "indent.txt"), []byte("\t\tnew\n"))
 		e := view.NewEditor(repo)
 		e.Options().IndentGuides = view.IndentGuides{
 			Render:     true,
@@ -337,8 +321,7 @@ func TestChangedFilePicker(t *testing.T) {
 		}
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(ui.NewChangedFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "- ┆   ┆   old")
@@ -356,18 +339,13 @@ func TestChangedFilePicker(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				repo := testutil.GitRepo(t)
 				long := strings.Repeat("word ", 40)
-				testutil.GitCommitFile(t,
-					repo, "long.txt", []byte(long+"old\n"),
-				)
-				testutil.WriteFile(t,
-					filepath.Join(repo, "long.txt"), []byte(long+"new\n"),
-				)
+				testutil.GitCommitFile(t, repo, "long.txt", []byte(long+"old\n"))
+				testutil.WriteFile(t, filepath.Join(repo, "long.txt"), []byte(long+"new\n"))
 				e := view.NewEditor(repo)
 				e.Options().SoftWrap.Enable = &tc.wrap
 				s := vcs.Attach(e)
 				t.Cleanup(s.Close)
-				m := ui.New(e, command.NewKeymaps()).
-					WithInitialPicker(ui.NewChangedFilePicker)
+				m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 				m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 				out := stripANSI(viewContent(m))
 				assert.Equal(t, tc.wrap, strings.Contains(out, "word old"))
@@ -386,17 +364,14 @@ func TestChangedFilePicker(t *testing.T) {
 			_, _ = fmt.Fprintln(&work, line+"!")
 		}
 		testutil.GitCommitFile(t, repo, "long.txt", []byte(base.String()))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "long.txt"), []byte(work.String()),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "long.txt"), []byte(work.String()))
 		open := func(t *testing.T) ui.Model {
 			e := view.NewEditor(repo)
 			e.Options().SoftWrap.Enable = new(true)
 			e.Options().Scrollbar = true
 			s := vcs.Attach(e)
 			t.Cleanup(s.Close)
-			m := ui.New(e, command.NewKeymaps()).
-				WithInitialPicker(ui.NewChangedFilePicker)
+			m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 			return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		}
 
@@ -435,15 +410,12 @@ func TestChangedFilePicker(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		tall := strings.Repeat("word ", 400)
 		testutil.GitCommitFile(t, repo, "tall.txt", []byte(tall+"OLDEND\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "tall.txt"), []byte(tall+"NEWEND\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "tall.txt"), []byte(tall+"NEWEND\n"))
 		e := view.NewEditor(repo)
 		e.Options().SoftWrap.Enable = new(true)
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(ui.NewChangedFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		_ = m.View()
 		for range 60 {
@@ -461,9 +433,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("added file previews as plain content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "tracked.txt", []byte("keep\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "added.txt"), []byte("alpha\nbeta\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "added.txt"), []byte("alpha\nbeta\n"))
 
 		m := changedFilePicker(t, repo)
 
@@ -475,9 +445,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 	t.Run("deleted file previews its base content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		gone := testutil.GitCommitFile(t,
-			repo, "gone.txt", []byte("first\nsecond\n"),
-		)
+		gone := testutil.GitCommitFile(t, repo, "gone.txt", []byte("first\nsecond\n"))
 		assert.NoError(t, os.Remove(gone))
 
 		m := changedFilePicker(t, repo)
@@ -491,9 +459,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 	t.Run("lists deleted and renamed files", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		deleted := testutil.GitCommitFile(t,
-			repo, "deleted.txt", []byte("gone\n"),
-		)
+		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", []byte("gone\n"))
 		testutil.GitCommitFile(t, repo, "old.txt", []byte("moved\n"))
 		assert.NoError(t, os.Remove(deleted))
 		testutil.RunGit(t, repo, "mv", "old.txt", "new.txt")
@@ -509,9 +475,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("accept opens changed file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "modified.txt", []byte("one\n"))
-		testutil.WriteFile(t,
-			filepath.Join(repo, "modified.txt"), []byte("two\n"),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "modified.txt"), []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
 		_ = sendSpecial(m, tea.KeyEnter)
@@ -521,17 +485,15 @@ func TestChangedFilePicker(t *testing.T) {
 	})
 
 	t.Run("click selects the clicked file", func(t *testing.T) {
-		// the changed-file picker uses empty-label columns, so it renders no
-		// header row, so a click must resolve to the row actually under it
+		// the changed-file picker uses empty-label columns, so it renders no header row, so a click
+		// must resolve to the row actually under it
 		repo := testutil.GitRepo(t)
 		for _, f := range []struct{ name, body string }{
 			{name: "a.txt", body: "AAA\n"},
 			{name: "b.txt", body: "BBB\n"},
 			{name: "c.txt", body: "CCC\n"},
 		} {
-			testutil.GitCommitFile(t,
-				repo, testutil.GitName(f.name), []byte("base\n"),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(f.name), []byte("base\n"))
 			testutil.WriteFile(t, filepath.Join(repo, f.name), []byte(f.body))
 		}
 
@@ -569,19 +531,14 @@ func TestChangedFilePicker(t *testing.T) {
 		for i := range lines {
 			lines[i] = "line\n"
 		}
-		testutil.GitCommitFile(t,
-			repo, "deep.txt", []byte(strings.Join(lines, "")),
-		)
+		testutil.GitCommitFile(t, repo, "deep.txt", []byte(strings.Join(lines, "")))
 		lines[49] = "CHANGED-DEEP\n"
-		testutil.WriteFile(t,
-			filepath.Join(repo, "deep.txt"), []byte(strings.Join(lines, "")),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "deep.txt"), []byte(strings.Join(lines, "")))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(ui.NewChangedFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		_ = sendSpecial(m, tea.KeyEnter)
 
@@ -636,9 +593,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("staging walks the group it empties", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
-			testutil.GitCommitFile(t,
-				repo, testutil.GitName(name), []byte("one\n"),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte("one\n"))
 			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
 		}
 
@@ -660,10 +615,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("staging the last visible row", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		for i := range 40 {
-			testutil.WriteFile(t,
-				filepath.Join(repo, fmt.Sprintf("f%02d.txt", i)),
-				[]byte("new\n"),
-			)
+			testutil.WriteFile(t, filepath.Join(repo, fmt.Sprintf("f%02d.txt", i)), []byte("new\n"))
 		}
 
 		m := changedFilePicker(t, repo)
@@ -683,9 +635,7 @@ func TestChangedFilePicker(t *testing.T) {
 	t.Run("external staging keeps the file selected", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
-			testutil.GitCommitFile(t,
-				repo, testutil.GitName(name), []byte("one\n"),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte("one\n"))
 			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
 		}
 
@@ -707,19 +657,13 @@ func TestChangedFilePicker(t *testing.T) {
 			deep[i] = "line\n"
 		}
 		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
-			testutil.GitCommitFile(t, repo, testutil.GitName(name),
-				[]byte(strings.Join(deep, "")),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte(strings.Join(deep, "")))
 		}
-		testutil.GitCommitFile(t,
-			repo, "d.txt", []byte(strings.Repeat("tall\n", 500)),
-		)
+		testutil.GitCommitFile(t, repo, "d.txt", []byte(strings.Repeat("tall\n", 500)))
 		changed := slices.Clone(deep)
 		changed[49] = "CHANGED-DEEP\n"
 		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
-			testutil.WriteFile(t,
-				filepath.Join(repo, name), []byte(strings.Join(changed, "")),
-			)
+			testutil.WriteFile(t, filepath.Join(repo, name), []byte(strings.Join(changed, "")))
 		}
 		testutil.WriteFile(t, filepath.Join(repo, "d.txt"),
 			[]byte("TOP\n"+strings.Repeat("tall\n", 500)),
@@ -749,22 +693,16 @@ func TestChangedFilePicker(t *testing.T) {
 			deep[i] = "line\n"
 		}
 		for _, name := range []string{"a.txt", "b.txt"} {
-			testutil.GitCommitFile(t, repo, testutil.GitName(name),
-				[]byte(strings.Join(deep, "")),
-			)
+			testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte(strings.Join(deep, "")))
 		}
 		changed := slices.Clone(deep)
 		changed[49] = "CHANGED-DEEP\n"
 		for _, name := range []string{"a.txt", "b.txt"} {
-			testutil.WriteFile(t,
-				filepath.Join(repo, name), []byte(strings.Join(changed, "")),
-			)
+			testutil.WriteFile(t, filepath.Join(repo, name), []byte(strings.Join(changed, "")))
 		}
 		testutil.RunGit(t, repo, "add", "a.txt")
 		changed[49] = "CHANGED-AGAIN\n"
-		testutil.WriteFile(t,
-			filepath.Join(repo, "a.txt"), []byte(strings.Join(changed, "")),
-		)
+		testutil.WriteFile(t, filepath.Join(repo, "a.txt"), []byte(strings.Join(changed, "")))
 
 		m := changedFilePicker(t, repo)
 		m = sendSpecialAndFeed(m, tea.KeyDown)
@@ -801,8 +739,8 @@ func TestChangedFilePicker(t *testing.T) {
 	})
 
 	t.Run("unstaging a rename drops both halves", func(t *testing.T) {
-		// a rename is one row naming its destination, so unstaging it has to
-		// reach the staged deletion of the source too
+		// a rename is one row naming its destination, so unstaging it has to reach the staged
+		// deletion of the source too
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "old.txt", []byte("moved\n"))
 		testutil.RunGit(t, repo, "mv", "old.txt", "new.txt")
@@ -825,8 +763,8 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "Discard changes to mod.txt?")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 
-		// nothing but the focus separates the two buttons, and it starts on the
-		// answer that changes nothing
+		// nothing but the focus separates the two buttons, and it starts on the answer that changes
+		// nothing
 		row := popupRow(m, "y Yes")
 		assert.Contains(t, stripANSI(row), "n No")
 		assert.Contains(t, row, "\x1b[4my")
@@ -911,8 +849,8 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendCtrl(changedFilePicker(t, repo), 'g')
 
-		// the ignored file leaves the list, and .gitignore takes its place,
-		// naming it in the preview rather than in a row of its own
+		// the ignored file leaves the list, and .gitignore takes its place, naming it in the
+		// preview rather than in a row of its own
 		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "\uf420 new.txt") //  nf-oct-question
 		assert.Contains(t, out, "\uf420 .gitignore")
@@ -936,8 +874,7 @@ func TestChangedFilePicker(t *testing.T) {
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
-		m := ui.New(e, command.NewKeymaps()).
-			WithInitialPicker(ui.NewChangedFilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		e.SetVersionControl(nil)
 
@@ -964,8 +901,7 @@ func changedFilePicker(t *testing.T, repo string) ui.Model {
 	e := view.NewEditor(repo)
 	s := vcs.Attach(e)
 	t.Cleanup(s.Close)
-	m := ui.New(e, command.NewKeymaps()).
-		WithInitialPicker(ui.NewChangedFilePicker)
+	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 	return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 }
 
@@ -998,9 +934,7 @@ func sendCtrl(m ui.Model, ch rune) ui.Model {
 
 func gitStatus(t *testing.T, repo string) string {
 	t.Helper()
-	out, err := exec.Command(
-		"git", "-C", repo, "status", "--porcelain", "--find-renames",
-	).Output()
+	out, err := exec.Command("git", "-C", repo, "status", "--porcelain", "--find-renames").Output()
 	assert.NoError(t, err)
 	return strings.Trim(string(out), "\n")
 }

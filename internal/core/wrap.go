@@ -14,8 +14,8 @@ type (
 		trailing   bool
 	}
 
-	// hardWrapPrefixes is the prefix carried by a paragraph's first line and
-	// the one carried by every line after it
+	// hardWrapPrefixes is the prefix carried by a paragraph's first line and the one carried by
+	// every line after it
 	hardWrapPrefixes struct {
 		initial    string
 		subsequent string
@@ -41,9 +41,9 @@ const (
 	wrapShortTailDiv  = 4
 )
 
-// ReflowHardWrap reformats text to fit within width columns by breaking at word
-// boundaries. Existing line breaks are first collapsed into spaces and common
-// quote, comment, and list prefixes are retained on wrapped rows
+// ReflowHardWrap reformats text to fit within width columns by breaking at word boundaries.
+// Existing line breaks are first collapsed into spaces and common quote, comment, and list prefixes
+// are retained on wrapped rows
 func ReflowHardWrap(text string, width int) string {
 	if width <= 0 || text == "" {
 		return text

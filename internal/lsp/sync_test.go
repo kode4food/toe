@@ -552,37 +552,27 @@ func (s *syncServer) Initialize(
 	}, nil
 }
 
-func (s *syncServer) Initialized(
-	context.Context, *protocol.InitializedParams,
-) error {
+func (s *syncServer) Initialized(context.Context, *protocol.InitializedParams) error {
 	close(s.initialized)
 	return nil
 }
 
-func (s *syncServer) DidOpen(
-	_ context.Context, p *protocol.DidOpenTextDocumentParams,
-) error {
+func (s *syncServer) DidOpen(_ context.Context, p *protocol.DidOpenTextDocumentParams) error {
 	s.opened <- p
 	return nil
 }
 
-func (s *syncServer) DidChange(
-	_ context.Context, p *protocol.DidChangeTextDocumentParams,
-) error {
+func (s *syncServer) DidChange(_ context.Context, p *protocol.DidChangeTextDocumentParams) error {
 	s.changed <- p
 	return nil
 }
 
-func (s *syncServer) DidSave(
-	_ context.Context, p *protocol.DidSaveTextDocumentParams,
-) error {
+func (s *syncServer) DidSave(_ context.Context, p *protocol.DidSaveTextDocumentParams) error {
 	s.saved <- p
 	return nil
 }
 
-func (s *syncServer) DidClose(
-	_ context.Context, p *protocol.DidCloseTextDocumentParams,
-) error {
+func (s *syncServer) DidClose(_ context.Context, p *protocol.DidCloseTextDocumentParams) error {
 	s.closed <- p
 	return nil
 }
@@ -640,13 +630,9 @@ func newSyncClient(
 	t.Helper()
 	ctx := t.Context()
 	clientConn, serverConn := net.Pipe()
-	_, serverRPC, _ := protocol.NewServer(
-		ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-	)
+	_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 	clientCtx, client := lsp.NewClient(ctx, clientConn, nil)
-	_, err := client.Initialize(
-		clientCtx, lsp.NewInitializeParams(lsp.InitializeConfig{}),
-	)
+	_, err := client.Initialize(clientCtx, lsp.NewInitializeParams(lsp.InitializeConfig{}))
 	assert.NoError(t, err)
 	assert.True(t, waitFor(server.initialized))
 	return clientCtx, client, func() {

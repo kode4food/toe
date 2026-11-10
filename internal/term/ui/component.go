@@ -8,9 +8,8 @@ import (
 )
 
 type (
-	// Callback lets a component push, pop, or mutate compositor layers
-	// without direct coupling, the compositor executes it after event
-	// propagation completes
+	// Callback lets a component push, pop, or mutate compositor layers without direct coupling, the
+	// compositor executes it after event propagation completes
 	Callback func(*Context, *Compositor) tea.Cmd
 
 	// EventResult is returned by every Component.HandleEvent call
@@ -25,24 +24,24 @@ type (
 		Cursor(*Context, geom.Size) (tea.Cursor, bool)
 	}
 
-	// BufferRenderer exposes the raw cell buffer a base component rendered
-	// into, so overlay layers can draw directly onto it
+	// BufferRenderer exposes the raw cell buffer a base component rendered into, so overlay layers
+	// can draw directly onto it
 	BufferRenderer interface {
 		Component
 		Render(*Context, geom.Size) *tui.Buffer
 	}
 
-	// BufferOverlayComponent extends Component for overlay layers that own
-	// their own cell buffer instead of drawing into the shared one
+	// BufferOverlayComponent extends Component for overlay layers that own their own cell buffer
+	// instead of drawing into the shared one
 	BufferOverlayComponent interface {
 		Component
 		Layout(*Context, geom.Size) (geom.Area, bool)
 		PaintBuffer(*Context, geom.Area) *tui.Buffer
 	}
 
-	// PaneInput is a pane that handles bubbletea key and mouse events itself.
-	// It receives the event first. An unconsumed event (handled=false) falls
-	// through to the editor's default keymap/document handling
+	// PaneInput is a pane that handles bubbletea key and mouse events itself. It receives the event
+	// first. An unconsumed event (handled=false) falls through to the editor's default
+	// keymap/document handling
 	PaneInput interface {
 		HandleEvent(*Context, tea.Msg) (EventResult, bool)
 	}
@@ -52,14 +51,13 @@ type (
 		Cursor(*Context) (tea.Cursor, bool)
 	}
 
-	// Pasteable is a pane that consumes a paste itself instead of the
-	// document/selection paste
+	// Pasteable is a pane that consumes a paste itself instead of the document/selection paste
 	Pasteable interface {
 		Paste(text string)
 	}
 
-	// Draggable is a pane that handles mouse drags itself. Drags span several
-	// events with cross-event state, so they stay separate from PaneInput
+	// Draggable is a pane that handles mouse drags itself. Drags span several events with
+	// cross-event state, so they stay separate from PaneInput
 	Draggable interface {
 		BeginDrag(*Context, geom.Point, tea.KeyMod) bool
 		ContinueDrag(*Context, geom.Point) tea.Cmd

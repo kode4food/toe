@@ -73,10 +73,8 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "other buffers closed"}
 				},
-				Modes: command.PaneModes,
-				Aliases: []string{
-					"bco", "bcloseother",
-				},
+				Modes:   command.PaneModes,
+				Aliases: []string{"bco", "bcloseother"},
 			},
 			{
 				Name:      actBufferCloseAll,
@@ -127,9 +125,7 @@ func BufferModule() command.Module {
 	}
 }
 
-func closeBuffers(
-	e *view.Editor, args *command.Args, force bool,
-) command.Result {
+func closeBuffers(e *view.Editor, args *command.Args, force bool) command.Result {
 	views, err := buffersToClose(e, args)
 	if err != nil {
 		return command.Result{Error: err}

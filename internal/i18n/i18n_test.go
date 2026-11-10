@@ -35,9 +35,7 @@ func TestText(t *testing.T) {
 	})
 
 	t.Run("formats translated error", func(t *testing.T) {
-		assert.Equal(t, "error: no document",
-			i18n.ErrorText(i18n.NewError(i18n.ErrorNoDocument)),
-		)
+		assert.Equal(t, "error: no document", i18n.ErrorText(i18n.NewError(i18n.ErrorNoDocument)))
 		err := i18n.NewError(i18n.ErrorNoSuchCommand)
 		withVars := err.WithVars(i18n.Vars{"name": "nope"})
 		assert.NotSame(t, err, withVars)
@@ -50,9 +48,7 @@ func TestText(t *testing.T) {
 	})
 
 	t.Run("formats literal error", func(t *testing.T) {
-		assert.Equal(t, "error: nope",
-			i18n.ErrorText(errors.New("nope")),
-		)
+		assert.Equal(t, "error: nope", i18n.ErrorText(errors.New("nope")))
 	})
 }
 
@@ -200,10 +196,7 @@ func TestPluralLocales(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			cmd := exec.Command(os.Args[0], "-test.run=^TestPluralLocales$")
-			cmd.Env = append(os.Environ(),
-				"LC_ALL="+tc.locale,
-				testLocaleExpected+"="+tc.expected,
-			)
+			cmd.Env = append(os.Environ(), "LC_ALL="+tc.locale, testLocaleExpected+"="+tc.expected)
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				t.Log(string(out))
@@ -216,9 +209,7 @@ func TestPluralLocales(t *testing.T) {
 func TestLocales(t *testing.T) {
 	if expected := os.Getenv(testLocaleExpected); expected != "" {
 		assert.Equal(t, expected, i18n.Text(i18n.ErrorNoDocument))
-		assert.Equal(t, os.Getenv(testPromptExpected),
-			i18n.Text(i18n.PromptCommand),
-		)
+		assert.Equal(t, os.Getenv(testPromptExpected), i18n.Text(i18n.PromptCommand))
 		return
 	}
 
@@ -306,18 +297,14 @@ func TestTranslationFiles(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			tr := readTranslations(t, "translations/"+name)
-			regional := strings.Contains(
-				strings.TrimSuffix(name, ".json"), "-",
-			)
+			regional := strings.Contains(strings.TrimSuffix(name, ".json"), "-")
 			if !regional {
 				assert.Len(t, tr, len(en))
 			}
 			for key, value := range tr {
 				fallback, ok := en[key]
 				assert.True(t, ok)
-				assert.Equal(t,
-					placeholders(fallback), placeholders(value),
-				)
+				assert.Equal(t, placeholders(fallback), placeholders(value))
 			}
 		})
 	}

@@ -92,8 +92,7 @@ func TestSession(t *testing.T) {
 		sessionDir := filepath.Join(dir, ".toe")
 		assert.NoError(t, os.MkdirAll(sessionDir, 0o755))
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(sessionDir, view.SessionFile),
-			[]byte("{{{not toml"), 0o644,
+			filepath.Join(sessionDir, view.SessionFile), []byte("{{{not toml"), 0o644,
 		))
 		e, km := sessionEditorInDir(t, dir)
 		res := test.RunCmd(t, km, e, "restore_session")
@@ -121,12 +120,10 @@ func baseOptions(t *testing.T, e *view.Editor) map[string]string {
 	return values
 }
 
-func sessionEditorInDir(
-	t *testing.T, dir string,
-) (*view.Editor, *command.Keymaps) {
+func sessionEditorInDir(t *testing.T, dir string) (*view.Editor, *command.Keymaps) {
 	t.Helper()
-	// pin the workspace root so FindWorkspace can't escape the temp dir to
-	// an ancestor with a stray .git/.toe marker (e.g. /tmp/.git)
+	// pin the workspace root so FindWorkspace can't escape the temp dir to an ancestor with a stray
+	// .git/.toe marker (e.g. /tmp/.git)
 	assert.NoError(t, os.MkdirAll(filepath.Join(dir, ".git"), 0o755))
 	km := command.NewKeymaps()
 	e := view.NewEditor(dir)

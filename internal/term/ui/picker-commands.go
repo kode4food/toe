@@ -41,10 +41,7 @@ func (c *commandPaletteSource) Load() PickerLoad {
 		name := cmd.Aliases[0]
 		items = append(items, slab.Add(PickerItem{
 			Display: name,
-			Columns: []string{
-				name, commandKeyString(c.keymaps, mode, cmd.Name),
-				cmd.DocString,
-			},
+			Columns: []string{name, commandKeyString(c.keymaps, mode, cmd.Name), cmd.DocString},
 			Content: name,
 			Payload: cmd,
 		}))

@@ -28,17 +28,13 @@ func TestDefaultTextFormat(t *testing.T) {
 
 func TestTextFormatForConfig(t *testing.T) {
 	t.Run("soft wrap disabled by default", func(t *testing.T) {
-		f := language.TextFormatForConfig(
-			&language.Language{}, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(&language.Language{}, nil, language.SoftWrap{}, 80)
 		assert.False(t, f.SoftWrap)
 	})
 
 	t.Run("soft wrap enabled via editor config", func(t *testing.T) {
 		sw := language.SoftWrap{Enable: new(true)}
-		f := language.TextFormatForConfig(
-			&language.Language{}, nil, sw, 80,
-		)
+		f := language.TextFormatForConfig(&language.Language{}, nil, sw, 80)
 		assert.True(t, f.SoftWrap)
 	})
 
@@ -46,9 +42,7 @@ func TestTextFormatForConfig(t *testing.T) {
 		lang := &language.Language{
 			SoftWrap: language.SoftWrap{Enable: new(true)},
 		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(lang, nil, language.SoftWrap{}, 80)
 		assert.True(t, f.SoftWrap)
 	})
 
@@ -56,9 +50,7 @@ func TestTextFormatForConfig(t *testing.T) {
 		lang := &language.Language{
 			SoftWrap: language.SoftWrap{WrapIndicator: new(">> ")},
 		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(lang, nil, language.SoftWrap{}, 80)
 		assert.Equal(t, ">> ", f.WrapIndicator)
 	})
 
@@ -67,9 +59,7 @@ func TestTextFormatForConfig(t *testing.T) {
 			TextWidth: new(40),
 			SoftWrap:  language.SoftWrap{WrapAtTextWidth: new(true)},
 		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(lang, nil, language.SoftWrap{}, 80)
 		assert.True(t, f.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, f.ViewportWidth)
 	})
@@ -79,31 +69,24 @@ func TestTextFormatForConfig(t *testing.T) {
 			TextWidth: new(100),
 			SoftWrap:  language.SoftWrap{WrapAtTextWidth: new(true)},
 		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(lang, nil, language.SoftWrap{}, 80)
 		assert.False(t, f.SoftWrapAtTextWidth)
 	})
 
 	t.Run("text width from language", func(t *testing.T) {
 		lang := &language.Language{TextWidth: new(60)}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(lang, nil, language.SoftWrap{}, 80)
 		assert.Equal(t, language.DefaultTextWidth, 80)
 		_ = f
 	})
 
 	t.Run("text width from editor config", func(t *testing.T) {
-		f := language.TextFormatForConfig(
-			&language.Language{}, new(72), language.SoftWrap{}, 80,
-		)
+		f := language.TextFormatForConfig(&language.Language{}, new(72), language.SoftWrap{}, 80)
 		_ = f
 	})
 	t.Run("unknown language returns default format", func(t *testing.T) {
 		f := language.TextFormatForConfig(
-			new(language.Registry).Get("no-such-lang"), nil,
-			language.SoftWrap{}, 80,
+			new(language.Registry).Get("no-such-lang"), nil, language.SoftWrap{}, 80,
 		)
 		assert.NotNil(t, f)
 		assert.Equal(t, 80, f.ViewportWidth)

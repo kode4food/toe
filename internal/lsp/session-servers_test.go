@@ -69,8 +69,6 @@ file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerStartMarkerEnv, marker,
 		testServerInitDelayMsEnv)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }

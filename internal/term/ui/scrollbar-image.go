@@ -67,9 +67,7 @@ func (m Model) scrollbarImageCmd() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (r *renderPass) drawScrollbar(
-	bar *scrollbar, buf *tui.Buffer, id view.Id,
-) {
+func (r *renderPass) drawScrollbar(bar *scrollbar, buf *tui.Buffer, id view.Id) {
 	vs, ok := r.editor.cache.viewScrollbars[id]
 	if !ok {
 		return
@@ -101,9 +99,7 @@ func (s *scrollbar) rowKind(at core.Span) scrollMarkKind {
 	return kind
 }
 
-func (s scrollbarPlacement) draw(
-	bar *scrollbar, st *scrollbarImageState, buf *tui.Buffer,
-) {
+func (s scrollbarPlacement) draw(bar *scrollbar, st *scrollbarImageState, buf *tui.Buffer) {
 	if !s.images.graphics {
 		bar.draw(buf)
 		return
@@ -124,9 +120,7 @@ func (s scrollbarPlacement) draw(
 		}
 		return
 	}
-	style := scrollbarImageStyle(
-		s.id, cells, bar.styles.scrollTrack[0].BgColor(),
-	)
+	style := scrollbarImageStyle(s.id, cells, bar.styles.scrollTrack[0].BgColor())
 	for row := range bar.geom.rows {
 		buf.Set(bar.at.Add(geom.Point{Y: row}), tui.Cell{
 			Symbol: s.images.placeholder(cells, geom.Point{Y: row}),
@@ -175,9 +169,7 @@ func (s *scrollbarImageState) ensure(bar *scrollbar) (*Image, uint64, bool) {
 	return s.image, s.rev, true
 }
 
-func (s *scrollbarImageState) displayCmd(
-	images *imageRegistry, bar *scrollbar, id uint32,
-) tea.Cmd {
+func (s *scrollbarImageState) displayCmd(images *imageRegistry, bar *scrollbar, id uint32) tea.Cmd {
 	if !images.graphics || images.inFlight(id) {
 		return nil
 	}
@@ -200,9 +192,7 @@ func scrollbarImageID(surface uint32) uint32 {
 	})
 }
 
-func renderScrollbarImage(
-	marks *scrollbar, thumb core.Span, size geom.Size,
-) *Image {
+func renderScrollbarImage(marks *scrollbar, thumb core.Span, size geom.Size) *Image {
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
 	slots := marks.geom.slots()
 	// a lone line must not shrink to a hairline
@@ -248,9 +238,7 @@ func paintScrollbarRow(img *image.RGBA, y int, c color.Color) {
 }
 
 func scrollbarImageStyle(id uint32, cells geom.Size, bg tui.Color) tui.Style {
-	return tui.Style{}.
-		Fg(tui.ImageColor(id)).
-		UlColor(tui.ImageColor(imagePlacementID(cells))).
+	return tui.Style{}.Fg(tui.ImageColor(id)).UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
 }
 

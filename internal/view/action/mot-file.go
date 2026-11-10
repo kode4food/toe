@@ -20,8 +20,8 @@ type GotoTarget struct {
 var (
 	// ErrNoFilePath is returned when no file path is found under the cursor
 	ErrNoFilePath = errors.New("no file path under cursor")
-	// ErrDocumentLinkTarget is returned when a caller needs a local path but
-	// the document link points elsewhere
+	// ErrDocumentLinkTarget is returned when a caller needs a local path but the document link
+	// points elsewhere
 	ErrDocumentLinkTarget = errors.New("document link target unsupported")
 	// ErrExternalURLOpener is returned when no external URL opener is available
 	ErrExternalURLOpener = errors.New("external URL opener unavailable")
@@ -135,9 +135,7 @@ func resolveDocumentLink(
 	return resolved, nil
 }
 
-func selectionOverlapsDocumentLink(
-	sel core.Range, link view.DocumentLink,
-) bool {
+func selectionOverlapsDocumentLink(sel core.Range, link view.DocumentLink) bool {
 	if sel.IsEmpty() {
 		pos := sel.From()
 		return link.From <= pos && pos < link.To
@@ -147,9 +145,7 @@ func selectionOverlapsDocumentLink(
 
 func parseDocumentLinkTarget(target string) (GotoTarget, error) {
 	if target == "" {
-		return GotoTarget{}, fmt.Errorf(
-			"%w: empty target", ErrDocumentLinkTarget,
-		)
+		return GotoTarget{}, fmt.Errorf("%w: empty target", ErrDocumentLinkTarget)
 	}
 	u, err := url.Parse(target)
 	if err != nil {

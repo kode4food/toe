@@ -38,9 +38,7 @@ func (c *Client) InlayHints(
 }
 
 // InlayHints returns language-server hints and stores them for the view
-func (s *Session) InlayHints(
-	doc *view.Document, viewID view.Id,
-) ([]view.InlayHint, error) {
+func (s *Session) InlayHints(doc *view.Document, viewID view.Id) ([]view.InlayHint, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		doc.ClearInlayHints(viewID)
@@ -94,9 +92,7 @@ func viewInlayHints(
 ) []view.InlayHint {
 	out := make([]view.InlayHint, 0, len(hints))
 	for _, hint := range hints {
-		pos, ok := lspPositionToChar(
-			doc, hint.Position, client.OffsetEncoding(),
-		)
+		pos, ok := lspPositionToChar(doc, hint.Position, client.OffsetEncoding())
 		if !ok {
 			continue
 		}

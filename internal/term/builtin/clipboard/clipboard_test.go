@@ -138,9 +138,7 @@ func TestClipboardPrimarySelection(t *testing.T) {
 }
 
 func TestClipboardDefaultRegister(t *testing.T) {
-	for _, cmd := range []string{
-		"yank", "delete_selection", "change_selection",
-	} {
+	for _, cmd := range []string{"yank", "delete_selection", "change_selection"} {
 		t.Run(cmd, func(t *testing.T) {
 			for _, reg := range []rune{0, 'a', '"', '_'} {
 				name := string(reg)
@@ -178,9 +176,7 @@ func TestClipboardDefaultRegister(t *testing.T) {
 		})
 	}
 
-	for _, cmd := range []string{
-		"delete_selection_noyank", "change_selection_noyank",
-	} {
+	for _, cmd := range []string{"delete_selection_noyank", "change_selection_noyank"} {
 		t.Run(cmd, func(t *testing.T) {
 			e, km := test.Env(t, "abc")
 			clip := testutil.NewFakeClipboard()
@@ -210,9 +206,7 @@ func TestClipboardSystemClipboard(t *testing.T) {
 
 		test.RunCmd(t, km, e, "clipboard-yank")
 
-		assert.Equal(t,
-			[]string{"abc", "def"}, e.ReadRegister(view.RegisterClipboard),
-		)
+		assert.Equal(t, []string{"abc", "def"}, e.ReadRegister(view.RegisterClipboard))
 	})
 
 	t.Run("yank main takes one selection", func(t *testing.T) {
@@ -224,9 +218,7 @@ func TestClipboardSystemClipboard(t *testing.T) {
 
 		test.RunCmd(t, km, e, "yank_main_selection")
 
-		assert.Equal(t,
-			[]string{"abc"}, e.ReadRegister(view.RegisterClipboard),
-		)
+		assert.Equal(t, []string{"abc"}, e.ReadRegister(view.RegisterClipboard))
 	})
 
 	t.Run("yank join uses the separator argument", func(t *testing.T) {

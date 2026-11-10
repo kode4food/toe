@@ -19,9 +19,7 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("moves forward by count graphemes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(
-			doc, core.DirectionForward, 3, core.MovementMove,
-		)
+		r = r.MoveHorizontally(doc, core.DirectionForward, 3, core.MovementMove)
 		assert.Equal(t, 3, r.Head)
 		assert.Equal(t, 3, r.Anchor)
 	})
@@ -29,9 +27,7 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("moves backward by count graphemes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(5)
-		r = r.MoveHorizontally(
-			doc, core.DirectionBackward, 2, core.MovementMove,
-		)
+		r = r.MoveHorizontally(doc, core.DirectionBackward, 2, core.MovementMove)
 		assert.Equal(t, 3, r.Head)
 		assert.Equal(t, 3, r.Anchor)
 	})
@@ -39,9 +35,7 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("extend keeps anchor fixed", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(
-			doc, core.DirectionForward, 3, core.MovementExtend,
-		)
+		r = r.MoveHorizontally(doc, core.DirectionForward, 3, core.MovementExtend)
 		assert.Equal(t, 0, r.Anchor)
 		assert.Equal(t, 4, r.Head) // next grapheme boundary after pos 3
 	})
@@ -49,18 +43,14 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("clamps at document start", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(
-			doc, core.DirectionBackward, 999, core.MovementMove,
-		)
+		r = r.MoveHorizontally(doc, core.DirectionBackward, 999, core.MovementMove)
 		assert.Equal(t, 0, r.Head)
 	})
 
 	t.Run("clamps at document end", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		r := core.PointRange(3)
-		r = r.MoveHorizontally(
-			doc, core.DirectionForward, 999, core.MovementMove,
-		)
+		r = r.MoveHorizontally(doc, core.DirectionForward, 999, core.MovementMove)
 		assert.Equal(t, 3, r.Head)
 	})
 }
@@ -413,8 +403,8 @@ func TestMoveNextLongWordEnd(t *testing.T) {
 
 func TestMovePrevLongWordEnd(t *testing.T) {
 	tests := []wordTest{
-		// Starting from a space, PrevLongWordEnd moves to just before the word
-		// and the boundary anchor is snapped
+		// Starting from a space, PrevLongWordEnd moves to just before the word and the boundary
+		// anchor is snapped
 		{
 			"Basic backward long word end",
 			1, core.Range{Anchor: 5, Head: 5}, core.Range{Anchor: 5, Head: 0},
@@ -502,8 +492,8 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		MaxIndentRetain:    0,
 		WrapIndicatorWidth: 0,
 	}
-	// "0123456789ab\ncd" wraps at col 10: chars 0-9, then "ab" 10-11 with
-	// \n at 12, then line 1 "cd" at 13-14
+	// "0123456789ab\ncd" wraps at col 10: chars 0-9, then "ab" 10-11 with \n at 12, then line 1
+	// "cd" at 13-14
 	t.Run("text-line fallback when SoftWrap off", func(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		r := core.PointRange(0)
@@ -643,9 +633,7 @@ func TestMoveVerticallyVisualEdges(t *testing.T) {
 
 	t.Run("every count lands on its own visual row", func(t *testing.T) {
 		// three wrapped lines and no trailing newline, so both edges are live
-		doc := core.NewRope(
-			"0123456789ab\n0123456789ab\n0123456789ab",
-		)
+		doc := core.NewRope("0123456789ab\n0123456789ab\n0123456789ab")
 		rows := []int{0, 10, 13, 23, 26, 36}
 		for from := range rows {
 			for to := range rows {
@@ -676,8 +664,8 @@ func TestVisualRowStarts(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 20, TabWidth: 4, MaxWrap: 5,
 		}
-		// "alpha bravo charlie delta": row 0 holds through the trailing space
-		// at col 20, so "delta" moves to row 1 whole rather than breaking
+		// "alpha bravo charlie delta": row 0 holds through the trailing space at col 20, so "delta"
+		// moves to row 1 whole rather than breaking
 		got := vf.VisualRowStarts([]rune("alpha bravo charlie delta"))
 		assert.Equal(t, []int{20}, got)
 	})
@@ -686,8 +674,8 @@ func TestVisualRowStarts(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
-		// "supercalifragilistic" cannot move whole, so it fills the row and
-		// breaks at the viewport edge
+		// "supercalifragilistic" cannot move whole, so it fills the row and breaks at the viewport
+		// edge
 		got := vf.VisualRowStarts([]rune("supercalifragilistic"))
 		assert.Equal(t, []int{10}, got)
 	})
@@ -697,12 +685,12 @@ func TestVisualRowStarts(t *testing.T) {
 			ViewportWidth: 14, TabWidth: 4, MaxWrap: 5,
 			MaxIndentRetain: 40, WrapIndicatorWidth: 0,
 		}
-		// four-space indent + "alpha bravo gamma", continuation rows begin at
-		// col 4, so fewer content columns are available per wrapped row
+		// four-space indent + "alpha bravo gamma", continuation rows begin at col 4, so fewer
+		// content columns are available per wrapped row
 		runes := []rune("    alpha bravo gamma")
 		got := vf.VisualRowStarts(runes)
-		// rows are "    alpha " at offsets 0-9, then the 4-column indent plus
-		// "bravo " at 10-15 and "gamma" at 16-20
+		// rows are " alpha " at offsets 0-9, then the 4-column indent plus "bravo " at 10-15 and
+		// "gamma" at 16-20
 		assert.Equal(t, []int{10, 16}, got)
 	})
 
@@ -739,8 +727,8 @@ func TestMoveVerticallyVisualIndented(t *testing.T) {
 	doc := core.NewRope("    alpha bravo gamma")
 
 	t.Run("down keeps visual column", func(t *testing.T) {
-		// from offset 4 (visual col 4), moving down must land on row 1's first
-		// content char, "bravo" at offset 10, also col 4 after the indent
+		// from offset 4 (visual col 4), moving down must land on row 1's first content char,
+		// "bravo" at offset 10, also col 4 after the indent
 		r := core.PointRange(4)
 		got := moveRows(vf, doc, r, 1)
 		assert.Equal(t, 10, got.Head)
@@ -882,9 +870,7 @@ func TestVisualRowWalk(t *testing.T) {
 }
 
 // moveRows moves r by rows visual rows, negative meaning upward
-func moveRows(
-	vf *core.VisualMoveFormat, doc core.Rope, r core.Range, rows int,
-) core.Range {
+func moveRows(vf *core.VisualMoveFormat, doc core.Rope, r core.Range, rows int) core.Range {
 	mv := core.VerticalMove{
 		Dir:      core.DirectionForward,
 		Count:    rows,

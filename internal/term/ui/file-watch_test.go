@@ -14,9 +14,7 @@ func TestWatchableTreeDirsExcludesGit(t *testing.T) {
 	for _, dir := range []string{".git", "src"} {
 		assert.NoError(t, os.Mkdir(filepath.Join(root, dir), 0o755))
 	}
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(root, "top.txt"), []byte("x"), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(root, "top.txt"), []byte("x"), 0o644))
 
 	dirs := watchableTreeDirs(root)
 

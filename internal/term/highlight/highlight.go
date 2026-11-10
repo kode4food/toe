@@ -1,5 +1,5 @@
-// Package highlight provides Chroma-based syntax highlighting for the editor
-// It tokenizes document text and maps Chroma token types to terminal styles
+// Package highlight provides Chroma-based syntax highlighting for the editor It tokenizes document
+// text and maps Chroma token types to terminal styles
 package highlight
 
 import (
@@ -98,9 +98,8 @@ var (
 	}
 )
 
-// Tokenize parses text using Chroma and returns highlight spans with theme
-// scope names. Prefer calling syntax.Tokenize which tries Tree-sitter first
-// and uses this as a fallback
+// Tokenize parses text using Chroma and returns highlight spans with theme scope names. Prefer
+// calling syntax.Tokenize which tries Tree-sitter first and uses this as a fallback
 func Tokenize(src core.Source) []Span {
 	if src.Lang == view.MessagesLanguage {
 		return tokenizeLog(src.Text)
@@ -128,8 +127,8 @@ func Tokenize(src core.Source) []Span {
 	return spans
 }
 
-// DefaultStyle returns the fallback ANSI style for a scope name when no
-// theme is active or the theme does not define the scope
+// DefaultStyle returns the fallback ANSI style for a scope name when no theme is active or the
+// theme does not define the scope
 func DefaultStyle(scope string) tui.Style {
 	// Walk up the scope hierarchy (e.g. "keyword.function" → "keyword")
 	for s := scope; s != ""; {

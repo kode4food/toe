@@ -11,9 +11,7 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-func (r *renderPass) screenCharPos(
-	doc *view.Document, v *view.View, at geom.Point,
-) (int, bool) {
+func (r *renderPass) screenCharPos(doc *view.Document, v *view.View, at geom.Point) (int, bool) {
 	a := v.Area()
 	localY := at.Y - a.Y
 	if localY < 0 {
@@ -30,8 +28,8 @@ func (r *renderPass) screenCharPos(
 
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, r.context.Editor.Options().Gutters)
-	// Add the horizontal scroll offset: screen column 0 of the content maps to
-	// content column hOff. The gutter is fixed and excluded from the offset
+	// Add the horizontal scroll offset: screen column 0 of the content maps to content column hOff.
+	// The gutter is fixed and excluded from the offset
 	contentX := max(at.X-a.X-gutterW-entry.prefixWidth, 0) +
 		v.Offset().HorizontalOffset
 	return charPosInLineSeg(charPosInLineSegArgs{
@@ -116,8 +114,7 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 		return
 	}
 
-	// A click outside any editor content area (a status line or a gap) must
-	// not move the cursor
+	// A click outside any editor content area (a status line or a gap) must not move the cursor
 	res, ok := r.resolveClickPos(at)
 	if !ok {
 		return
@@ -134,12 +131,12 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	case msg.Mod&tea.ModAlt != 0:
 		newSel = prevSel.Push(core.PointRange(res.pos))
 	case msg.Mod&tea.ModCtrl != 0:
-		// a ctrl-click jumps from the clicked symbol, so it lands on it rather
-		// than extending a selection over it
+		// a ctrl-click jumps from the clicked symbol, so it lands on it rather than extending a
+		// selection over it
 		newSel = core.PointSelection(res.pos)
 	case cx.Editor.Mode() == view.ModeSelect:
-		// In select mode a click extends the primary selection rather than
-		// collapsing it, discarding any secondary selections
+		// In select mode a click extends the primary selection rather than collapsing it,
+		// discarding any secondary selections
 		primary := prevSel.Primary().PutCursor(text, res.pos, true)
 		if s, err := core.NewSelection([]core.Range{primary}, 0); err == nil {
 			newSel = s
@@ -175,9 +172,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		if sep.layout == view.LayoutHorizontal {
 			newPos = at.Y - yOff
 		}
-		cx.Editor.Tree().MoveSeparator(
-			sep.containerID, sep.childIdx, sep.layout, newPos,
-		)
+		cx.Editor.Tree().MoveSeparator(sep.containerID, sep.childIdx, sep.layout, newPos)
 		return r.editor.settlePaneResizeCmd()
 	}
 
@@ -434,9 +429,7 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 	return charPos, true
 }
 
-func extendSelectionTo(
-	cx *Context, doc *view.Document, v *view.View, pos int,
-) bool {
+func extendSelectionTo(cx *Context, doc *view.Document, v *view.View, pos int) bool {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary().PutCursor(text, pos, true)

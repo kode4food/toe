@@ -2,8 +2,8 @@ package ui
 
 import "github.com/kode4food/toe/internal/geom"
 
-// scales are a delta from those in effect when the drag began, so the grabbed
-// border tracks the pointer whatever the overlay is anchored to
+// scales are a delta from those in effect when the drag began, so the grabbed border tracks the
+// pointer whatever the overlay is anchored to
 type overlayDrag struct {
 	from        geom.Point
 	startWidth  float64
@@ -62,8 +62,8 @@ func (d *overlayDrag) heightScale(at geom.Point, avail int) float64 {
 	return scaleDelta(d.startHeight, d.signY*(at.Y-d.from.Y), avail)
 }
 
-// a centered overlay grows on both sides at once, so a border that moves n
-// cells changes the size by 2n
+// a centered overlay grows on both sides at once, so a border that moves n cells changes the size
+// by 2n
 func scaleDelta(start float64, moved, avail int) float64 {
 	if avail <= 0 {
 		return clampOverlayScale(start)

@@ -89,8 +89,7 @@ func (t *Tree) FindSplitInDirection(id Id, dir Direction) (Id, bool) {
 	}
 }
 
-// SwapSplitInDirection swaps the focused pane with the nearest pane in the
-// given direction
+// SwapSplitInDirection swaps the focused pane with the nearest pane in the given direction
 func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 	t.Unmaximize()
 	target, ok := t.FindSplitInDirection(t.focus, dir)

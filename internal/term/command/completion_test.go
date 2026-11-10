@@ -136,8 +136,8 @@ func TestCompleteFlagArgument(t *testing.T) {
 	}
 	c := command.Completer{}
 
-	// Flag argument completion triggers when the flag value is being typed
-	// (i.e., after --flag has been parsed and a partial value follows)
+	// Flag argument completion triggers when the flag value is being typed (i.e., after --flag has
+	// been parsed and a partial value follows)
 	t.Run("completes flag argument with prefix j", func(t *testing.T) {
 		got := c.Complete(nil, sig, "--fmt j")
 		assert.Equal(t, 1, len(got))
@@ -214,9 +214,7 @@ func TestCompleteTrailingPositionals(t *testing.T) {
 	})
 
 	t.Run("a nil last slot stops completion", func(t *testing.T) {
-		stop := command.PositionalCompleter(
-			command.StaticCompleter("one", "two"), nil,
-		)
+		stop := command.PositionalCompleter(command.StaticCompleter("one", "two"), nil)
 		sig := command.Signature{
 			Positionals: command.Positionals{Min: 0, Max: -1},
 			Completer:   stop,

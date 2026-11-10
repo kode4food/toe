@@ -22,12 +22,10 @@ func TestOpenPathImage(t *testing.T) {
 		return e, ok, err
 	}
 
-	// The pane is created regardless of terminal support. The pane itself
-	// presents the unsupported message and skips transmission
+	// The pane is created regardless of terminal support. The pane itself presents the unsupported
+	// message and skips transmission
 	t.Run("unsupported terminal opens pane", func(t *testing.T) {
-		for _, k := range []string{
-			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
-		} {
+		for _, k := range []string{"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM"} {
 			t.Setenv(k, "")
 		}
 		e, ok, err := openImage(t)
@@ -49,9 +47,7 @@ func TestOpenPathImage(t *testing.T) {
 	t.Run("executable opens binary pane", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		path := filepath.Join(t.TempDir(), "tool")
-		assert.NoError(t, os.WriteFile(
-			path, []byte{0xCF, 0xFA, 0xED, 0xFE}, 0o755,
-		))
+		assert.NoError(t, os.WriteFile(path, []byte{0xCF, 0xFA, 0xED, 0xFE}, 0o755))
 
 		v, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 
@@ -65,9 +61,7 @@ func TestOpenPathImage(t *testing.T) {
 	t.Run("malformed image remains invalid", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		path := filepath.Join(t.TempDir(), "broken.png")
-		assert.NoError(t, os.WriteFile(
-			path, []byte{0x89, 'P', 'N', 'G', 0, 0, 0, 0}, 0o644,
-		))
+		assert.NoError(t, os.WriteFile(path, []byte{0x89, 'P', 'N', 'G', 0, 0, 0, 0}, 0o644))
 
 		_, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 

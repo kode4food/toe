@@ -21,8 +21,8 @@ const (
 	runeLastPrintableASCII  rune = 0x7e // '~' - last printable ASCII
 )
 
-// indentGuides describes where indent guides are drawn on a row: guides run
-// from level start up to (not including) end, within the indent columns
+// indentGuides describes where indent guides are drawn on a row: guides run from level start up to
+// (not including) end, within the indent columns
 type indentGuides struct {
 	indentCol int
 	start     int
@@ -44,9 +44,7 @@ type renderGraphemeRes struct {
 	glyph documentGlyph
 }
 
-func (r *rowRender) renderGrapheme(
-	ch rune, col int, guides indentGuides,
-) renderGraphemeRes {
+func (r *rowRender) renderGrapheme(ch rune, col int, guides indentGuides) renderGraphemeRes {
 	if ch >= runeFirstPrintableASCII && ch <= runeLastPrintableASCII {
 		return renderGraphemeRes{
 			text:  tui.ASCIIString(ch),
@@ -137,13 +135,11 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 		return nil
 	}
 	vf := &core.VisualMoveFormat{
-		ViewportWidth:   r.format.ViewportWidth,
-		TabWidth:        r.format.TabWidth,
-		MaxWrap:         r.format.MaxWrap,
-		MaxIndentRetain: r.format.MaxIndentRetain,
-		WrapIndicatorWidth: runewidth.StringWidth(
-			r.format.WrapIndicatorPrefix(),
-		),
+		ViewportWidth:      r.format.ViewportWidth,
+		TabWidth:           r.format.TabWidth,
+		MaxWrap:            r.format.MaxWrap,
+		MaxIndentRetain:    r.format.MaxIndentRetain,
+		WrapIndicatorWidth: runewidth.StringWidth(r.format.WrapIndicatorPrefix()),
 	}
 	return vf.VisualRowStarts([]rune(r.lineText))
 }
@@ -155,9 +151,7 @@ func softWrapPrefix(format *language.TextFormat, indent int) string {
 	return strings.Repeat(" ", indent) + format.WrapIndicatorPrefix()
 }
 
-func softWrapContinuationRow(
-	format *language.TextFormat, indent int, styles *styles,
-) renderedRow {
+func softWrapContinuationRow(format *language.TextFormat, indent int, styles *styles) renderedRow {
 	prefix := softWrapPrefix(format, indent)
 	wrap := format.WrapIndicatorPrefix()
 	wrapW := runewidth.StringWidth(wrap)

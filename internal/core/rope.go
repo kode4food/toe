@@ -12,8 +12,8 @@ type (
 		root *ropeNode
 	}
 
-	// Source is a document's text together with the language it is written
-	// in. Highlighting, parsing, and language detection operate on this pair
+	// Source is a document's text together with the language it is written in. Highlighting,
+	// parsing, and language detection operate on this pair
 	Source struct {
 		Text string
 		Lang string
@@ -21,8 +21,8 @@ type (
 )
 
 const (
-	// DefaultRopeLeafChars is the most characters one leaf holds, so text this
-	// short builds no tree at all
+	// DefaultRopeLeafChars is the most characters one leaf holds, so text this short builds no tree
+	// at all
 	DefaultRopeLeafChars = 1024
 
 	maxRopeDepthSkew = 1
@@ -70,8 +70,8 @@ func (r Rope) Slice(s Span) (Rope, error) {
 	return Rope{root: splitRopeNode(rest, s.Len()).left}, nil
 }
 
-// SliceString returns the substring the span covers without constructing a new
-// rope. Faster than Slice(s).String()
+// SliceString returns the substring the span covers without constructing a new rope. Faster than
+// Slice(s).String()
 func (r Rope) SliceString(s Span) (string, error) {
 	if err := r.checkSpan(s); err != nil {
 		return "", err
@@ -87,8 +87,7 @@ func (r Rope) SliceString(s Span) (string, error) {
 	return b.String(), nil
 }
 
-// ForEachSegment applies fn to each contiguous leaf substring the span covers,
-// without copying
+// ForEachSegment applies fn to each contiguous leaf substring the span covers, without copying
 func (r Rope) ForEachSegment(s Span, fn func(string)) {
 	s.From = max(s.From, 0)
 	s.To = min(s.To, r.LenChars())
@@ -172,8 +171,7 @@ func (r Rope) CharToLine(pos int) (int, error) {
 	return charToLineRopeNode(r.root, pos), nil
 }
 
-// LineEndCharIndex returns the position after the line's last character,
-// excluding its ending
+// LineEndCharIndex returns the position after the line's last character, excluding its ending
 func (r Rope) LineEndCharIndex(line int) (int, error) {
 	start, err := r.LineToChar(line)
 	if err != nil {
@@ -189,8 +187,8 @@ func (r Rope) LineEndCharIndex(line int) (int, error) {
 	if end <= start {
 		return end, nil
 	}
-	// The line ending is at most the final two chars. Read only those rather
-	// than the whole line to locate where the content ends
+	// The line ending is at most the final two chars. Read only those rather than the whole line to
+	// locate where the content ends
 	tail, err := r.SliceString(Span{From: max(end-2, start), To: end})
 	if err != nil {
 		return end, nil

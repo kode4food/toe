@@ -33,8 +33,7 @@ func lspRangeToChars(
 }
 
 func lspPositionToChar(
-	doc *view.Document, pos protocol.Position,
-	enc protocol.PositionEncodingKind,
+	doc *view.Document, pos protocol.Position, enc protocol.PositionEncodingKind,
 ) (int, bool) {
 	return serverPosition(pos).Resolve(doc.Text(), viewEncoding(enc))
 }

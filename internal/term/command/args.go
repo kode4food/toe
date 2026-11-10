@@ -90,11 +90,9 @@ const (
 	CompletingFlagValue
 )
 
-// ParseArgs parses command input using the supplied signature. expand may be
-// nil, in which case raw token content is used as-is
-func ParseArgs(
-	input string, sig Signature, validate bool, expand TokenExpander,
-) (*Args, error) {
+// ParseArgs parses command input using the supplied signature. expand may be nil, in which case raw
+// token content is used as-is
+func ParseArgs(input string, sig Signature, validate bool, expand TokenExpander) (*Args, error) {
 	t := NewTokenizer(input, validate)
 	args := NewArgs(sig, validate)
 	for {
@@ -235,9 +233,7 @@ func (p *ParseError) Error() string {
 	case ParseErrorUnterminatedToken:
 		return fmt.Sprintf("unterminated token %s", p.Token.Content)
 	case ParseErrorDuplicatedFlag:
-		return fmt.Sprintf(
-			"flag '--%s' specified more than once", p.Flag,
-		)
+		return fmt.Sprintf("flag '--%s' specified more than once", p.Flag)
 	case ParseErrorUnknownFlag:
 		return fmt.Sprintf("unknown flag '%s'", p.Text)
 	case ParseErrorFlagMissingArgument:
@@ -246,9 +242,7 @@ func (p *ParseError) Error() string {
 		if p.Text == "" {
 			return "'%' was not properly escaped. Please use '%%'"
 		}
-		return fmt.Sprintf(
-			"missing a string delimiter after '%%%s'", p.Text,
-		)
+		return fmt.Sprintf("missing a string delimiter after '%%%s'", p.Text)
 	case ParseErrorUnknownExpansion:
 		return fmt.Sprintf("unknown expansion '%s'", p.Text)
 	default:
@@ -264,22 +258,15 @@ func (p *ParseError) Is(target error) bool {
 func (p *ParseError) wrongPositionalCountError() string {
 	switch {
 	case p.Max > 0 && p.Min == p.Max:
-		return fmt.Sprintf(
-			"expected exactly %d argument%s, got %d",
-			p.Min, plural(p.Min), p.Actual,
-		)
+		return fmt.Sprintf("expected exactly %d argument%s, got %d", p.Min, plural(p.Min), p.Actual)
 	case p.Actual < p.Min:
 		return fmt.Sprintf(
-			"expected at least %d argument%s, got %d",
-			p.Min, plural(p.Min), p.Actual,
+			"expected at least %d argument%s, got %d", p.Min, plural(p.Min), p.Actual,
 		)
 	case p.Max == 0:
 		return fmt.Sprintf("expected no arguments, got %d", p.Actual)
 	default:
-		return fmt.Sprintf(
-			"expected at most %d argument%s, got %d",
-			p.Max, plural(p.Max), p.Actual,
-		)
+		return fmt.Sprintf("expected at most %d argument%s, got %d", p.Max, plural(p.Max), p.Actual)
 	}
 }
 

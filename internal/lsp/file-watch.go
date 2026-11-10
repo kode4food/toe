@@ -43,9 +43,7 @@ func (c *Client) DidChangeWatchedFile(ctx context.Context, path string) error {
 }
 
 // DidChangeWatchedFiles notifies the server that watched files changed
-func (c *Client) DidChangeWatchedFiles(
-	ctx context.Context, events []fileWatchEvent,
-) error {
+func (c *Client) DidChangeWatchedFiles(ctx context.Context, events []fileWatchEvent) error {
 	if len(events) == 0 {
 		return nil
 	}
@@ -68,9 +66,7 @@ func (c *Client) DidChangeWatchedFiles(
 	return c.server.DidChangeWatchedFiles(ctx, params)
 }
 
-func (s *Session) registerCapability(
-	server string, params *protocol.RegistrationParams,
-) error {
+func (s *Session) registerCapability(server string, params *protocol.RegistrationParams) error {
 	if params == nil {
 		return nil
 	}
@@ -91,9 +87,7 @@ func (s *Session) registerCapability(
 	return nil
 }
 
-func (s *Session) unregisterCapability(
-	server string, params *protocol.UnregistrationParams,
-) {
+func (s *Session) unregisterCapability(server string, params *protocol.UnregistrationParams) {
 	if params == nil {
 		return
 	}

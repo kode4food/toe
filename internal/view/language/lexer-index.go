@@ -11,8 +11,8 @@ import (
 )
 
 type (
-	// lexerIndex answers what chroma's Match would, but buckets each glob by
-	// the extension any name it matches must end with
+	// lexerIndex answers what chroma's Match would, but buckets each glob by the extension any name
+	// it matches must end with
 	lexerIndex struct {
 		primary lexerGlobs
 		alias   lexerGlobs
@@ -48,8 +48,8 @@ func (l lexerIndex) match(filename string) chroma.Lexer {
 	return l.alias.match(base)
 }
 
-// candidates are checked in registry order so chroma's priority sort sees the
-// same input and breaks ties the same way
+// candidates are checked in registry order so chroma's priority sort sees the same input and breaks
+// ties the same way
 func (g lexerGlobs) match(base string) chroma.Lexer {
 	cands := slices.Concat(g.byExt[filepath.Ext(base)], g.other)
 	slices.SortFunc(cands, func(a, b lexerGlob) int {
@@ -68,8 +68,8 @@ func (g lexerGlobs) match(base string) chroma.Lexer {
 	return matched[0]
 }
 
-// a glob of "*" then a literal holding a dot only matches names sharing that
-// literal's extension, with or without an ignored suffix
+// a glob of "*" then a literal holding a dot only matches names sharing that literal's extension,
+// with or without an ignored suffix
 func (g *lexerGlobs) add(lg lexerGlob) {
 	lit, ok := strings.CutPrefix(lg.glob, "*")
 	simple := ok && !strings.ContainsAny(lit, globMeta) &&

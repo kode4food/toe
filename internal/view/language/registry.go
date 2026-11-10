@@ -8,8 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/loader"
 )
 
-// Registry holds the language configuration merged for the working directory,
-// loading it on first use and again after Invalidate. The zero value is ready
+// Registry holds the language configuration merged for the working directory, loading it on first
+// use and again after Invalidate. The zero value is ready
 type Registry struct {
 	mu     sync.Mutex
 	config Languages
@@ -19,8 +19,8 @@ type Registry struct {
 	loaded bool
 }
 
-// Get returns the definition for a language name, or an empty one when
-// no user configuration directory exists or no definition has that name
+// Get returns the definition for a language name, or an empty one when no user configuration
+// directory exists or no definition has that name
 func (r *Registry) Get(name string) *Language {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -31,17 +31,16 @@ func (r *Registry) Get(name string) *Language {
 	return &Language{}
 }
 
-// DetectArgs is a file path and its content, both used to identify the
-// language, plus the name to fall back to when nothing matches
+// DetectArgs is a file path and its content, both used to identify the language, plus the name to
+// fall back to when nothing matches
 type DetectArgs struct {
 	Path    string
 	Content string
 	Default string
 }
 
-// Detect identifies a language from the file name, then its shebang, then its
-// content, trying Chroma's lexers when no definition matches and returning
-// Default when nothing does
+// Detect identifies a language from the file name, then its shebang, then its content, trying
+// Chroma's lexers when no definition matches and returning Default when nothing does
 func (r *Registry) Detect(args DetectArgs) string {
 	r.mu.Lock()
 	r.ensureLoaded()

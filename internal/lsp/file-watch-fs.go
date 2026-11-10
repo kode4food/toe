@@ -95,8 +95,8 @@ func (s *Session) handleFileWatchEvent(ev notify.EventInfo) {
 	}
 }
 
-// queueWatchEvent reports whether the event opened a new batch; only that event
-// schedules a flush, so a steady stream cannot postpone it
+// queueWatchEvent reports whether the event opened a new batch; only that event schedules a flush,
+// so a steady stream cannot postpone it
 func (s *Session) queueWatchEvent(event fileWatchEvent) bool {
 	s.watch.Lock()
 	defer s.watch.Unlock()

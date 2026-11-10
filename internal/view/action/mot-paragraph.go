@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// GotoNextParagraph moves (or extends in select mode) each cursor to the start
-// of the next paragraph. A paragraph boundary is a blank line
+// GotoNextParagraph moves (or extends in select mode) each cursor to the start of the next
+// paragraph. A paragraph boundary is a blank line
 func GotoNextParagraph(e *view.Editor) {
 	e.SetLastMotion(GotoNextParagraph)
 	n := e.CountOr(1)
@@ -48,8 +48,8 @@ func GotoNextParagraph(e *view.Editor) {
 	})
 }
 
-// GotoPrevParagraph moves (or extends in select mode) each cursor to the start
-// of the previous paragraph
+// GotoPrevParagraph moves (or extends in select mode) each cursor to the start of the previous
+// paragraph
 func GotoPrevParagraph(e *view.Editor) {
 	e.SetLastMotion(GotoPrevParagraph)
 	n := e.CountOr(1)

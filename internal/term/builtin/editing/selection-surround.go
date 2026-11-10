@@ -24,9 +24,7 @@ func surroundReplaceAction(_ *view.Editor) command.Continuation {
 		) command.Continuation {
 			if positions, ok := syntaxSurroundPos(e, from); ok {
 				if doc := e.FocusedDocument(); doc != nil {
-					action.SurroundReplaceAt(
-						e, doc.Text(), positions, to,
-					)
+					action.SurroundReplaceAt(e, doc.Text(), positions, to)
 					return nil
 				}
 			}

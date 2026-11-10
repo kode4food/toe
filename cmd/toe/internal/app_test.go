@@ -122,9 +122,7 @@ func TestStart(t *testing.T) {
 	t.Run("explicit config file is applied", func(t *testing.T) {
 		dir := workspace(t)
 		cfg := filepath.Join(t.TempDir(), "custom.toml")
-		assert.NoError(t, os.WriteFile(
-			cfg, []byte("[editor]\nmouse = false\n"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(cfg, []byte("[editor]\nmouse = false\n"), 0o644))
 
 		a := start(t, dir, "--config", cfg)
 
@@ -245,8 +243,7 @@ func TestStop(t *testing.T) {
 		dir := workspace(t)
 		sessionPath := view.WorkspaceSessionFile(dir)
 		assert.NoError(t, os.MkdirAll(filepath.Dir(sessionPath), 0o755))
-		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte("original"), 0o644))
+		assert.NoError(t, os.WriteFile(sessionPath, []byte("original"), 0o644))
 		a := start(t, dir)
 
 		assert.NoError(t, a.Stop())
@@ -321,8 +318,7 @@ func saveSessionFor(t *testing.T, dir string, paths ...string) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 	}
-	assert.NoError(t,
-		e.SaveSession(view.WorkspaceSessionFile(dir), nil))
+	assert.NoError(t, e.SaveSession(view.WorkspaceSessionFile(dir), nil))
 }
 
 func savedSessionOptions(t *testing.T, path string) map[string]string {

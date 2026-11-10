@@ -35,8 +35,8 @@ const (
 
 	borkGoSrc = "package main\n\nvar x Bork\n"
 
-	// long enough to soft-wrap, and enough lines to widen the gutter past a
-	// one-line scratch buffer's
+	// long enough to soft-wrap, and enough lines to widen the gutter past a one-line scratch
+	// buffer's
 	splitPaneProse = "some fairly long prose line that has to wrap\n"
 )
 
@@ -197,10 +197,8 @@ func TestRenderCrash(t *testing.T) {
 	})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: view.ModeInsert, name: "insert_newline",
-		fn: act(action.InsertNewline),
-		seqs: [][]command.KeyEvent{{
-			char('j').WithMods(command.ModCtrl),
-		}},
+		fn:   act(action.InsertNewline),
+		seqs: [][]command.KeyEvent{{char('j').WithMods(command.ModCtrl)}},
 	})
 
 	m := ui.New(e, km)
@@ -559,8 +557,8 @@ func TestThemeRender(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
-		// vA (docA) sits on the left, the diagnostic popup always renders
-		// in the screen's top-right corner, over the OTHER (docB) pane
+		// vA (docA) sits on the left, the diagnostic popup always renders in the screen's top-right
+		// corner, over the OTHER (docB) pane
 		e.FocusView(vA.ID())
 		docA := e.Document(vA.DocID())
 		assert.NotNil(t, docA)
@@ -628,8 +626,8 @@ func TestThemeRender(t *testing.T) {
 
 		out := viewContent(m)
 
-		// nothing stays rgb, and both derived highlights clear the background
-		// rather than landing on it
+		// nothing stays rgb, and both derived highlights clear the background rather than landing
+		// on it
 		assert.NotContains(t, out, "\x1b[48;2;")
 		assert.Contains(t, out, "\x1b[48;5;235m")
 		assert.Contains(t, out, "\x1b[48;5;236m")
@@ -716,9 +714,7 @@ func TestThemeRender(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		path := filepath.Join(root, "note.txt")
-		err := os.WriteFile(
-			path, []byte("hello world\nhello again\n"), 0o644,
-		)
+		err := os.WriteFile(path, []byte("hello world\nhello again\n"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
@@ -918,8 +914,8 @@ func TestLineContentRender(t *testing.T) {
 
 		rows := strings.Split(viewContent(m), "\n")
 
-		// with the \r correctly outside the line, the cursor sits at line
-		// end and draws a cursor-styled cell, on the \r it renders nothing
+		// with the \r correctly outside the line, the cursor sits at line end and draws a
+		// cursor-styled cell, on the \r it renders nothing
 		assert.Contains(t, rows[0], "\x1b[48;2;245;224;220m")
 	})
 
@@ -1046,8 +1042,8 @@ func TestBaseStyleAtCases(t *testing.T) {
 }
 
 func TestErroredIdentifierGating(t *testing.T) {
-	// "Bork" is a type_identifier, so Tree-sitter tags it @type purely from
-	// parse-tree shape, with no idea whether Bork actually exists
+	// "Bork" is a type_identifier, so Tree-sitter tags it @type purely from parse-tree shape, with
+	// no idea whether Bork actually exists
 	bork := strings.Index(borkGoSrc, "Bork")
 	typeColoredBork := "\x1b[38;2;249;226;175mBork" // type yellow
 
@@ -1089,8 +1085,8 @@ func TestErroredIdentifierGating(t *testing.T) {
 		out := viewContent(m)
 
 		assert.NotContains(t, out, typeColoredBork)
-		// no distinct color escape before "Bork" means it blends into the
-		// surrounding plain-text run rather than keeping its syntax color
+		// no distinct color escape before "Bork" means it blends into the surrounding plain-text
+		// run rather than keeping its syntax color
 		assert.Contains(t, out, " x \x1b[58:2::243:139:168m\x1b[4:3mBork")
 	})
 
@@ -1105,10 +1101,9 @@ func TestErroredIdentifierGating(t *testing.T) {
 
 		out := viewContent(m)
 
-		// warning-severity diagnostics overlay an underline but don't gate
-		// the base color, so the type-yellow fg code still precedes "Bork"
-		assert.Contains(t,
-			out, "\x1b[38;2;249;226;175m\x1b[58:2::249:226:175m\x1b[4:3mBork")
+		// warning-severity diagnostics overlay an underline but don't gate the base color, so the
+		// type-yellow fg code still precedes "Bork"
+		assert.Contains(t, out, "\x1b[38;2;249;226;175m\x1b[58:2::249:226:175m\x1b[4:3mBork")
 	})
 
 	t.Run("highlight and diagnostic both apply", func(t *testing.T) {
@@ -1127,10 +1122,9 @@ func TestErroredIdentifierGating(t *testing.T) {
 
 		out := viewContent(m)
 
-		// occurrence-highlight background (surface2) and diagnostic
-		// underline both land on "Bork" rather than one hiding the other
-		assert.Contains(t, out,
-			"\x1b[48;2;88;91;112m\x1b[58:2::249:226:175m\x1b[4:3mBork")
+		// occurrence-highlight background (surface2) and diagnostic underline both land on "Bork"
+		// rather than one hiding the other
+		assert.Contains(t, out, "\x1b[48;2;88;91;112m\x1b[58:2::249:226:175m\x1b[4:3mBork")
 	})
 
 	t.Run("highlight without diagnostic", func(t *testing.T) {
@@ -1301,10 +1295,7 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{
-			core.PointRange(0),
-			core.PointRange(3),
-		}, 0)
+		sel, err := core.NewSelection([]core.Range{core.PointRange(0), core.PointRange(3)}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1446,10 +1437,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(24), core.PointRange(28)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(24), core.PointRange(28)}, 0)
 		v.SetOffset(view.Position{HorizontalOffset: 10})
 		m := resize(ui.New(e, command.NewKeymaps()), 20, 8)
 
@@ -1495,9 +1483,7 @@ func TestDocumentHighlightAndLinkRender(t *testing.T) {
 		assert.NotEqual(t, plain, linked)
 
 		e.SetMode(view.ModeInsert)
-		assert.Equal(t,
-			linked, rawLineContaining(t, viewContent(m), "hello"),
-		)
+		assert.Equal(t, linked, rawLineContaining(t, viewContent(m), "hello"))
 	})
 }
 
@@ -1701,8 +1687,8 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.Contains(t, before, "hello world")
 		assert.Contains(t, before, "second file")
 
-		// the left pane stays 50 wide from 101 to 102 columns (the right pane
-		// absorbs the vsplit remainder), yet the frame buffer reallocates
+		// the left pane stays 50 wide from 101 to 102 columns (the right pane absorbs the vsplit
+		// remainder), yet the frame buffer reallocates
 		m = resize(m, 102, 30)
 		after := stripANSI(viewContent(m))
 
@@ -1808,9 +1794,7 @@ func soloExtendAtWidth(t *testing.T, width int) int {
 	return extendTenVisualLines(t, e)
 }
 
-func splitWithDifferentGutters(
-	t *testing.T,
-) (*view.View, *view.View, *view.Editor) {
+func splitWithDifferentGutters(t *testing.T) (*view.View, *view.View, *view.Editor) {
 	t.Helper()
 	e := editorWithText(t, strings.Repeat(splitPaneProse, 1200))
 	enableSoftWrap(e)

@@ -132,10 +132,7 @@ func TestClipboard(t *testing.T) {
 		e = testutil.EditorWithText(t, "wxyz")
 		e.SetClipboard(clip)
 		e.WriteRegister('+', []string{"a", "c"})
-		testutil.SetSelection(t, e, []core.Range{
-			core.PointRange(1),
-			core.PointRange(3),
-		}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1), core.PointRange(3)}, 0)
 
 		action.PasteAfter(e)
 

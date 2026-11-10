@@ -35,8 +35,8 @@ const (
 	DiagnosticSeverityError
 )
 
-// ReplaceDiagnostics replaces all diagnostics from provider with diags, which
-// are recorded as that provider's however their own Provider field is set
+// ReplaceDiagnostics replaces all diagnostics from provider with diags, which are recorded as that
+// provider's however their own Provider field is set
 func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 	d.overlays.Lock()
 	before := slices.Clone(d.overlays.diagnostics)

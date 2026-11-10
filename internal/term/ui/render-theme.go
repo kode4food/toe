@@ -19,14 +19,10 @@ const (
 )
 
 func buildStyles(th *theme.Theme, mode view.Mode) *styles {
-	return buildStylesWithBackground(
-		th, mode, th.Get("ui.background").BgColor(),
-	)
+	return buildStylesWithBackground(th, mode, th.Get("ui.background").BgColor())
 }
 
-func buildStylesWithBackground(
-	th *theme.Theme, mode view.Mode, bg tui.Color,
-) *styles {
+func buildStylesWithBackground(th *theme.Theme, mode view.Mode, bg tui.Color) *styles {
 	sel := th.Get("ui.selection")
 	cur, _ := modeCursorStyleFor(th, mode, false)
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
@@ -146,8 +142,8 @@ func deriveBackground(bg tui.Color, pct float64, light bool) tui.Color {
 }
 
 func rampBackground(bg tui.Color, pct float64, light bool) tui.Color {
-	// a 3% tint is finer than the color cube can express, and the background
-	// quantizes too, so step from the entry it actually lands on
+	// a 3% tint is finer than the color cube can express, and the background quantizes too, so step
+	// from the entry it actually lands on
 	lum := colorLuma(bg.Quantized()) / lumaScale
 	steps := int(pct/cursorHighlightPct + 0.5)
 	if light {
@@ -180,9 +176,7 @@ func highlighterFor(th *theme.Theme) func(string) tui.Style {
 	}
 }
 
-func modeCursorStyleFor(
-	th *theme.Theme, mode view.Mode, primary bool,
-) (tui.Style, bool) {
+func modeCursorStyleFor(th *theme.Theme, mode view.Mode, primary bool) (tui.Style, bool) {
 	scope := "ui.cursor." + mode.Scope()
 	if primary {
 		scope = "ui.cursor.primary." + mode.Scope()
@@ -215,13 +209,11 @@ func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 }
 
 func promptBackground(th *theme.Theme) tui.Color {
-	return deriveBackground(
-		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
-	)
+	return deriveBackground(th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th))
 }
 
-// the terminal's own cursor color suits its configured background, so a bar or
-// underline can vanish under a theme that inverts it
+// the terminal's own cursor color suits its configured background, so a bar or underline can vanish
+// under a theme that inverts it
 func cursorColor(cx *Context, mode view.Mode) color.Color {
 	st, ok := modeCursorStyleFor(cx.Theme(), mode, true)
 	if !ok {

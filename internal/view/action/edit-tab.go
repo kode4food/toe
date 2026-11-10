@@ -8,8 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// InLeadingWhitespace reports whether every cursor has only whitespace between
-// it and the start of its line
+// InLeadingWhitespace reports whether every cursor has only whitespace between it and the start of
+// its line
 func InLeadingWhitespace(e *view.Editor) bool {
 	v := e.FocusedView()
 	if v == nil {
@@ -79,9 +79,7 @@ func InsertTab(e *view.Editor) {
 		return
 	}
 	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 

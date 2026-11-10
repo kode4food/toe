@@ -49,9 +49,7 @@ const (
 	scrollbarSlotsPerCell = 48
 )
 
-func (s *scrollbar) reset(
-	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
-) {
+func (s *scrollbar) reset(g scrollbarGeom, at geom.Point, styles *styles, topLine int) {
 	n := max(g.rows, 0) * scrollbarSlotsPerCell
 	s.marks = slices.Grow(s.marks, max(n-len(s.marks), 0))[:n]
 	clear(s.marks)
@@ -76,9 +74,7 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 	}
 }
 
-func (s *scrollbar) addSearchMarks(
-	matches []matchSpan, lineIdx []lineIndexEntry,
-) {
+func (s *scrollbar) addSearchMarks(matches []matchSpan, lineIdx []lineIndexEntry) {
 	line := 0
 	for _, m := range matches {
 		for line+1 < len(lineIdx) && lineIdx[line+1].charStart <= m.from {

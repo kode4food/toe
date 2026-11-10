@@ -77,20 +77,18 @@ func DeleteChange(s Span) Change {
 	return Change{Span: s}
 }
 
-// NewChangeSetFromChanges builds a change set from non-overlapping changes,
-// which must be ordered by position
+// NewChangeSetFromChanges builds a change set from non-overlapping changes, which must be ordered
+// by position
 func NewChangeSetFromChanges(doc Rope, changes []Change) (ChangeSet, error) {
 	cs := ChangeSet{}
 	last := 0
 	n := doc.LenChars()
 	for _, c := range changes {
 		if c.From < last || c.To < c.From {
-			return ChangeSet{}, fmt.Errorf("%w: %d..%d", ErrChangeOrder,
-				c.From, c.To)
+			return ChangeSet{}, fmt.Errorf("%w: %d..%d", ErrChangeOrder, c.From, c.To)
 		}
 		if c.To > n {
-			return ChangeSet{}, fmt.Errorf("%w: %d..%d", ErrChangeOutOfRange,
-				c.From, c.To)
+			return ChangeSet{}, fmt.Errorf("%w: %d..%d", ErrChangeOutOfRange, c.From, c.To)
 		}
 		cs = cs.retain(c.From - last)
 		span := c.To - c.From
@@ -199,9 +197,7 @@ func (c ChangeSet) delete(n int) ChangeSet {
 	return c.appendCountOp(n, OperationDelete, false)
 }
 
-func (c ChangeSet) appendCountOp(
-	n int, kind OperationKind, updateLenAfter bool,
-) ChangeSet {
+func (c ChangeSet) appendCountOp(n int, kind OperationKind, updateLenAfter bool) ChangeSet {
 	if n == 0 {
 		return c
 	}

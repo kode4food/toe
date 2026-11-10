@@ -16,8 +16,8 @@ type SortSelectionsArgs struct {
 	Insensitive bool
 }
 
-// SortSelections sorts the text of each selection range lexicographically,
-// replacing each range with the sorted text
+// SortSelections sorts the text of each selection range lexicographically, replacing each range
+// with the sorted text
 func SortSelections(e *view.Editor, args SortSelectionsArgs) error {
 	v := e.FocusedView()
 	if v == nil {
@@ -31,8 +31,7 @@ func SortSelections(e *view.Editor, args SortSelectionsArgs) error {
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 	if len(ranges) < 2 {
-		return errors.New(
-			"sorting requires multiple selections; hint: split selection first")
+		return errors.New("sorting requires multiple selections; hint: split selection first")
 	}
 
 	fragments := make([]string, len(ranges))
@@ -86,12 +85,11 @@ func SortSelections(e *view.Editor, args SortSelectionsArgs) error {
 	if err != nil {
 		return err
 	}
-	return e.Apply(
-		core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
+	return e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
-// ReflowSelections reflows the text of each selection range to the given
-// column width. Mirrors :reflow in the reference
+// ReflowSelections reflows the text of each selection range to the given column width. Mirrors
+// :reflow in the reference
 func ReflowSelections(e *view.Editor, width int) {
 	v := e.FocusedView()
 	if v == nil {
@@ -126,12 +124,11 @@ func ReflowSelections(e *view.Editor, width int) {
 	if err != nil {
 		return
 	}
-	_ = e.Apply(
-		core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
+	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
-// CharInfo returns a string describing the grapheme at the primary cursor.
-// Format: "<printable>" (U+XXXX ...) [Dec N] Hex xx [+xx ...]
+// CharInfo returns a string describing the grapheme at the primary cursor. Format: "<printable>"
+// (U+XXXX ...) [Dec N] Hex xx [+xx ...]
 func CharInfo(e *view.Editor) string {
 	v := e.FocusedView()
 	if v == nil {

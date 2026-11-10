@@ -48,9 +48,7 @@ func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 	})
 }
 
-func newLSPSymbolPicker(
-	e *view.Editor, docID view.DocumentId, symbols []view.Symbol,
-) *Picker {
+func newLSPSymbolPicker(e *view.Editor, docID view.DocumentId, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
 		Editor:      e,
 		Ident:       "lsp-symbols",
@@ -90,9 +88,7 @@ func (l *lspWorkspaceCommandSource) Load() PickerLoad {
 }
 
 // Accept executes the chosen server command
-func (l *lspWorkspaceCommandSource) Accept(
-	item *PickerItem, _ PickerAcceptAction,
-) {
+func (l *lspWorkspaceCommandSource) Accept(item *PickerItem, _ PickerAcceptAction) {
 	name, ok := item.Payload.(string)
 	if !ok {
 		return
@@ -130,9 +126,7 @@ func (l *lspLocationSource) Load() PickerLoad {
 }
 
 // Accept jumps to the chosen location
-func (l *lspLocationSource) Accept(
-	item *PickerItem, action PickerAcceptAction,
-) {
+func (l *lspLocationSource) Accept(item *PickerItem, action PickerAcceptAction) {
 	acceptLocation(l.Editor, item, action)
 }
 
@@ -162,9 +156,7 @@ func (l *lspSymbolSource) Load() PickerLoad {
 }
 
 // Accept jumps to the chosen symbol
-func (l *lspSymbolSource) Accept(
-	item *PickerItem, action PickerAcceptAction,
-) {
+func (l *lspSymbolSource) Accept(item *PickerItem, action PickerAcceptAction) {
 	acceptLocation(l.Editor, item, action)
 }
 
@@ -199,15 +191,11 @@ func (l *lspWorkspaceSymbolSource) Load() PickerLoad {
 }
 
 // Accept jumps to the chosen symbol
-func (l *lspWorkspaceSymbolSource) Accept(
-	item *PickerItem, action PickerAcceptAction,
-) {
+func (l *lspWorkspaceSymbolSource) Accept(item *PickerItem, action PickerAcceptAction) {
 	acceptLocation(l.Editor, item, action)
 }
 
-func (l *lspWorkspaceSymbolSource) item(
-	slab *PickerItemSlab, sym view.Symbol,
-) (*PickerItem, bool) {
+func (l *lspWorkspaceSymbolSource) item(slab *PickerItemSlab, sym view.Symbol) (*PickerItem, bool) {
 	e := l.Editor
 	loc := sym.Location
 	line, lines := locationLineRange(loc)
@@ -250,9 +238,7 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 	})
 }
 
-func locationItem(
-	slab *PickerItemSlab, loc view.Location, cwd string,
-) *PickerItem {
+func locationItem(slab *PickerItemSlab, loc view.Location, cwd string) *PickerItem {
 	line, lines := locationLineRange(loc)
 	rel := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    loc.Path,
@@ -273,9 +259,7 @@ func locationItem(
 	})
 }
 
-func acceptLocation(
-	e *view.Editor, item *PickerItem, accept PickerAcceptAction,
-) {
+func acceptLocation(e *view.Editor, item *PickerItem, accept PickerAcceptAction) {
 	loc, ok := item.Payload.(view.Location)
 	if !ok {
 		return
@@ -295,9 +279,7 @@ func locationLineRange(loc view.Location) (int, *core.Span) {
 	return from, &core.Span{From: from, To: to}
 }
 
-func locationSelection(
-	text core.Rope, loc view.Location,
-) (core.Selection, bool) {
+func locationSelection(text core.Rope, loc view.Location) (core.Selection, bool) {
 	r, ok := loc.ResolveRange(text)
 	if !ok {
 		return core.Selection{}, false

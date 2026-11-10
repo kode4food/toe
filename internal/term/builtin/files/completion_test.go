@@ -17,9 +17,7 @@ func TestCompletionOptions(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.key, func(t *testing.T) {
 			e, km := test.Env(t, "")
-			test.RunCmdArgs(t,
-				km, e, "set-option", tc.key+" "+tc.value,
-			)
+			test.RunCmdArgs(t, km, e, "set-option", tc.key+" "+tc.value)
 			res := test.RunCmdArgs(t, km, e, "get-option", tc.key)
 			assert.Equal(t, tc.key+": "+tc.value, res.Message)
 		})

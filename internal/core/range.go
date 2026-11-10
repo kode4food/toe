@@ -104,8 +104,8 @@ func (r Range) Contains(pos int) bool {
 	return r.From() <= pos && pos < r.To()
 }
 
-// LineSpan returns the inclusive line span the range touches. An empty range
-// covers one line. A non-empty one excludes an end on a line start
+// LineSpan returns the inclusive line span the range touches. An empty range covers one line. A
+// non-empty one excludes an end on a line start
 func (r Range) LineSpan(text Rope) (Span, error) {
 	from := r.From()
 	to := r.To()
@@ -164,8 +164,8 @@ func (r Range) GraphemeAligned(doc Rope) Range {
 	}
 }
 
-// MinWidth1 ensures the range covers at least one grapheme by advancing the
-// head forward if the range is empty
+// MinWidth1 ensures the range covers at least one grapheme by advancing the head forward if the
+// range is empty
 func (r Range) MinWidth1(doc Rope) Range {
 	if r.Anchor != r.Head {
 		return r
@@ -173,8 +173,7 @@ func (r Range) MinWidth1(doc Rope) Range {
 	return Range{Anchor: r.Anchor, Head: NextGraphemeBoundary(doc, r.Head)}
 }
 
-// IsSingleGrapheme reports whether this range covers exactly one grapheme
-// cluster
+// IsSingleGrapheme reports whether this range covers exactly one grapheme cluster
 func (r Range) IsSingleGrapheme(doc Rope) bool {
 	if r.From() >= r.To() {
 		return false
@@ -183,9 +182,8 @@ func (r Range) IsSingleGrapheme(doc Rope) bool {
 	return first >= r.To()
 }
 
-// Cursor returns the char index of the block-cursor position. For a forward
-// range the cursor sits one grapheme before the head. For backward or empty
-// ranges it is the head itself
+// Cursor returns the char index of the block-cursor position. For a forward range the cursor sits
+// one grapheme before the head. For backward or empty ranges it is the head itself
 func (r Range) Cursor(doc Rope) int {
 	if r.Head > r.Anchor {
 		return PrevGraphemeBoundary(doc, r.Head)
@@ -193,8 +191,8 @@ func (r Range) Cursor(doc Rope) int {
 	return r.Head
 }
 
-// PutCursor moves the block cursor to charIdx, optionally extending the
-// selection anchor using 1-width block cursor semantics
+// PutCursor moves the block cursor to charIdx, optionally extending the selection anchor using
+// 1-width block cursor semantics
 func (r Range) PutCursor(doc Rope, charIdx int, extend bool) Range {
 	if !extend {
 		return PointRange(charIdx)

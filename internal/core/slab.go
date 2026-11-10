@@ -1,7 +1,7 @@
 package core
 
-// Slab batches values into contiguous backing arrays, handing out
-// individually stable pointers to each one
+// Slab batches values into contiguous backing arrays, handing out individually stable pointers to
+// each one
 type Slab[T any] struct {
 	items []T
 }

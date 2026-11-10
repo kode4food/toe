@@ -35,9 +35,7 @@ func newScrollbarBenchState(b *testing.B, lines int) *scrollbarBenchState {
 	b.Setenv("KITTY_WINDOW_ID", "1")
 	root := b.TempDir()
 	path := filepath.Join(root, "lines.txt")
-	if err := os.WriteFile(
-		path, []byte(numberedLines(lines)), 0o644,
-	); err != nil {
+	if err := os.WriteFile(path, []byte(numberedLines(lines)), 0o644); err != nil {
 		b.Fatal(err)
 	}
 	e := view.NewEditor(root)
@@ -118,9 +116,7 @@ func BenchmarkScrollbarKittyThumb(b *testing.B) {
 	b.StopTimer()
 	s := newScrollbarBenchState(b, scrollbarBenchThumbLines)
 	var anchors [2]int
-	for i, line := range [...]int{
-		scrollbarBenchThumbTop, scrollbarBenchThumbNext,
-	} {
+	for i, line := range [...]int{scrollbarBenchThumbTop, scrollbarBenchThumbNext} {
 		at, err := s.doc.Text().LineToChar(line)
 		if err != nil {
 			b.Fatal(err)

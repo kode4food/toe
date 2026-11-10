@@ -13,14 +13,14 @@ type newlineTarget struct {
 	off int
 }
 
-// AddNewlineAbove inserts blank lines above each selection's first line.
-// Repeats count times using the document line ending
+// AddNewlineAbove inserts blank lines above each selection's first line. Repeats count times using
+// the document line ending
 func AddNewlineAbove(e *view.Editor) {
 	addNewlineImpl(e, true)
 }
 
-// AddNewlineBelow inserts blank lines below each selection's last line. Repeats
-// count times using the document line ending
+// AddNewlineBelow inserts blank lines below each selection's last line. Repeats count times using
+// the document line ending
 func AddNewlineBelow(e *view.Editor) {
 	addNewlineImpl(e, false)
 }
@@ -135,8 +135,7 @@ func applyNewlines(e *view.Editor, args applyNewlinesArgs) {
 	}
 	primary := min(args.sel.PrimaryIndex(), len(newRanges)-1)
 	if newSel, err := core.NewSelection(newRanges, primary); err == nil {
-		tx := core.NewTransaction(args.text).WithChanges(cs).
-			WithSelection(newSel)
+		tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
 		_ = e.Apply(tx)
 		e.SetMode(view.ModeInsert)
 	}
@@ -192,9 +191,7 @@ func addNewlineImpl(e *view.Editor, above bool) {
 		return
 	}
 	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 
@@ -238,9 +235,7 @@ func openUnit(args openUnitArgs) (string, int) {
 	return unit, utf8.RuneCountInString(unit)
 }
 
-func openIndent(
-	e *view.Editor, doc *view.Document, line int, continueComment bool,
-) string {
+func openIndent(e *view.Editor, doc *view.Document, line int, continueComment bool) string {
 	text := doc.Text()
 	pos, err := text.LineEndCharIndex(line)
 	if err != nil {

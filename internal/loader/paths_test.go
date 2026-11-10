@@ -18,8 +18,7 @@ func TestPaths(t *testing.T) {
 		path, ok := loader.ConfigFile()
 
 		assert.True(t, ok)
-		assert.Equal(t,
-			filepath.Join(root, loader.DirName, "config.toml"), path)
+		assert.Equal(t, filepath.Join(root, loader.DirName, "config.toml"), path)
 	})
 
 	t.Run("resolves languages file", func(t *testing.T) {
@@ -29,8 +28,7 @@ func TestPaths(t *testing.T) {
 		path, ok := loader.LanguagesFile()
 
 		assert.True(t, ok)
-		assert.Equal(t,
-			filepath.Join(root, loader.DirName, "languages.toml"), path)
+		assert.Equal(t, filepath.Join(root, loader.DirName, "languages.toml"), path)
 	})
 
 	t.Run("resolves config ignore file", func(t *testing.T) {
@@ -49,8 +47,7 @@ func TestPaths(t *testing.T) {
 		path, ok := loader.LogFile()
 
 		assert.True(t, ok)
-		assert.Equal(t,
-			filepath.Join(root, loader.DirName, loader.LogFileName), path)
+		assert.Equal(t, filepath.Join(root, loader.DirName, loader.LogFileName), path)
 	})
 
 	t.Run("resolves data dir via XDG", func(t *testing.T) {
@@ -109,8 +106,7 @@ func TestPaths(t *testing.T) {
 
 		path := loader.WorkspaceConfigFile(work)
 
-		assert.Equal(t,
-			filepath.Join(work, "."+loader.DirName, "config.toml"), path)
+		assert.Equal(t, filepath.Join(work, "."+loader.DirName, "config.toml"), path)
 	})
 
 	t.Run("resolves workspace languages file", func(t *testing.T) {
@@ -121,8 +117,7 @@ func TestPaths(t *testing.T) {
 
 		path := loader.WorkspaceLanguagesFile(work)
 
-		assert.Equal(t,
-			filepath.Join(work, "."+loader.DirName, "languages.toml"), path)
+		assert.Equal(t, filepath.Join(work, "."+loader.DirName, "languages.toml"), path)
 	})
 
 }
@@ -155,8 +150,8 @@ func TestCanonicalPath(t *testing.T) {
 		dir := t.TempDir()
 		gone := filepath.Join(dir, "gone.txt")
 
-		// the directory resolves though the file is absent, and its base
-		// carries through to the returned key
+		// the directory resolves though the file is absent, and its base carries through to the
+		// returned key
 		got := loader.CanonicalPath(gone)
 
 		resolved, err := filepath.EvalSymlinks(dir)
@@ -165,9 +160,7 @@ func TestCanonicalPath(t *testing.T) {
 	})
 
 	t.Run("absolute fallback", func(t *testing.T) {
-		got := loader.CanonicalPath(
-			filepath.Join(t.TempDir(), "no-such-dir", "f.txt"),
-		)
+		got := loader.CanonicalPath(filepath.Join(t.TempDir(), "no-such-dir", "f.txt"))
 		assert.True(t, filepath.IsAbs(got))
 		assert.Contains(t, got, filepath.Join("no-such-dir", "f.txt"))
 	})

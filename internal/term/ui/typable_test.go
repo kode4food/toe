@@ -28,8 +28,7 @@ func TestConfigCommands(t *testing.T) {
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)
-		assert.Equal(t,
-			filepath.Join(root, loader.DirName, "config.toml"), doc.Path())
+		assert.Equal(t, filepath.Join(root, loader.DirName, "config.toml"), doc.Path())
 	})
 
 	t.Run("config-open-workspace", func(t *testing.T) {
@@ -43,18 +42,13 @@ func TestConfigCommands(t *testing.T) {
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 		assert.NoError(t, loader.TrustWorkspace(cwd))
 		e := view.NewEditor(cwd)
-		m := runTypable(
-			newTestModel(t, e),
-			"config-open-workspace",
-		)
+		m := runTypable(newTestModel(t, e), "config-open-workspace")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)
-		assert.Equal(t,
-			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
-			doc.Path())
+		assert.Equal(t, filepath.Join(work, loader.WorkspaceDirName, "config.toml"), doc.Path())
 	})
 
 	t.Run("log-open", func(t *testing.T) {
@@ -67,9 +61,7 @@ func TestConfigCommands(t *testing.T) {
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)
-		assert.Equal(t,
-			filepath.Join(root, loader.DirName, loader.LogFileName),
-			doc.Path())
+		assert.Equal(t, filepath.Join(root, loader.DirName, loader.LogFileName), doc.Path())
 	})
 
 	t.Run("workspace-trust", func(t *testing.T) {
@@ -95,10 +87,7 @@ func TestConfigCommands(t *testing.T) {
 	t.Run("set", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(
-			newTestModel(t, e),
-			"set text-width 72",
-		)
+		_ = runTypable(newTestModel(t, e), "set text-width 72")
 
 		assert.Equal(t, 72, *e.Options().TextWidth)
 	})
@@ -106,10 +95,7 @@ func TestConfigCommands(t *testing.T) {
 	t.Run("set: quoted spaces", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(
-			newTestModel(t, e),
-			"set soft-wrap.wrap-indicator '» '",
-		)
+		_ = runTypable(newTestModel(t, e), "set soft-wrap.wrap-indicator '» '")
 
 		assert.Equal(t, "» ", *e.Options().SoftWrap.WrapIndicator)
 	})
@@ -128,10 +114,7 @@ func TestConfigCommands(t *testing.T) {
 	t.Run("toggle", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(
-			newTestModel(t, e),
-			"toggle soft-wrap.enable",
-		)
+		_ = runTypable(newTestModel(t, e), "toggle soft-wrap.enable")
 
 		assert.True(t, *e.Options().SoftWrap.Enable)
 	})
@@ -175,9 +158,7 @@ text-width = 72
 		assert.NotEqual(t, "bad", e.Options().Theme)
 		// the popup is a fixed width, so a long error shows only its head
 		assert.Contains(t, viewContent(m), "could not load theme")
-		assert.Contains(t,
-			e.MessagesDocument().Text().String(), "theme not found",
-		)
+		assert.Contains(t, e.MessagesDocument().Text().String(), "theme not found")
 	})
 
 	t.Run("theme: RGB without true color", func(t *testing.T) {

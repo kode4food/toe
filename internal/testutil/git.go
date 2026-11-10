@@ -35,9 +35,7 @@ func GitRepo(t testing.TB) string {
 }
 
 // GitCommitFile writes and commits a file, returning its absolute path
-func GitCommitFile(
-	t testing.TB, repo string, name GitName, data []byte,
-) string {
+func GitCommitFile(t testing.TB, repo string, name GitName, data []byte) string {
 	t.Helper()
 	path := filepath.Join(repo, string(name))
 	WriteFile(t, path, data)

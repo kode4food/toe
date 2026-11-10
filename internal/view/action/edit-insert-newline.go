@@ -8,8 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// InsertNewline inserts a newline at every cursor in insert mode, then
-// replicates the previous line's leading whitespace (auto-indent)
+// InsertNewline inserts a newline at every cursor in insert mode, then replicates the previous
+// line's leading whitespace (auto-indent)
 func InsertNewline(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -60,8 +60,8 @@ func InsertNewline(e *view.Editor) {
 			}
 		}
 		if firstTrailingWS < 0 {
-			// Entire line up to pos is whitespace: insert bare newline at
-			// line start, leaving old whitespace on the new line
+			// Entire line up to pos is whitespace: insert bare newline at line start, leaving old
+			// whitespace on the new line
 			changes = append(changes,
 				core.TextChange(core.Span{
 					From: lineStart,
@@ -177,9 +177,7 @@ func leadingWhitespace(text core.Rope, pos int) string {
 	return b.String()
 }
 
-func continuedIndent(
-	e *view.Editor, doc *view.Document, at core.LinePos,
-) (string, bool) {
+func continuedIndent(e *view.Editor, doc *view.Document, at core.LinePos) (string, bool) {
 	text := doc.Text()
 	indent := leadingWhitespace(text, at.Pos)
 	args := structuralIndentArgs{

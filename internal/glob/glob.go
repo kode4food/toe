@@ -11,8 +11,8 @@ type Candidate struct {
 	Path    string
 }
 
-// Match reports whether Path matches the glob Pattern, expanding brace
-// alternatives and matching with both native and slash separators
+// Match reports whether Path matches the glob Pattern, expanding brace alternatives and matching
+// with both native and slash separators
 func Match(c Candidate) bool {
 	path := c.Path
 	for _, p := range expandBraces(c.Pattern) {

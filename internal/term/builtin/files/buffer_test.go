@@ -16,8 +16,8 @@ import (
 
 func TestBufferNavigation(t *testing.T) {
 	t.Run("next and previous cycle focus", func(t *testing.T) {
-		// focus navigation walks the split tree, so a split is needed for the
-		// focused view to actually change
+		// focus navigation walks the split tree, so a split is needed for the focused view to
+		// actually change
 		dir := t.TempDir()
 		km := command.NewKeymaps()
 		e := view.NewEditor(dir)

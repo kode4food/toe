@@ -66,13 +66,7 @@ func TestSelection(t *testing.T) {
 	t.Run("rotate selections changes primary", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
 		testutil.SetSelection(
-			t, e,
-			[]core.Range{
-				core.PointRange(0),
-				core.PointRange(1),
-				core.PointRange(2),
-			},
-			0,
+			t, e, []core.Range{core.PointRange(0), core.PointRange(1), core.PointRange(2)}, 0,
 		)
 
 		action.RotateSelectionsForward(e)
@@ -745,8 +739,7 @@ func writeTextLangConfig(t *testing.T, commentToken string) {
 	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
 		"comment-token = \"" + commentToken + "\"\n"
 	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
+		os.WriteFile(filepath.Join(configDir, "languages.toml"), []byte(content), 0o644),
 	)
 }
 
@@ -759,7 +752,6 @@ func writeTextBlockCommentConfig(t *testing.T) {
 	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
 		"block-comment-tokens = [{ start = \"/*\", end = \"*/\" }]\n"
 	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
+		os.WriteFile(filepath.Join(configDir, "languages.toml"), []byte(content), 0o644),
 	)
 }

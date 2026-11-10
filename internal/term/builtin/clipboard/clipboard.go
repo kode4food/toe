@@ -56,9 +56,7 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.Yank),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-yank"},
-				Keys: kit.Keys(
-					kit.Char('y'), kit.LeaderPrefix(kit.Char('y')),
-				),
+				Keys:      kit.Keys(kit.Char('y'), kit.LeaderPrefix(kit.Char('y'))),
 			},
 			{
 				Name:      actYankMain,
@@ -73,9 +71,7 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PasteAfter),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-paste-after"},
-				Keys: kit.Keys(
-					kit.Char('p'), kit.LeaderPrefix(kit.Char('p')),
-				),
+				Keys:      kit.Keys(kit.Char('p'), kit.LeaderPrefix(kit.Char('p'))),
 			},
 			{
 				Name:      actPasteBefore,
@@ -83,9 +79,7 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PasteBefore),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-paste-before"},
-				Keys: kit.Keys(
-					kit.Char('P'), kit.LeaderPrefix(kit.Char('P')),
-				),
+				Keys:      kit.Keys(kit.Char('P'), kit.LeaderPrefix(kit.Char('P'))),
 			},
 			{
 				Name:      actReplaceWithYanked,
@@ -93,9 +87,7 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.ReplaceWithYanked),
 				Counted:   true,
 				Modes:     command.DocNormalModes,
-				Keys: kit.Keys(
-					kit.Char('R'), kit.LeaderPrefix(kit.Char('R')),
-				),
+				Keys:      kit.Keys(kit.Char('R'), kit.LeaderPrefix(kit.Char('R'))),
 			},
 			{
 				Name: actYankJoin,

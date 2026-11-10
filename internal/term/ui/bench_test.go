@@ -39,8 +39,8 @@ func BenchmarkRenderImage(b *testing.B) {
 	}
 }
 
-// BenchmarkRenderLongLine renders a single very long line with the cursor
-// scrolled to the far right, exercising the horizontal-scroll render path
+// BenchmarkRenderLongLine renders a single very long line with the cursor scrolled to the far
+// right, exercising the horizontal-scroll render path
 func BenchmarkRenderLongLine(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "long.txt")
@@ -84,8 +84,7 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "buffer_picker", m.PickerAction(bufferPicker),
-		[]command.KeyEvent{char('b')},
+		km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 	)
 	m = resize(m, 120, 40)
 	m = sendKey(m, 'b')
@@ -113,9 +112,7 @@ func BenchmarkRenderEmptyPicker(b *testing.B) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "command_picker",
-		m.PickerAction(m.CommandPalettePicker),
-		[]command.KeyEvent{char('p')},
+		km, "command_picker", m.PickerAction(m.CommandPalettePicker), []command.KeyEvent{char('p')},
 	)
 	m = resize(m, 80, 24)
 	m = sendKey(m, 'p')
@@ -130,9 +127,9 @@ func BenchmarkRenderEmptyPicker(b *testing.B) {
 	}
 }
 
-// BenchmarkRenderLongLineCursorStart renders a long line with the cursor at the
-// start (no horizontal scroll), the common case where only the first columns
-// are visible yet the whole line is otherwise processed
+// BenchmarkRenderLongLineCursorStart renders a long line with the cursor at the start (no
+// horizontal scroll), the common case where only the first columns are visible yet the whole line
+// is otherwise processed
 func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "long.txt")
@@ -174,8 +171,8 @@ func benchTerminal(b *testing.B, fill string) {
 	}
 }
 
-// BenchmarkRenderTerminal redraws a full terminal screen every frame, the worst
-// case for the emulator-to-buffer cell copy and per-cell style conversion
+// BenchmarkRenderTerminal redraws a full terminal screen every frame, the worst case for the
+// emulator-to-buffer cell copy and per-cell style conversion
 func BenchmarkRenderTerminal(b *testing.B) {
 	var sb strings.Builder
 	for i := range 22 {
@@ -184,30 +181,26 @@ func BenchmarkRenderTerminal(b *testing.B) {
 	benchTerminal(b, sb.String())
 }
 
-// BenchmarkRenderTerminalColored exercises the realistic case of many short
-// same-style runs (colored ls/grep/build output), where the style memo has a
-// lower but still winning hit rate
+// BenchmarkRenderTerminalColored exercises the realistic case of many short same-style runs
+// (colored ls/grep/build output), where the style memo has a lower but still winning hit rate
 func BenchmarkRenderTerminalColored(b *testing.B) {
 	colors := []string{"31", "32", "33", "34", "36"}
 	var sb strings.Builder
 	for range 22 {
 		for c := range 9 {
-			_, _ = fmt.Fprintf(&sb, "\x1b[%sm%s", colors[c%len(colors)],
-				strings.Repeat("w", 8))
+			_, _ = fmt.Fprintf(&sb, "\x1b[%sm%s", colors[c%len(colors)], strings.Repeat("w", 8))
 		}
 		sb.WriteString("\x1b[0m\r\n")
 	}
 	benchTerminal(b, sb.String())
 }
 
-// BenchmarkKeystroke moves the cursor in a repository-backed document, the
-// path that reconciles file watches on every message
+// BenchmarkKeystroke moves the cursor in a repository-backed document, the path that reconciles
+// file watches on every message
 func BenchmarkKeystroke(b *testing.B) {
 	testutil.RequireGit(b)
 	repo := testutil.GitRepo(b)
-	path := testutil.GitCommitFile(b,
-		repo, "a.go", []byte(strings.Repeat("line of text\n", 400)),
-	)
+	path := testutil.GitCommitFile(b, repo, "a.go", []byte(strings.Repeat("line of text\n", 400)))
 	e := view.NewEditor(repo)
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
@@ -225,8 +218,8 @@ func BenchmarkKeystroke(b *testing.B) {
 	}
 }
 
-// frameSink writes the frame to a discarded terminal as the program does, so
-// render benchmarks time the full per-frame path
+// frameSink writes the frame to a discarded terminal as the program does, so render benchmarks time
+// the full per-frame path
 func frameSink(m ui.Model) {
 	if f := m.View().Frame; f != nil {
 		_ = f.WriteFrame(io.Discard)

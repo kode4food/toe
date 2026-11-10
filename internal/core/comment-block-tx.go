@@ -2,8 +2,8 @@ package core
 
 import "unicode/utf8"
 
-// CreateBlockCommentTransaction builds the transaction and updated ranges for a
-// block comment toggle operation
+// CreateBlockCommentTransaction builds the transaction and updated ranges for a block comment
+// toggle operation
 func CreateBlockCommentTransaction(
 	doc Rope, commented bool, commentChanges []CommentChange,
 ) (Transaction, []Range, error) {
@@ -72,16 +72,12 @@ func CreateBlockCommentTransaction(
 }
 
 // ToggleBlockComments toggles block comments on all ranges in sel
-func ToggleBlockComments(
-	doc Rope, sel Selection, tokens []BlockCommentToken,
-) (Transaction, error) {
+func ToggleBlockComments(doc Rope, sel Selection, tokens []BlockCommentToken) (Transaction, error) {
 	commented, commentChanges, err := FindBlockComments(tokens, doc, sel)
 	if err != nil {
 		return Transaction{}, err
 	}
-	tx, ranges, err := CreateBlockCommentTransaction(
-		doc, commented, commentChanges,
-	)
+	tx, ranges, err := CreateBlockCommentTransaction(doc, commented, commentChanges)
 	if err != nil {
 		return Transaction{}, err
 	}

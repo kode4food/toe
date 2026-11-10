@@ -2,8 +2,8 @@ package action
 
 import "github.com/kode4food/toe/internal/view"
 
-// SystemClipboard talks to the OS clipboard via an external command, detected
-// once at construction and reused for every read and write
+// SystemClipboard talks to the OS clipboard via an external command, detected once at construction
+// and reused for every read and write
 type SystemClipboard struct {
 	provider clipboardProvider
 }

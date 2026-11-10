@@ -24,9 +24,8 @@ type (
 	}
 )
 
-// ExpandSelection returns the smallest Tree-sitter named node that strictly
-// contains the current range, or the smallest named node at the cursor for an
-// empty range
+// ExpandSelection returns the smallest Tree-sitter named node that strictly contains the current
+// range, or the smallest named node at the cursor for an empty range
 func ExpandSelection(args SelectionArgs) (Range, bool) {
 	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
 
@@ -46,8 +45,8 @@ func ExpandSelection(args SelectionArgs) (Range, bool) {
 	return Range{}, false
 }
 
-// ShrinkSelection returns the largest Tree-sitter named node under the cursor
-// that is strictly contained by the current range
+// ShrinkSelection returns the largest Tree-sitter named node under the cursor that is strictly
+// contained by the current range
 func ShrinkSelection(args SelectionArgs) (Range, bool) {
 	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
 
@@ -65,9 +64,9 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 	return Range{}, false
 }
 
-// ParentNodeEnd returns the end of the innermost named node at the cursor,
-// which is where a syntax-aware tab jumps to. False means no node was found,
-// which is not the same as a node whose end the cursor already sits on
+// ParentNodeEnd returns the end of the innermost named node at the cursor, which is where a
+// syntax-aware tab jumps to. False means no node was found, which is not the same as a node whose
+// end the cursor already sits on
 func ParentNodeEnd(args SelectionArgs) (int, bool) {
 	nodes, ok := nodePathFor(core.Source{Text: args.Text, Lang: args.Lang},
 
@@ -89,9 +88,7 @@ func nodePathAt(source core.Source, cursor int) ([]Range, bool) {
 	return nodePathFor(source, cursor, true)
 }
 
-func nodePathFor(
-	source core.Source, cursor int, widen bool,
-) ([]Range, bool) {
+func nodePathFor(source core.Source, cursor int, widen bool) ([]Range, bool) {
 	text := source.Text
 	language := languageFor(source.Lang)
 	if language == nil {

@@ -19,8 +19,8 @@ func GotoLastAccessedFile(e *view.Editor) {
 	}
 }
 
-// GotoLastModifiedFile switches focus to the most recently modified document
-// that is not currently focused
+// GotoLastModifiedFile switches focus to the most recently modified document that is not currently
+// focused
 func GotoLastModifiedFile(e *view.Editor) {
 	curDID := view.InvalidDocumentId
 	if v := e.FocusedView(); v != nil {
@@ -62,8 +62,8 @@ func ExtendToColumn(e *view.Editor) {
 	gotoColumn(e, true)
 }
 
-// PasteRegisterAtCursor inserts the contents of the given register at each
-// cursor position (for use in insert mode)
+// PasteRegisterAtCursor inserts the contents of the given register at each cursor position (for use
+// in insert mode)
 func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	val, ok := e.FirstRegister(reg)
 	if !ok {
@@ -72,8 +72,8 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	InsertText(e, val)
 }
 
-// YankJoin yanks all selection text joined by a separator to the active
-// register (default: system clipboard). Mirrors :yank-join
+// YankJoin yanks all selection text joined by a separator to the active register (default: system
+// clipboard). Mirrors :yank-join
 func YankJoin(e *view.Editor, sep string) {
 	v := e.FocusedView()
 	if v == nil {

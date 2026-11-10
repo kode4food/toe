@@ -48,10 +48,7 @@ func TestOpenAbove(t *testing.T) {
 
 	t.Run("shared target keeps every cursor", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(0), core.PointRange(1)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(1)}, 0)
 
 		action.OpenAbove(e)
 
@@ -147,10 +144,7 @@ func TestOpenBelow(t *testing.T) {
 
 	t.Run("shared target keeps every cursor", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(0), core.PointRange(1)},
-			0,
-		)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(0), core.PointRange(1)}, 0)
 
 		action.OpenBelow(e)
 

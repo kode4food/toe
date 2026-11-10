@@ -62,9 +62,6 @@ func TestPickerLayoutOptions(t *testing.T) {
 			},
 		}
 
-		assert.Equal(
-			t, ui.MaxPickerSplitRatio,
-			opts.SplitRatioFor("Diagnostics"),
-		)
+		assert.Equal(t, ui.MaxPickerSplitRatio, opts.SplitRatioFor("Diagnostics"))
 	})
 }

@@ -13,8 +13,8 @@ import (
 )
 
 type (
-	// PickerIgnore decides whether a walked path is hidden from a picker,
-	// applying the ignore rules that govern one directory
+	// PickerIgnore decides whether a walked path is hidden from a picker, applying the ignore rules
+	// that govern one directory
 	PickerIgnore struct {
 		base    string
 		dir     string
@@ -28,8 +28,8 @@ type (
 		IgnoreFiles bool
 	}
 
-	// IgnoreTarget is the walk root and the path being tested against the
-	// ignore rules that apply to it
+	// IgnoreTarget is the walk root and the path being tested against the ignore rules that apply
+	// to it
 	IgnoreTarget struct {
 		Root string
 		Path string
@@ -65,8 +65,8 @@ var excludedPickerTypes = map[string]struct{}{
 	".cab":  {},
 }
 
-// SkipPickerPathArgs holds the entry a picker file-walk is considering and
-// the ignore state to test it against
+// SkipPickerPathArgs holds the entry a picker file-walk is considering and the ignore state to test
+// it against
 type SkipPickerPathArgs struct {
 	Rel     string
 	Path    string
@@ -75,8 +75,8 @@ type SkipPickerPathArgs struct {
 	Opts    PickerIgnoreOptions
 }
 
-// SkipPickerPath reports whether a walked entry should be excluded from a
-// picker's file listing under the given ignore rules
+// SkipPickerPath reports whether a walked entry should be excluded from a picker's file listing
+// under the given ignore rules
 func SkipPickerPath(args SkipPickerPathArgs) bool {
 	name := args.Entry.Name()
 	if args.Opts.Hidden && strings.HasPrefix(name, ".") {
@@ -95,11 +95,9 @@ func SkipPickerPath(args SkipPickerPathArgs) bool {
 	return false
 }
 
-// LoadIgnoreFiles collects .ignore, .toe/ignore, and .gitignore rules that
-// apply to path, nearest directory last
-func LoadIgnoreFiles(
-	target IgnoreTarget, opts PickerIgnoreOptions,
-) []PickerIgnore {
+// LoadIgnoreFiles collects .ignore, .toe/ignore, and .gitignore rules that apply to path, nearest
+// directory last
+func LoadIgnoreFiles(target IgnoreTarget, opts PickerIgnoreOptions) []PickerIgnore {
 	if !opts.IgnoreFiles {
 		return nil
 	}
@@ -131,8 +129,8 @@ func LoadIgnoreFiles(
 	return ignores
 }
 
-// DefaultPickerIgnoreOptions is the ignore behavior file-walking pickers use
-// when a caller does not need to customize it
+// DefaultPickerIgnoreOptions is the ignore behavior file-walking pickers use when a caller does not
+// need to customize it
 func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
 	return PickerIgnoreOptions{
 		Hidden: true, Parents: true, IgnoreFiles: true,
@@ -161,9 +159,7 @@ func ignorePathForBase(at ignoreCandidate, ig PickerIgnore) (string, bool) {
 	return sub, ok
 }
 
-func appendIgnorePath(
-	ignores []PickerIgnore, f ignoreFile,
-) []PickerIgnore {
+func appendIgnorePath(ignores []PickerIgnore, f ignoreFile) []PickerIgnore {
 	if ig := compileIgnore(f.path); ig != nil {
 		return append(ignores, PickerIgnore{dir: f.dir, matcher: ig})
 	}

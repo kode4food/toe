@@ -85,10 +85,8 @@ func TestEditorMacro(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
-			[]command.KeyEvent{char('z')})
-		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
-			[]command.KeyEvent{char('v')})
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction, []command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction, []command.KeyEvent{char('v')})
 		bindNormalTestKeyAction(km, "pop",
 			func(*view.Editor) command.Continuation {
 				return func(
@@ -142,10 +140,8 @@ func TestEditorMacro(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
-			[]command.KeyEvent{char('z')})
-		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
-			[]command.KeyEvent{char('v')})
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction, []command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction, []command.KeyEvent{char('v')})
 		bindNormalTestAction(km, "dd",
 			func(e *view.Editor) {
 				action.InsertMode(e)
@@ -171,10 +167,8 @@ func TestEditorMacro(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
-			[]command.KeyEvent{char('z')})
-		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
-			[]command.KeyEvent{char('v')})
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction, []command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction, []command.KeyEvent{char('v')})
 		bindTestAction(bindTestActionArgs{
 			km:      km,
 			mode:    view.ModeNormal,
@@ -207,8 +201,8 @@ func TestEditorMacro(t *testing.T) {
 
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		// the count-prefixed insert runs once live while recording, then
-		// again on replay: 3 x's each time
+		// the count-prefixed insert runs once live while recording, then again on replay: 3 x's
+		// each time
 		assert.Equal(t, "xxxxxx", doc.Text().String())
 	})
 
@@ -227,8 +221,8 @@ func TestEditorMacro(t *testing.T) {
 	})
 
 	t.Run("replays a register-written macro", func(t *testing.T) {
-		// registers are what the session persists, so a macro restored from
-		// one replays without any separate macro state being installed
+		// registers are what the session persists, so a macro restored from one replays without any
+		// separate macro state being installed
 		m, e := macroModel(t)
 		e.Registers().Set('a', "i x esc")
 
@@ -256,10 +250,8 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
-		[]command.KeyEvent{char('z')})
-	bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
-		[]command.KeyEvent{char('v')})
+	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction, []command.KeyEvent{char('z')})
+	bindNormalTestKeyAction(km, "play", m.MacroReplayAction, []command.KeyEvent{char('v')})
 	// 'g' returns a continuation, followed by 'x' it inserts "X"
 	bindNormalTestKeyAction(km, "g-prefix",
 		func(ed *view.Editor) command.Continuation {
@@ -283,10 +275,8 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
-		[]command.KeyEvent{char('z')})
-	bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
-		[]command.KeyEvent{char('v')})
+	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction, []command.KeyEvent{char('z')})
+	bindNormalTestKeyAction(km, "play", m.MacroReplayAction, []command.KeyEvent{char('v')})
 	bindNormalTestAction(km, "to_insert",
 		func(e *view.Editor) {
 			action.InsertMode(e)

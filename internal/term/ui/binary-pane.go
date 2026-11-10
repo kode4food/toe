@@ -50,9 +50,7 @@ func NewBinaryPane(e *view.Editor, path string) (*BinaryPane, error) {
 }
 
 // HandleEvent scrolls the binary dump
-func (p *BinaryPane) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, bool) {
+func (p *BinaryPane) HandleEvent(cx *Context, msg tea.Msg) (EventResult, bool) {
 	switch m := msg.(type) {
 	case tea.KeyPressMsg:
 		switch {

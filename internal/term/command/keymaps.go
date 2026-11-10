@@ -48,9 +48,8 @@ func NewKeymaps() *Keymaps {
 	}
 }
 
-// Register adds a command entry and wires its key bindings. Returns
-// ErrDuplicateCommand if name is already registered - each command must be
-// fully declared once, in the module that owns it
+// Register adds a command entry and wires its key bindings. Returns ErrDuplicateCommand if name is
+// already registered - each command must be fully declared once, in the module that owns it
 func (k *Keymaps) Register(name string, cmd Command) error {
 	if _, ok := k.byName[name]; ok {
 		return fmt.Errorf("%w: %s", ErrDuplicateCommand, name)
@@ -233,9 +232,7 @@ func (k *keyTrieNode) countable() bool {
 	return false
 }
 
-func (k *keyTrieNode) collectBindings(
-	name string, seq []KeyEvent, bindings *KeyBinding,
-) {
+func (k *keyTrieNode) collectBindings(name string, seq []KeyEvent, bindings *KeyBinding) {
 	if k.action != nil && k.name == name {
 		*bindings = append(*bindings, slices.Clone(seq))
 	}

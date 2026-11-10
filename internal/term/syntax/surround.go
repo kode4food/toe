@@ -6,22 +6,22 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-// FindSurroundPairArgs identifies the enclosing pair to find: the Skip-th pair
-// around Cursor, in any bracket style
+// FindSurroundPairArgs identifies the enclosing pair to find: the Skip-th pair around Cursor, in
+// any bracket style
 type FindSurroundPairArgs struct {
 	Source core.Source
 	Cursor int
 	Skip   int
 }
 
-// FindSurroundPair returns the Range of the Skip-th bracket pair enclosing
-// Cursor, or (Range{}, false) if none exists at that depth
+// FindSurroundPair returns the Range of the Skip-th bracket pair enclosing Cursor, or (Range{},
+// false) if none exists at that depth
 func FindSurroundPair(args FindSurroundPairArgs) (Range, bool) {
 	return findSurroundPair(args, isBracketNodeAny)
 }
 
-// FindSurroundPairForArgs identifies the enclosing bracket pair to find: the
-// Skip-th pair matching Char around Cursor
+// FindSurroundPairForArgs identifies the enclosing bracket pair to find: the Skip-th pair matching
+// Char around Cursor
 type FindSurroundPairForArgs struct {
 	Text   string
 	Lang   string
@@ -30,8 +30,8 @@ type FindSurroundPairForArgs struct {
 	Skip   int
 }
 
-// FindSurroundPairFor returns the Range of the Skip-th enclosing pair matching
-// Char (either bracket of the pair), or (Range{}, false) if none exists
+// FindSurroundPairFor returns the Range of the Skip-th enclosing pair matching Char (either bracket
+// of the pair), or (Range{}, false) if none exists
 func FindSurroundPairFor(args FindSurroundPairForArgs) (Range, bool) {
 	pair, ok := bracketPairFor(args.Char)
 	if !ok {

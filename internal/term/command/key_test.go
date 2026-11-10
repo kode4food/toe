@@ -148,9 +148,7 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		cmd := km.ResolveCommand("w")
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('w'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('w')})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
@@ -188,9 +186,7 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		cmd := km.ResolveCommand("move-left")
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('h'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('h')})
 
 		assert.NotNil(t, cmd)
 		assert.True(t, ok)
@@ -215,9 +211,7 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		cmd := km.ResolveCommand("q")
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('q'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('q')})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
@@ -244,9 +238,7 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		cmd := km.ResolveCommand("q")
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('q'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('q')})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
@@ -271,14 +263,10 @@ func TestModeIsolation(t *testing.T) {
 			},
 		})
 
-		_, ok := km.Lookup(
-			view.ModeInsert, []command.KeyEvent{char('h')},
-		)
+		_, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{char('h')})
 		assert.False(t, ok)
 
-		_, ok = km.Lookup(
-			view.ModeInsert, []command.KeyEvent{special(command.Left)},
-		)
+		_, ok = km.Lookup(view.ModeInsert, []command.KeyEvent{special(command.Left)})
 		assert.True(t, ok)
 
 		_, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{char('h')})
@@ -292,21 +280,15 @@ func TestIsTypable(t *testing.T) {
 	})
 
 	t.Run("shift char is typable", func(t *testing.T) {
-		assert.True(t,
-			char('A').WithMods(command.ModShift).IsTypable(),
-		)
+		assert.True(t, char('A').WithMods(command.ModShift).IsTypable())
 	})
 
 	t.Run("ctrl char is not typable", func(t *testing.T) {
-		assert.False(t,
-			char('c').WithMods(command.ModCtrl).IsTypable(),
-		)
+		assert.False(t, char('c').WithMods(command.ModCtrl).IsTypable())
 	})
 
 	t.Run("alt char is not typable", func(t *testing.T) {
-		assert.False(t,
-			char('x').WithMods(command.ModAlt).IsTypable(),
-		)
+		assert.False(t, char('x').WithMods(command.ModAlt).IsTypable())
 	})
 
 	t.Run("special key is not typable", func(t *testing.T) {
@@ -340,9 +322,7 @@ func TestPopOnBackspace(t *testing.T) {
 			return nil, command.ContinuationDone
 		})
 
-		_, got := run(
-			nil, special(command.Backspace).WithMods(command.ModCtrl),
-		)
+		_, got := run(nil, special(command.Backspace).WithMods(command.ModCtrl))
 
 		assert.Equal(t, command.ContinuationDone, got)
 		assert.True(t, called)
@@ -444,9 +424,7 @@ func TestLabelNode(t *testing.T) {
 
 	t.Run("sets label on prefix node", func(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('g')}}, "Goto")
-		title, hints := km.PendingHints(
-			nil, view.ModeNormal, []command.KeyEvent{char('g')}, false,
-		)
+		title, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('g')}, false)
 
 		assert.Equal(t, "Goto", title)
 		assert.Equal(t, 1, len(hints))
@@ -454,9 +432,7 @@ func TestLabelNode(t *testing.T) {
 
 	t.Run("LabelNode on unknown mode is no-op", func(t *testing.T) {
 		km.LabelNode(view.ModeBinary, command.KeyBinding{{char('g')}}, "X")
-		title, hints := km.PendingHints(
-			nil, view.ModeBinary, []command.KeyEvent{char('g')}, false,
-		)
+		title, hints := km.PendingHints(nil, view.ModeBinary, []command.KeyEvent{char('g')}, false)
 
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
@@ -464,9 +440,7 @@ func TestLabelNode(t *testing.T) {
 
 	t.Run("LabelNode on nonexistent key is no-op", func(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('z')}}, "Z")
-		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			char('z'),
-		}, false)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('z')}, false)
 
 		assert.Nil(t, hints)
 	})
@@ -510,33 +484,25 @@ func TestPendingHints(t *testing.T) {
 	})
 
 	t.Run("returns hints for prefix", func(t *testing.T) {
-		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			char('g'),
-		}, false)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('g')}, false)
 
 		assert.Equal(t, 3, len(hints))
 	})
 
 	t.Run("displays shifted uppercase char", func(t *testing.T) {
-		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			char('g'),
-		}, false)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('g')}, false)
 
 		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
 	})
 
 	t.Run("omits undocumented commands", func(t *testing.T) {
-		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			char('g'),
-		}, false)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('g')}, false)
 
 		assert.NotContains(t, hints, command.KeyHint{Key: "c"})
 	})
 
 	t.Run("returns empty for unknown mode", func(t *testing.T) {
-		title, hints := km.PendingHints(
-			nil, view.ModeBinary, []command.KeyEvent{char('g')}, false,
-		)
+		title, hints := km.PendingHints(nil, view.ModeBinary, []command.KeyEvent{char('g')}, false)
 
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
@@ -551,9 +517,7 @@ func TestPendingHints(t *testing.T) {
 	})
 
 	t.Run("returns empty for unknown key in mode", func(t *testing.T) {
-		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			char('z'),
-		}, false)
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('z')}, false)
 
 		assert.Nil(t, hints)
 	})
@@ -611,9 +575,7 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 	})
 
 	t.Run("single key binding found", func(t *testing.T) {
-		lookup, ok := km.Lookup(
-			view.ModeNormal, []command.KeyEvent{char('q')},
-		)
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('q')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 		called = ""
@@ -622,18 +584,14 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 	})
 
 	t.Run("command name found", func(t *testing.T) {
-		lookup, ok := km.Lookup(
-			view.ModeNormal, []command.KeyEvent{char('q')},
-		)
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('q')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 		assert.Equal(t, "quit", lookup.Name)
 	})
 
 	t.Run("two-key sequence found", func(t *testing.T) {
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('g'), char('g'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('g'), char('g')})
 		assert.True(t, ok)
 		assert.False(t, lookup.Prefix)
 		called = ""
@@ -642,26 +600,20 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 	})
 
 	t.Run("prefix returns prefix=true", func(t *testing.T) {
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('g'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('g')})
 		assert.False(t, ok)
 		assert.True(t, lookup.Prefix)
 	})
 
 	t.Run("command prefix returns prefix=true", func(t *testing.T) {
-		lookup, ok := km.Lookup(
-			view.ModeNormal, []command.KeyEvent{char('g')},
-		)
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('g')})
 		assert.False(t, ok)
 		assert.True(t, lookup.Prefix)
 		assert.Empty(t, lookup.Name)
 	})
 
 	t.Run("unknown key returns false", func(t *testing.T) {
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('z'),
-		})
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('z')})
 		assert.False(t, ok)
 		assert.False(t, lookup.Prefix)
 	})

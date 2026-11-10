@@ -83,9 +83,7 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 		}
 		if p.hlFrom < 0 {
 			sel := p.previewSelection(doc)
-			if l, err := doc.Text().CharToLine(
-				sel.Primary().Cursor(doc.Text()),
-			); err == nil {
+			if l, err := doc.Text().CharToLine(sel.Primary().Cursor(doc.Text())); err == nil {
 				p.hlFrom = l
 				p.hlTo = l
 			}
@@ -111,13 +109,9 @@ func (p *previewCtx) previewSelection(doc *view.Document) core.Selection {
 	return doc.Selection()
 }
 
-func (p *previewCtx) renderDocInto(
-	buf *tui.Buffer, at geom.Point, doc *view.Document,
-) {
+func (p *previewCtx) renderDocInto(buf *tui.Buffer, at geom.Point, doc *view.Document) {
 	entry := p.picker.preview.cache.doc(p.syntax, doc)
-	format := doc.TextFormatForConfig(
-		p.textWrap(p.markerWidth()), p.editor.Options(),
-	)
+	format := doc.TextFormatForConfig(p.textWrap(p.markerWidth()), p.editor.Options())
 	entry.renderText(p, buf, at, format)
 }
 
@@ -126,9 +120,7 @@ type diffPreviewLinesArgs struct {
 	working *previewDocEntry
 }
 
-func (p *previewCtx) diffPreviewLines(
-	args diffPreviewLinesArgs,
-) []diffPreviewLine {
+func (p *previewCtx) diffPreviewLines(args diffPreviewLinesArgs) []diffPreviewLine {
 	c := &p.picker.preview.diffLines
 	if c.item == p.item && c.base == args.base && c.working == args.working {
 		return c.lines
@@ -156,8 +148,8 @@ func (p *previewCtx) markerWidth() int {
 	return 0
 }
 
-// text wraps inside the columns the renderer draws beside it, the gutter on the
-// left and the scrollbar on the right
+// text wraps inside the columns the renderer draws beside it, the gutter on the left and the
+// scrollbar on the right
 func (p *previewCtx) textWrap(gutter int) int {
 	width := p.wrap - gutter
 	if p.editor.Options().Scrollbar {
@@ -211,15 +203,12 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	p.picker.preview.hScroll = r.hScroll
 }
 
-// a staged row shows what a commit would record, so its working side is the
-// index text rather than the file on disk
-func (p *previewCtx) workingPreview(
-	vc view.VersionControl, staged bool,
-) *previewDocEntry {
+// a staged row shows what a commit would record, so its working side is the index text rather than
+// the file on disk
+func (p *previewCtx) workingPreview(vc view.VersionControl, staged bool) *previewDocEntry {
 	if staged {
 		return p.picker.preview.cache.indexText(
-			p.syntax, p.editor.Languages(), vc,
-			p.item.Location.Target.Path,
+			p.syntax, p.editor.Languages(), vc, p.item.Location.Target.Path,
 		)
 	}
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
@@ -231,26 +220,18 @@ func (p *previewCtx) workingPreview(
 	if doc := openDocumentPreview(p.editor, path); doc != nil {
 		return p.picker.preview.cache.doc(p.syntax, doc)
 	}
-	e, ok := p.picker.preview.cache.path(
-		p.syntax, p.editor.Languages(), path,
-	).(*previewDocEntry)
+	e, ok := p.picker.preview.cache.path(p.syntax, p.editor.Languages(), path).(*previewDocEntry)
 	if ok {
 		return e
 	}
 	return &previewDocEntry{rope: core.NewRope(""), lang: view.DefaultLanguage}
 }
 
-func (p *previewCtx) renderFileInto(
-	buf *tui.Buffer, at geom.Point, path string,
-) {
-	p.picker.preview.cache.path(
-		p.syntax, p.editor.Languages(), path,
-	).renderInto(p, buf, at)
+func (p *previewCtx) renderFileInto(buf *tui.Buffer, at geom.Point, path string) {
+	p.picker.preview.cache.path(p.syntax, p.editor.Languages(), path).renderInto(p, buf, at)
 }
 
-func (p *previewDocEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
-) {
+func (p *previewDocEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
 	opts := ctx.editor.Options()
 	format := language.TextFormatForConfig(
 		ctx.editor.Languages().Get(p.lang), opts.TextWidth, opts.SoftWrap,
@@ -260,8 +241,7 @@ func (p *previewDocEntry) renderInto(
 }
 
 func (p *previewDocEntry) renderText(
-	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
-	format *language.TextFormat,
+	ctx *previewCtx, buf *tui.Buffer, at geom.Point, format *language.TextFormat,
 ) {
 	r := &previewDocRender{
 		highlight: ctx.highlight,
@@ -286,14 +266,10 @@ func (p *previewDocEntry) renderText(
 	ctx.picker.preview.hScroll = r.hScroll
 }
 
-func (p *previewDirEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
-) {
+func (p *previewDirEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
 	popupBg := ctx.theme.Get("ui.popup").BgColor()
 	fillTUI := ctx.theme.Get("ui.popup")
-	dirTUI := tui.Style{}.
-		Fg(ctx.theme.Get("ui.text.directory").FgColor()).
-		Bg(popupBg)
+	dirTUI := tui.Style{}.Fg(ctx.theme.Get("ui.text.directory").FgColor()).Bg(popupBg)
 	for i, entry := range p.rows {
 		if i >= ctx.size.Height {
 			return
@@ -318,33 +294,23 @@ func (p *previewDirEntry) renderInto(
 			textAt.X += iconWidth
 			width = max(width-iconWidth, 0)
 		}
-		buf.SetString(
-			textAt,
-			runewidth.Truncate(entry.name, width, ""),
-			st,
-		)
+		buf.SetString(textAt, runewidth.Truncate(entry.name, width, ""), st)
 	}
 }
 
-func (n noPreviewEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
-) {
+func (n noPreviewEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
 	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	renderCenteredMessage(
 		buf, geom.Area{Point: at, Size: ctx.size}, string(n), style,
 	)
 }
 
-func (p *previewCtx) blitPlaceholderInto(
-	buf *tui.Buffer, at geom.Point, text string,
-) {
+func (p *previewCtx) blitPlaceholderInto(buf *tui.Buffer, at geom.Point, text string) {
 	fillTUI := tui.Style{}.Bg(p.theme.Get("ui.popup").BgColor())
 	blitTextInto(buf, geom.Area{Point: at, Size: p.size}, text, fillTUI)
 }
 
-func blitTextInto(
-	buf *tui.Buffer, area geom.Area, text string, fillStyle tui.Style,
-) {
+func blitTextInto(buf *tui.Buffer, area geom.Area, text string, fillStyle tui.Style) {
 	lines := strings.SplitN(text, "\n", area.Height+1)
 	if len(lines) > area.Height {
 		lines = lines[:area.Height]
@@ -380,8 +346,7 @@ func previewSpans(args previewSpansArgs) []highlight.Span {
 	return args.cache.Tokenize(core.Source{Text: args.text, Lang: args.lang})
 }
 
-// previewHighlighter: the background is stripped so the pane can patch its own
-// onto every row
+// previewHighlighter: the background is stripped so the pane can patch its own onto every row
 func previewHighlighter(th *theme.Theme) func(string) tui.Style {
 	fn := highlighterFor(th)
 	cache := make(map[string]tui.Style, 32)

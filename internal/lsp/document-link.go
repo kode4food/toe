@@ -58,9 +58,7 @@ func (c *Client) ResolveDocumentLink(
 }
 
 // DocumentLinks returns document-wide links and stores them on the document
-func (s *Session) DocumentLinks(
-	doc *view.Document,
-) ([]view.DocumentLink, error) {
+func (s *Session) DocumentLinks(doc *view.Document) ([]view.DocumentLink, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		doc.ClearDocumentLinks()
@@ -117,9 +115,7 @@ func (s *Session) ResolveDocumentLink(
 	if !ok || candidate.docID != doc.ID() {
 		return link, ErrDocumentLinkUnavailable
 	}
-	resolved, sent, err := candidate.client.ResolveDocumentLink(
-		s.ctx, candidate.link,
-	)
+	resolved, sent, err := candidate.client.ResolveDocumentLink(s.ctx, candidate.link)
 	if err != nil {
 		return link, s.completionError(candidate.client, err)
 	}
@@ -152,8 +148,7 @@ func (s *Session) documentLink(id string) (documentLinkCandidate, bool) {
 }
 
 func (s *Session) replaceDocumentLink(
-	doc *view.Document, id string, link view.DocumentLink,
-	raw protocol.DocumentLink,
+	doc *view.Document, id string, link view.DocumentLink, raw protocol.DocumentLink,
 ) {
 	links := doc.DocumentLinks()
 	for i := range links {

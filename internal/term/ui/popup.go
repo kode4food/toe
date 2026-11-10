@@ -18,8 +18,8 @@ type popup struct {
 const (
 	overlayPadX = 1
 
-	// the bottom row a centered overlay stays clear of: the bottom right pane's
-	// statusline, which carries maximized, register, and macro state
+	// the bottom row a centered overlay stays clear of: the bottom right pane's statusline, which
+	// carries maximized, register, and macro state
 	overlayKeepClear = 1
 )
 
@@ -63,9 +63,7 @@ func (p popup) divider(buf *tui.Buffer, area geom.Area, dx int) {
 	}
 }
 
-func drawPopupTitle(
-	buf *tui.Buffer, area geom.Area, title string, style tui.Style,
-) {
+func drawPopupTitle(buf *tui.Buffer, area geom.Area, title string, style tui.Style) {
 	if title == "" {
 		return
 	}

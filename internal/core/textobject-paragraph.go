@@ -5,12 +5,9 @@ type paragraphLines struct {
 	lineCount int
 }
 
-// TextObjectParagraph selects the paragraph containing the cursor. A paragraph
-// is a contiguous sequence of non-empty lines around=TextObjectAround includes
-// the trailing empty lines
-func TextObjectParagraph(
-	doc Rope, r Range, kind TextObjectKind, count int,
-) Range {
+// TextObjectParagraph selects the paragraph containing the cursor. A paragraph is a contiguous
+// sequence of non-empty lines around=TextObjectAround includes the trailing empty lines
+func TextObjectParagraph(doc Rope, r Range, kind TextObjectKind, count int) Range {
 	lines := paragraphLines{doc: doc, lineCount: doc.LenLines()}
 	cursor := r.Cursor(doc)
 	line, err := doc.CharToLine(cursor)
@@ -78,12 +75,9 @@ func TextObjectParagraph(
 	return Range{Anchor: from, Head: to}
 }
 
-// TextObjectPairSurround selects the pair surrounding the cursor. ch, if
-// non-zero, specifies which pair. Zero uses the nearest pair. kind controls
-// whether the delimiters themselves are included
-func (r Range) TextObjectPairSurround(
-	doc Rope, kind TextObjectKind, ch rune, count int,
-) Range {
+// TextObjectPairSurround selects the pair surrounding the cursor. ch, if non-zero, specifies which
+// pair. Zero uses the nearest pair. kind controls whether the delimiters themselves are included
+func (r Range) TextObjectPairSurround(doc Rope, kind TextObjectKind, ch rune, count int) Range {
 	sel, err := NewSelection([]Range{r}, 0)
 	if err != nil {
 		return r

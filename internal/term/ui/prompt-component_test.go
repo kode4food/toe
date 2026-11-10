@@ -634,9 +634,7 @@ func TestPromptCompletion(t *testing.T) {
 
 	t.Run("completes file args", func(t *testing.T) {
 		root := t.TempDir()
-		err := os.WriteFile(
-			filepath.Join(root, "main.go"), []byte("package main\n"), 0o644,
-		)
+		err := os.WriteFile(filepath.Join(root, "main.go"), []byte("package main\n"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(root)
 		km := command.NewKeymaps()
@@ -1062,8 +1060,7 @@ func TestSearchPromptAccept(t *testing.T) {
 	t.Run("empty search repeats prior pattern", func(t *testing.T) {
 		dir := t.TempDir()
 		source := filepath.Join(dir, "source.go")
-		assert.NoError(t,
-			os.WriteFile(source, []byte("x foo y foo z\n"), 0o600))
+		assert.NoError(t, os.WriteFile(source, []byte("x foo y foo z\n"), 0o600))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(source)
 		assert.NoError(t, err)
@@ -1172,8 +1169,8 @@ func TestPromptHandlesMouse(t *testing.T) {
 }
 
 func TestPromptBorderResize(t *testing.T) {
-	// At 100x30 the search prompt box is 55x3 at (22,4), the top of a frame
-	// centered on its full height, so its right border is x=76
+	// At 100x30 the search prompt box is 55x3 at (22,4), the top of a frame centered on its full
+	// height, so its right border is x=76
 
 	t.Run("side drag widens", func(t *testing.T) {
 		m := sendKey(builtinModel(t), '/')

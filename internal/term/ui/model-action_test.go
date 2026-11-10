@@ -46,21 +46,15 @@ var gotoActionCases = []gotoActionCase{
 	{"GotoImplementationAction", ui.Model.GotoImplementationAction},
 }
 
-func (c *locationController) RestartLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
+func (c *locationController) RestartLanguageServers(*view.Document, []string) ([]string, error) {
 	return nil, nil
 }
 
-func (c *locationController) StopLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
+func (c *locationController) StopLanguageServers(*view.Document, []string) ([]string, error) {
 	return nil, nil
 }
 
-func (c *locationController) ExecuteWorkspaceCommand(
-	*view.Document, string, []string,
-) error {
+func (c *locationController) ExecuteWorkspaceCommand(*view.Document, string, []string) error {
 	return nil
 }
 
@@ -72,9 +66,7 @@ func (c *locationController) LanguageServerNames(*view.Document) []string {
 	return nil
 }
 
-func (c *locationController) Completions(
-	*view.Document, view.Id,
-) (view.CompletionResult, error) {
+func (c *locationController) Completions(*view.Document, view.Id) (view.CompletionResult, error) {
 	return view.CompletionResult{}, nil
 }
 
@@ -90,9 +82,7 @@ func (c *locationController) ResolveCompletion(
 	return item, nil
 }
 
-func (c *locationController) ApplyCompletion(
-	*view.Document, view.Id, *view.CompletionItem,
-) error {
+func (c *locationController) ApplyCompletion(*view.Document, view.Id, *view.CompletionItem) error {
 	return nil
 }
 
@@ -100,9 +90,7 @@ func (c *locationController) Hover(*view.Document, view.Id) (string, error) {
 	return "", nil
 }
 
-func (c *locationController) SignatureHelp(
-	*view.Document, view.Id,
-) (view.SignatureHelp, error) {
+func (c *locationController) SignatureHelp(*view.Document, view.Id) (view.SignatureHelp, error) {
 	return c.signatureHelp, nil
 }
 
@@ -112,45 +100,35 @@ func (c *locationController) TriggerSignatureHelp(
 	return view.SignatureHelp{}, nil
 }
 
-func (c *locationController) GotoDeclaration(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *locationController) GotoDeclaration(*view.Document, view.Id) ([]view.Location, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
 	return c.locations, nil
 }
 
-func (c *locationController) GotoDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *locationController) GotoDefinition(*view.Document, view.Id) ([]view.Location, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
 	return c.locations, nil
 }
 
-func (c *locationController) GotoTypeDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *locationController) GotoTypeDefinition(*view.Document, view.Id) ([]view.Location, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
 	return c.locations, nil
 }
 
-func (c *locationController) GotoImplementation(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *locationController) GotoImplementation(*view.Document, view.Id) ([]view.Location, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
 	return c.locations, nil
 }
 
-func (c *locationController) GotoReference(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
+func (c *locationController) GotoReference(*view.Document, view.Id) ([]view.Location, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
@@ -161,22 +139,16 @@ func (c *locationController) RenameSymbolPrefill(
 	doc *view.Document, viewID view.Id,
 ) (string, error) {
 	sel := doc.SelectionFor(viewID)
-	r := core.TextObjectWord(
-		doc.Text(), sel.Primary(), core.TextObjectInside, false,
-	)
+	r := core.TextObjectWord(doc.Text(), sel.Primary(), core.TextObjectInside, false)
 	return r.Fragment(doc.Text())
 }
 
-func (c *locationController) RenameSymbol(
-	_ *view.Document, _ view.Id, name string,
-) error {
+func (c *locationController) RenameSymbol(_ *view.Document, _ view.Id, name string) error {
 	c.renamed = name
 	return nil
 }
 
-func (c *locationController) CodeActions(
-	*view.Document, view.Id,
-) ([]view.CodeAction, error) {
+func (c *locationController) CodeActions(*view.Document, view.Id) ([]view.CodeAction, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
@@ -199,9 +171,7 @@ func (c *locationController) DocumentHighlights(
 	return c.highlights, nil
 }
 
-func (c *locationController) DocumentLinks(
-	*view.Document,
-) ([]view.DocumentLink, error) {
+func (c *locationController) DocumentLinks(*view.Document) ([]view.DocumentLink, error) {
 	return nil, nil
 }
 
@@ -219,18 +189,14 @@ func (c *locationController) FormatSelection(*view.Document, view.Id) error {
 	return nil
 }
 
-func (c *locationController) DocumentSymbols(
-	*view.Document,
-) ([]view.Symbol, error) {
+func (c *locationController) DocumentSymbols(*view.Document) ([]view.Symbol, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
 	return c.symbols, nil
 }
 
-func (c *locationController) WorkspaceSymbols(
-	*view.Document, string,
-) ([]view.Symbol, error) {
+func (c *locationController) WorkspaceSymbols(*view.Document, string) ([]view.Symbol, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
@@ -249,9 +215,7 @@ func TestLocationAction(t *testing.T) {
 		prefix := strings.Repeat("line\n", 30)
 		targetLine := strings.Count(prefix, "\n")
 		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
-		assert.NoError(t, os.WriteFile(
-			target, []byte(prefix+"target\n"), 0o600,
-		))
+		assert.NoError(t, os.WriteFile(target, []byte(prefix+"target\n"), 0o600))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(source)
 		assert.NoError(t, err)
@@ -348,8 +312,7 @@ func TestLocationAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "goto_definition", m.GotoDefinitionAction,
-			[]command.KeyEvent{char('d')},
+			km, "goto_definition", m.GotoDefinitionAction, []command.KeyEvent{char('d')},
 		)
 		m = resize(m, 80, 24)
 
@@ -381,9 +344,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		prefix := strings.Repeat("line\n", 30)
 		body := strings.Repeat("body\n", 4)
 		text := prefix + body + strings.Repeat("tail\n", 30)
-		assert.NoError(t, os.WriteFile(
-			path, []byte(text), 0o600,
-		))
+		assert.NoError(t, os.WriteFile(path, []byte(text), 0o600))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
@@ -406,8 +367,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "symbol_picker", m.SymbolPickerAction,
-			[]command.KeyEvent{char('s')},
+			km, "symbol_picker", m.SymbolPickerAction, []command.KeyEvent{char('s')},
 		)
 		m = resize(m, 80, 24)
 
@@ -554,9 +514,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "main.go")
-			assert.NoError(t, os.WriteFile(
-				path, []byte("package main\n"), 0o600,
-			))
+			assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o600))
 			e := view.NewEditor(dir)
 			_, err := e.OpenFile(path)
 			assert.NoError(t, err)
@@ -569,8 +527,7 @@ func TestSymbolPickerAction(t *testing.T) {
 			km := command.NewKeymaps()
 			m := ui.New(e, km)
 			bindNormalTestAction(
-				km, "sym_kind_test", m.SymbolPickerAction,
-				[]command.KeyEvent{char('s')},
+				km, "sym_kind_test", m.SymbolPickerAction, []command.KeyEvent{char('s')},
 			)
 			m = resize(m, 80, 24)
 			m = sendKey(m, 's')
@@ -637,9 +594,7 @@ func TestSelectReferencesAction(t *testing.T) {
 	t.Run("selects ranges at offset", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "source.go")
-		assert.NoError(t,
-			os.WriteFile(path, []byte("hello world hello\n"), 0o600),
-		)
+		assert.NoError(t, os.WriteFile(path, []byte("hello world hello\n"), 0o600))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
@@ -677,8 +632,7 @@ func TestRenameSymbolAction(t *testing.T) {
 		m := ui.New(e, km)
 		i18n.Register(files.LspModule(m).Translations)
 		bindNormalTestAction(
-			km, "rename_symbol", m.RenameSymbolAction,
-			[]command.KeyEvent{char('r')},
+			km, "rename_symbol", m.RenameSymbolAction, []command.KeyEvent{char('r')},
 		)
 		m = resize(m, 80, 24)
 
@@ -735,8 +689,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "code_action", m.CodeActionPickerAction,
-			[]command.KeyEvent{char('a')},
+			km, "code_action", m.CodeActionPickerAction, []command.KeyEvent{char('a')},
 		)
 		m = resize(m, 80, 24)
 
@@ -881,9 +834,7 @@ func TestGotoActions(t *testing.T) {
 
 		m.GotoDeclarationAction(e)
 
-		assert.Contains(t,
-			testutil.StatusMsg(e), "No configured language server",
-		)
+		assert.Contains(t, testutil.StatusMsg(e), "No configured language server")
 	})
 
 	t.Run("not found sets status", func(t *testing.T) {
@@ -923,12 +874,8 @@ func TestGotoActions(t *testing.T) {
 			dir := t.TempDir()
 			source := filepath.Join(dir, "source.go")
 			target := filepath.Join(dir, "target.go")
-			assert.NoError(t, os.WriteFile(
-				source, []byte("source\n"), 0o600,
-			))
-			assert.NoError(t, os.WriteFile(
-				target, []byte("target\n"), 0o600,
-			))
+			assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
+			assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o600))
 			e := view.NewEditor(dir)
 			_, err := e.OpenFile(source)
 			assert.NoError(t, err)
@@ -972,8 +919,7 @@ func TestGotoActions(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "goto_reference", m.GotoReferenceAction,
-			[]command.KeyEvent{char('r')},
+			km, "goto_reference", m.GotoReferenceAction, []command.KeyEvent{char('r')},
 		)
 		m = resize(m, 80, 24)
 
@@ -1085,10 +1031,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestAction(
-			km, "sig_help", m.SignatureHelpAction,
-			[]command.KeyEvent{char('s')},
-		)
+		bindNormalTestAction(km, "sig_help", m.SignatureHelpAction, []command.KeyEvent{char('s')})
 		m = resize(m, 80, 24)
 		m = sendKey(m, 's')
 		assert.NotEmpty(t, stripANSI(viewContent(m)))
@@ -1143,8 +1086,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "lsp_cmds",
-			m.PickerAction(ui.LSPWorkspaceCommandPicker),
+			km, "lsp_cmds", m.PickerAction(ui.LSPWorkspaceCommandPicker),
 			[]command.KeyEvent{char('w')},
 		)
 		m = resize(m, 80, 24)
@@ -1170,8 +1112,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "lsp_cmds",
-			m.PickerAction(ui.LSPWorkspaceCommandPicker),
+			km, "lsp_cmds", m.PickerAction(ui.LSPWorkspaceCommandPicker),
 			[]command.KeyEvent{char('w')},
 		)
 		m = resize(m, 80, 24)
@@ -1180,9 +1121,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 	})
 }
 
-func codeActionModel(
-	t *testing.T, actions []view.CodeAction,
-) (ui.Model, *locationController) {
+func codeActionModel(t *testing.T, actions []view.CodeAction) (ui.Model, *locationController) {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "main.go")
@@ -1194,10 +1133,7 @@ func codeActionModel(
 	e.SetLanguageServerController(ctl)
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	bindNormalTestAction(
-		km, "code_action", m.CodeActionPickerAction,
-		[]command.KeyEvent{char('a')},
-	)
+	bindNormalTestAction(km, "code_action", m.CodeActionPickerAction, []command.KeyEvent{char('a')})
 	return resize(m, 80, 24), ctl
 }
 

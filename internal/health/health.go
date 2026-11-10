@@ -16,8 +16,8 @@ type (
 	// Report is the result of every check a health run performed
 	Report []Check
 
-	// Check is one health check's outcome, with Detail summarizing what was
-	// inspected and Errors listing what failed
+	// Check is one health check's outcome, with Detail summarizing what was inspected and Errors
+	// listing what failed
 	Check struct {
 		Name   string
 		OK     bool
@@ -32,11 +32,7 @@ var (
 
 // CheckRuntime runs every bundled-asset check
 func CheckRuntime() Report {
-	return Report{
-		checkLanguages(),
-		checkThemes(),
-		checkSyntaxQueries(),
-	}
+	return Report{checkLanguages(), checkThemes(), checkSyntaxQueries()}
 }
 
 // OK reports whether every check passed

@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// tui drives a toe process in a pseudo-terminal, feeding its output through an
-// emulator so tests assert on the rendered screen, not the raw cell deltas
+// tui drives a toe process in a pseudo-terminal, feeding its output through an emulator so tests
+// assert on the rendered screen, not the raw cell deltas
 type tui struct {
 	t    *testing.T
 	cmd  *exec.Cmd
@@ -40,8 +40,8 @@ const (
 	termCols = 80
 	termRows = 24
 
-	// must comfortably exceed the terminal reader's 50ms escape timeout, or a
-	// key sent after a bare escape is read as an alt-modified sequence
+	// must comfortably exceed the terminal reader's 50ms escape timeout, or a key sent after a bare
+	// escape is read as an alt-modified sequence
 	escPause = 200 * time.Millisecond
 )
 
@@ -107,8 +107,8 @@ func TestIntegration(t *testing.T) {
 
 		tt.send(":terminal\r")
 		tt.waitFor(" terminal")
-		// fill well past the pane height so the shell's own idea of its last
-		// row is exercised, then print a marker as the final visible line
+		// fill well past the pane height so the shell's own idea of its last row is exercised, then
+		// print a marker as the final visible line
 		tt.send("seq 1 100; echo LAST_LINE_MARKER\r")
 		tt.waitFor("LAST_LINE_MARKER")
 
@@ -123,13 +123,10 @@ func TestIntegration(t *testing.T) {
 			}
 		}
 		if markerRow < 0 || statusRow < 0 {
-			t.Fatalf(
-				"expected both marker and status rows visible; screen:\n%s",
-				tt.screen(),
-			)
+			t.Fatalf("expected both marker and status rows visible; screen:\n%s", tt.screen())
 		}
-		// the shell prints a fresh prompt right after the marker, so a PTY one
-		// row taller than we draw loses that row instead of showing it
+		// the shell prints a fresh prompt right after the marker, so a PTY one row taller than we
+		// draw loses that row instead of showing it
 		if statusRow-markerRow < 2 {
 			t.Fatalf(
 				"expected a prompt row between the marker and the pane's "+
@@ -159,10 +156,7 @@ func TestIntegration(t *testing.T) {
 			time.Sleep(20 * time.Millisecond)
 		}
 		if strings.Contains(tt.screen(), " terminal") {
-			t.Fatalf(
-				"terminal pane still open after shell exit; screen:\n%s",
-				tt.screen(),
-			)
+			t.Fatalf("terminal pane still open after shell exit; screen:\n%s", tt.screen())
 		}
 		tt.quit()
 	})
@@ -316,8 +310,8 @@ func TestIntegration(t *testing.T) {
 		tt.escape()
 		tt.send(":write\r") // closing a modified doc needs it saved first
 		tt.send("\x17q")    // ctrl-w q: close the focused split
-		// "hello world" already shows in both splits, so wait on the count
-		// dropping to 1 rather than on its presence
+		// "hello world" already shows in both splits, so wait on the count dropping to 1 rather
+		// than on its presence
 		tt.waitForCount("hello world", 1)
 		tt.quit()
 	})
@@ -440,8 +434,8 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-// send types keystrokes one byte at a time so the process sees distinct key
-// events with per-keystroke redraws, matching real typing
+// send types keystrokes one byte at a time so the process sees distinct key events with
+// per-keystroke redraws, matching real typing
 func (tt *tui) send(keys string) {
 	tt.t.Helper()
 	for i := 0; i < len(keys); i++ {
@@ -482,8 +476,8 @@ func (tt *tui) waitFor(want string) {
 	tt.t.Fatalf("timed out waiting for %q; screen:\n%s", want, tt.screen())
 }
 
-// waitForCount polls until want appears exactly n times, for actions that
-// change a count rather than introduce text (closing a duplicating split)
+// waitForCount polls until want appears exactly n times, for actions that change a count rather
+// than introduce text (closing a duplicating split)
 func (tt *tui) waitForCount(want string, n int) {
 	tt.t.Helper()
 	deadline := time.Now().Add(waitTimeout)
@@ -495,10 +489,7 @@ func (tt *tui) waitForCount(want string, n int) {
 		}
 		time.Sleep(pollPause)
 	}
-	tt.t.Fatalf(
-		"timed out waiting for %d× %q, saw %d; screen:\n%s",
-		n, want, last, tt.screen(),
-	)
+	tt.t.Fatalf("timed out waiting for %d× %q, saw %d; screen:\n%s", n, want, last, tt.screen())
 }
 
 func (tt *tui) waitFileContent(path, want string) {
@@ -514,10 +505,7 @@ func (tt *tui) waitFileContent(path, want string) {
 		}
 		time.Sleep(pollPause)
 	}
-	tt.t.Fatalf(
-		"file %s = %q, want %q; screen:\n%s",
-		path, last, want, tt.screen(),
-	)
+	tt.t.Fatalf("file %s = %q, want %q; screen:\n%s", path, last, want, tt.screen())
 }
 
 func (tt *tui) quit() {
@@ -527,10 +515,7 @@ func (tt *tui) quit() {
 	case err := <-tt.done:
 		assert.NoError(tt.t, err)
 	case <-time.After(waitTimeout):
-		tt.t.Fatalf(
-			"timed out waiting for process exit; screen:\n%s",
-			tt.screen(),
-		)
+		tt.t.Fatalf("timed out waiting for process exit; screen:\n%s", tt.screen())
 	}
 }
 
@@ -578,8 +563,8 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 		"HOME="+dir,
 		"XDG_CONFIG_HOME="+filepath.Join(dir, ".config"),
 	)
-	// an empty .zshrc suppresses zsh's interactive new-user setup wizard,
-	// which some Linux distros trigger on a HOME with no rc file
+	// an empty .zshrc suppresses zsh's interactive new-user setup wizard, which some Linux distros
+	// trigger on a HOME with no rc file
 	writeFile(t, dir, ".zshrc", "")
 
 	ptmx, err := pty.StartWithSize(
@@ -596,8 +581,8 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 		vt:   vt.NewSafeEmulator(termCols, termRows),
 	}
 	go tt.pump()
-	// drain the emulator's replies (mode queries, DA responses) back to the
-	// child, or an unread reply blocks the next Write forever
+	// drain the emulator's replies (mode queries, DA responses) back to the child, or an unread
+	// reply blocks the next Write forever
 	go func() { _, _ = io.Copy(tt.ptmx, tt.vt) }()
 	go func() { tt.done <- cmd.Wait() }()
 	t.Cleanup(tt.stop)
@@ -610,9 +595,7 @@ func buildBinary() (string, error) {
 		return "", err
 	}
 	path := filepath.Join(dir, "toe")
-	out, err := exec.Command(
-		"go", "build", "-o", path, ".",
-	).CombinedOutput()
+	out, err := exec.Command("go", "build", "-o", path, ".").CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", err, out)
 	}

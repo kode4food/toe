@@ -108,8 +108,8 @@ func writeCellsWindowed(a writeCellsArgs) int {
 			a.buf.SetString(geom.Point{X: sx, Y: a.at.Y}, c.text, c.style)
 			cx = sx + c.width
 		case cutOff > 0 && cutOff < c.width:
-			// straddles the left edge: the visible remainder of a tab or wide
-			// rune is drawn as styled blanks
+			// straddles the left edge: the visible remainder of a tab or wide rune is drawn as
+			// styled blanks
 			visW := c.width - cutOff
 			a.buf.FillRange(a.at, visW, c.style)
 			cx = a.at.X + visW

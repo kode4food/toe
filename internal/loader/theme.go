@@ -56,9 +56,7 @@ func loadThemeTOML(name string, seen map[string]bool) (map[string]any, error) {
 	return resolveInherits(theme, seen)
 }
 
-func resolveInherits(
-	theme map[string]any, seen map[string]bool,
-) (map[string]any, error) {
+func resolveInherits(theme map[string]any, seen map[string]bool) (map[string]any, error) {
 	parent, ok := theme["inherits"].(string)
 	if !ok {
 		return theme, nil

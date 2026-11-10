@@ -28,9 +28,7 @@ func CommentModule() command.Module {
 				DocString: "Comment/uncomment selections",
 				Run:       kit.Runner(action.ToggleComments),
 				Modes:     command.DocNormalModes,
-				Keys: kit.Keys(
-					kit.Ctrl('c'), kit.LeaderPrefix(kit.Char('c')),
-				),
+				Keys:      kit.Keys(kit.Ctrl('c'), kit.LeaderPrefix(kit.Char('c'))),
 			},
 			{
 				Name:      actToggleLineComments,

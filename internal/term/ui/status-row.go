@@ -30,8 +30,8 @@ type (
 		prose   bool
 	}
 
-	// statusEdge is one shape's dividers: the solid pair cuts between two
-	// backgrounds, the thin pair divides segments sharing one
+	// statusEdge is one shape's dividers: the solid pair cuts between two backgrounds, the thin
+	// pair divides segments sharing one
 	statusEdge struct {
 		solidRight string
 		solidLeft  string
@@ -40,12 +40,12 @@ type (
 	}
 )
 
-// dividerBlendPct: a thin divider sits this far from its own background toward
-// the text color, so it separates without competing with the text
+// dividerBlendPct: a thin divider sits this far from its own background toward the text color, so
+// it separates without competing with the text
 const dividerBlendPct = 35
 
-// statusEdges is the glyph set for each configured shape; every one but the
-// plain line needs a nerd font
+// statusEdges is the glyph set for each configured shape; every one but the plain line needs a nerd
+// font
 var statusEdges = map[view.StatusLineEdges]statusEdge{
 	view.StatusLineEdgesArrow: {
 		solidRight: "\ue0b0", // '' - nf-pl-left_hard_divider
@@ -89,11 +89,9 @@ func (r statusRow) paint(buf *tui.Buffer) {
 	r.writeElems(buf, right, r.at.X+r.width-r.elemsWidth(right, true), true)
 }
 
-// writeElems paints one side of the row; toLeft puts each divider on the
-// leading edge, so the right-hand run points back toward the middle
-func (r statusRow) writeElems(
-	buf *tui.Buffer, elems []statusElem, x int, toLeft bool,
-) {
+// writeElems paints one side of the row; toLeft puts each divider on the leading edge, so the
+// right-hand run points back toward the middle
+func (r statusRow) writeElems(buf *tui.Buffer, elems []statusElem, x int, toLeft bool) {
 	for i, e := range elems {
 		st := r.styleFor(e)
 		text, sep := r.divider(elems, i, toLeft)
@@ -113,11 +111,9 @@ func (r statusRow) writeElems(
 	}
 }
 
-// divider is an element's outward edge: the solid glyph in its own background
-// over the one it cuts into, or the receding thin one where they match
-func (r statusRow) divider(
-	elems []statusElem, idx int, toLeft bool,
-) (string, tui.Style) {
+// divider is an element's outward edge: the solid glyph in its own background over the one it cuts
+// into, or the receding thin one where they match
+func (r statusRow) divider(elems []statusElem, idx int, toLeft bool) (string, tui.Style) {
 	e := elems[idx]
 	if e.prose {
 		return "", r.baseStyle
@@ -136,8 +132,8 @@ func (r statusRow) divider(
 	return solid, r.baseStyle.Fg(bg).Bg(intoBg)
 }
 
-// styleFor puts a segment on the section background, unless it brought one of
-// its own or the row is unfocused, which leaves the whole row flat
+// styleFor puts a segment on the section background, unless it brought one of its own or the row is
+// unfocused, which leaves the whole row flat
 func (r statusRow) styleFor(e statusElem) tui.Style {
 	if e.prose || !r.focused || e.style.BgColor() != r.baseStyle.BgColor() {
 		return e.style
@@ -152,15 +148,13 @@ func (r statusRow) neighborStyle(elems []statusElem, idx int) tui.Style {
 	return r.baseStyle
 }
 
-func (r statusRow) write(
-	buf *tui.Buffer, x int, text string, style tui.Style,
-) int {
+func (r statusRow) write(buf *tui.Buffer, x int, text string, style tui.Style) int {
 	buf.SetString(geom.Point{X: x, Y: r.at.Y}, text, style)
 	return x + runewidth.StringWidth(text)
 }
 
-// elemsWidth measures through divider, so the space reserved for an edge is
-// always the glyph writeElems will paint there
+// elemsWidth measures through divider, so the space reserved for an edge is always the glyph
+// writeElems will paint there
 func (r statusRow) elemsWidth(elems []statusElem, toLeft bool) int {
 	w := 0
 	for i, e := range elems {

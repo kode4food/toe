@@ -19,9 +19,7 @@ type contentRenderTarget struct {
 	scrollbar bool
 }
 
-func (r *renderPass) prepareContentRender(
-	target *contentRenderTarget,
-) *contentRenderState {
+func (r *renderPass) prepareContentRender(target *contentRenderTarget) *contentRenderState {
 	cx := r.context
 	doc := target.doc
 	v := target.view
@@ -62,8 +60,8 @@ func (r *renderPass) prepareContentRender(
 			anchorLine = l
 		}
 	}
-	// vOff is the number of visual rows scrolled into the anchor line itself,
-	// so a soft-wrapped line taller than the viewport can be scrolled within
+	// vOff is the number of visual rows scrolled into the anchor line itself, so a soft-wrapped
+	// line taller than the viewport can be scrolled within
 	vOff := max(v.Offset().VerticalOffset, 0)
 
 	nLines := text.LenLines()
@@ -142,10 +140,7 @@ func (r *renderPass) prepareContentRender(
 	diagnostics := diagnosticSpans(docDiagnostics, styles)
 	annotations := c.viewAnnotations[v.ID()][:0]
 	if mode == view.ModeNormal {
-		annotations = append(
-			annotations,
-			inlayHintAnnotations(doc.InlayHints(v.ID()), styles)...,
-		)
+		annotations = append(annotations, inlayHintAnnotations(doc.InlayHints(v.ID()), styles)...)
 	}
 	annotations = appendColorAnnotations(annotations, colors, opts.NerdFonts)
 	slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
@@ -162,21 +157,19 @@ func (r *renderPass) prepareContentRender(
 	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
 	insertMode := mode == view.ModeInsert
 
-	format := doc.TextFormatForConfig(
-		target.area.Width-gutterW, cx.Editor.Options(),
-	)
+	format := doc.TextFormatForConfig(target.area.Width-gutterW, cx.Editor.Options())
 	softWrap := format.SoftWrap && gutterW < target.area.Width
 	contentW := target.area.Width - gutterW
 	v.SetContentWidth(contentW)
 
-	// a non-positive width disables horizontal scrolling and resets the offset
-	// to 0, which is what soft-wrap wants. The gutter never shifts either way
+	// a non-positive width disables horizontal scrolling and resets the offset to 0, which is what
+	// soft-wrap wants. The gutter never shifts either way
 	hWidth := 0
 	if !softWrap {
 		hWidth = contentW
 	}
-	// Free scroll decouples the horizontal offset from the cursor too, but
-	// soft-wrap must still reset the offset to 0
+	// Free scroll decouples the horizontal offset from the cursor too, but soft-wrap must still
+	// reset the offset to 0
 	if !v.FreeScroll() || softWrap {
 		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
 			Doc:       text,
@@ -323,9 +316,7 @@ func documentLinkSpans(links []view.DocumentLink) []matchSpan {
 	return out
 }
 
-func inlayHintAnnotations(
-	hints []view.InlayHint, styles *styles,
-) []inlineAnnotation {
+func inlayHintAnnotations(hints []view.InlayHint, styles *styles) []inlineAnnotation {
 	if len(hints) == 0 {
 		return nil
 	}

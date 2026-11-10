@@ -32,15 +32,12 @@ func (c *Client) FormatDocument(
 
 // FormatRange requests range-formatting edits
 func (c *Client) FormatRange(
-	ctx context.Context, doc DocumentSnapshot, r core.Range,
-	opts protocol.FormattingOptions,
+	ctx context.Context, doc DocumentSnapshot, r core.Range, opts protocol.FormattingOptions,
 ) ([]protocol.TextEdit, bool, error) {
 	if !c.SupportsFeature(FeatureRangeFormat) {
 		return nil, false, nil
 	}
-	lspRange, err := lspRange(
-		core.NewRope(doc.Text), r, c.OffsetEncoding(),
-	)
+	lspRange, err := lspRange(core.NewRope(doc.Text), r, c.OffsetEncoding())
 	if err != nil {
 		return nil, false, err
 	}
@@ -92,10 +89,7 @@ func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 		if !sent {
 			continue
 		}
-		return errors.Join(
-			err,
-			s.applyFormattingEdits(doc, edits, client.OffsetEncoding()),
-		)
+		return errors.Join(err, s.applyFormattingEdits(doc, edits, client.OffsetEncoding()))
 	}
 	if err != nil {
 		return err
@@ -104,8 +98,7 @@ func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 }
 
 func (c *Client) formatRequest(
-	ctx context.Context, snap DocumentSnapshot, r *core.Range,
-	opts protocol.FormattingOptions,
+	ctx context.Context, snap DocumentSnapshot, r *core.Range, opts protocol.FormattingOptions,
 ) ([]protocol.TextEdit, bool, error) {
 	if r == nil {
 		return c.FormatDocument(ctx, snap, opts)
@@ -114,8 +107,7 @@ func (c *Client) formatRequest(
 }
 
 func (s *Session) applyFormattingEdits(
-	doc *view.Document, edits []protocol.TextEdit,
-	enc protocol.PositionEncodingKind,
+	doc *view.Document, edits []protocol.TextEdit, enc protocol.PositionEncodingKind,
 ) error {
 	if len(edits) == 0 {
 		return nil

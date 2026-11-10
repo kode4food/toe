@@ -28,8 +28,7 @@ const (
 var _ BufferOverlayComponent = (*codeActionMenu)(nil)
 
 func newCodeActionMenu(
-	ec *EditorComponent, docID view.DocumentId, viewID view.Id,
-	actions []view.CodeAction,
+	ec *EditorComponent, docID view.DocumentId, viewID view.Id, actions []view.CodeAction,
 ) *codeActionMenu {
 	cursor := 0
 	for i, a := range actions {
@@ -48,9 +47,7 @@ func newCodeActionMenu(
 }
 
 // HandleEvent drives selection and acceptance
-func (m *codeActionMenu) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+func (m *codeActionMenu) HandleEvent(cx *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.Code {
@@ -81,9 +78,7 @@ func (m *codeActionMenu) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 }
 
 // Layout places the menu near the cursor, inside the frame
-func (m *codeActionMenu) Layout(
-	cx *Context, screen geom.Size,
-) (geom.Area, bool) {
+func (m *codeActionMenu) Layout(cx *Context, screen geom.Size) (geom.Area, bool) {
 	if len(m.actions) == 0 || !m.valid(cx) {
 		return geom.Area{}, false
 	}
@@ -202,9 +197,7 @@ func (m *codeActionMenu) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 	return consumed()
 }
 
-func (m *codeActionMenu) handleMouseWheel(
-	cx *Context, msg tea.MouseWheelMsg,
-) EventResult {
+func (m *codeActionMenu) handleMouseWheel(cx *Context, msg tea.MouseWheelMsg) EventResult {
 	if !m.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}
@@ -214,9 +207,7 @@ func (m *codeActionMenu) handleMouseWheel(
 	return consumed()
 }
 
-func (m *codeActionMenu) renderScroll(
-	buf *tui.Buffer, at geom.Point, rows int, style tui.Style,
-) {
+func (m *codeActionMenu) renderScroll(buf *tui.Buffer, at geom.Point, rows int, style tui.Style) {
 	if rows <= 0 || len(m.actions) <= rows {
 		return
 	}

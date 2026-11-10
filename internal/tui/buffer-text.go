@@ -14,9 +14,9 @@ func (b *Buffer) Fill(style Style) {
 	}
 }
 
-// FillRange fills width cells with a space in the given style. A style with no
-// background is transparent: each cell keeps its existing background so a
-// pre-painted layer (ruler, cursorline) shows through
+// FillRange fills width cells with a space in the given style. A style with no background is
+// transparent: each cell keeps its existing background so a pre-painted layer (ruler, cursorline)
+// shows through
 func (b *Buffer) FillRange(p geom.Point, width int, style Style) {
 	x, y := p.X, p.Y
 	if y < 0 || y >= b.Height || width <= 0 || x >= b.Width {
@@ -46,8 +46,8 @@ type RightAlignedIntArgs struct {
 	Style Style
 }
 
-// SetRightAlignedInt writes Value as decimal digits right-aligned in a field of
-// Width starting at At, padding left with spaces
+// SetRightAlignedInt writes Value as decimal digits right-aligned in a field of Width starting at
+// At, padding left with spaces
 func (b *Buffer) SetRightAlignedInt(args RightAlignedIntArgs) {
 	width := args.Width
 	style := args.Style
@@ -79,9 +79,8 @@ func (b *Buffer) SetRightAlignedInt(args RightAlignedIntArgs) {
 	}
 }
 
-// SetString writes graphemes of s starting at p, advancing x by display width.
-// A style with no background is transparent, keeping each cell's existing
-// background
+// SetString writes graphemes of s starting at p, advancing x by display width. A style with no
+// background is transparent, keeping each cell's existing background
 func (b *Buffer) SetString(p geom.Point, s string, style Style) {
 	x, y := p.X, p.Y
 	if y < 0 || y >= b.Height || x >= b.Width {
@@ -132,9 +131,7 @@ func (b *Buffer) setASCIICell(p geom.Point, ch byte, style Style) {
 	b.cells[idx] = Cell{Symbol: ASCIIString(rune(ch)), Style: style}
 }
 
-func (b *Buffer) setASCIIString(
-	p geom.Point, s string, style Style, overBg bool,
-) (int, string) {
+func (b *Buffer) setASCIIString(p geom.Point, s string, style Style, overBg bool) (int, string) {
 	x, y := p.X, p.Y
 	for i := range len(s) {
 		ch := s[i]

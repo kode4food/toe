@@ -16,14 +16,14 @@ func DeleteSelection(e *view.Editor) {
 	deleteOrChange(e, deleteOrChangeArgs{yank: true})
 }
 
-// ChangeSelection yanks all selections into the active register, deletes them,
-// and enters insert mode. For linewise selections, opens a blank line above
+// ChangeSelection yanks all selections into the active register, deletes them, and enters insert
+// mode. For linewise selections, opens a blank line above
 func ChangeSelection(e *view.Editor) {
 	deleteOrChange(e, deleteOrChangeArgs{yank: true, enterInsert: true})
 }
 
-// SplitSelectionOnNewline splits each selection range on line boundaries,
-// producing one sub-range per line (excluding the line ending itself)
+// SplitSelectionOnNewline splits each selection range on line boundaries, producing one sub-range
+// per line (excluding the line ending itself)
 func SplitSelectionOnNewline(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -91,8 +91,7 @@ func DeleteSelectionNoYank(e *view.Editor) {
 	deleteOrChange(e, deleteOrChangeArgs{})
 }
 
-// ChangeSelectionNoYank deletes each selection without yanking and enters
-// insert mode
+// ChangeSelectionNoYank deletes each selection without yanking and enters insert mode
 func ChangeSelectionNoYank(e *view.Editor) {
 	deleteOrChange(e, deleteOrChangeArgs{enterInsert: true})
 }

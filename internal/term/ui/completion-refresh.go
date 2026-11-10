@@ -47,9 +47,7 @@ func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	return c.refreshCmd()
 }
 
-func (c *completionComponent) handleRefreshMsg(
-	msg completionRefreshMsg,
-) (EventResult, tea.Cmd) {
+func (c *completionComponent) handleRefreshMsg(msg completionRefreshMsg) (EventResult, tea.Cmd) {
 	if msg.layer != c {
 		return ignored(), nil
 	}

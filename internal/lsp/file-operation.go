@@ -33,9 +33,7 @@ func (c *Client) WillCreateFile(
 }
 
 // DidCreateFile notifies the server that a file was created
-func (c *Client) DidCreateFile(
-	ctx context.Context, path string, dir bool,
-) (bool, error) {
+func (c *Client) DidCreateFile(ctx context.Context, path string, dir bool) (bool, error) {
 	if !c.fileOperationInterested(fileOpDidCreate, path, dir) {
 		return false, nil
 	}
@@ -97,9 +95,7 @@ func (c *Client) WillDeleteFile(
 }
 
 // DidDeleteFile notifies the server that a file was deleted
-func (c *Client) DidDeleteFile(
-	ctx context.Context, path string, dir bool,
-) (bool, error) {
+func (c *Client) DidDeleteFile(ctx context.Context, path string, dir bool) (bool, error) {
 	if !c.fileOperationInterested(fileOpDidDelete, path, dir) {
 		return false, nil
 	}
@@ -112,9 +108,7 @@ func (c *Client) DidDeleteFile(
 // WillCreateFile applies any edits servers want made before creating path
 func (s *Session) WillCreateFile(path string, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpWillCreate, path, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpWillCreate, path, dir) {
 		edit, _, e := client.WillCreateFile(s.ctx, path, dir)
 		if e != nil {
 			err = errors.Join(err, e)
@@ -128,9 +122,7 @@ func (s *Session) WillCreateFile(path string, dir bool) error {
 // DidCreateFile tells every server that path was created
 func (s *Session) DidCreateFile(path string, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpDidCreate, path, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpDidCreate, path, dir) {
 		_, e := client.DidCreateFile(s.ctx, path, dir)
 		err = errors.Join(err, e)
 	}
@@ -140,9 +132,7 @@ func (s *Session) DidCreateFile(path string, dir bool) error {
 // WillRenameFile applies any edits servers want made before renaming
 func (s *Session) WillRenameFile(rename view.FileRename, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpWillRename, rename.OldPath, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpWillRename, rename.OldPath, dir) {
 		edit, _, e := client.WillRenameFile(s.ctx, rename, dir)
 		if e != nil {
 			err = errors.Join(err, e)
@@ -156,9 +146,7 @@ func (s *Session) WillRenameFile(rename view.FileRename, dir bool) error {
 // DidRenameFile tells every server that a path was renamed
 func (s *Session) DidRenameFile(rename view.FileRename, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpDidRename, rename.NewPath, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpDidRename, rename.NewPath, dir) {
 		_, e := client.DidRenameFile(s.ctx, rename, dir)
 		err = errors.Join(err, e)
 	}
@@ -168,9 +156,7 @@ func (s *Session) DidRenameFile(rename view.FileRename, dir bool) error {
 // WillDeleteFile applies any edits servers want made before deleting path
 func (s *Session) WillDeleteFile(path string, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpWillDelete, path, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpWillDelete, path, dir) {
 		edit, _, e := client.WillDeleteFile(s.ctx, path, dir)
 		if e != nil {
 			err = errors.Join(err, e)
@@ -184,18 +170,14 @@ func (s *Session) WillDeleteFile(path string, dir bool) error {
 // DidDeleteFile tells every server that path was deleted
 func (s *Session) DidDeleteFile(path string, dir bool) error {
 	var err error
-	for _, client := range s.fileOperationClients(
-		fileOpDidDelete, path, dir,
-	) {
+	for _, client := range s.fileOperationClients(fileOpDidDelete, path, dir) {
 		_, e := client.DidDeleteFile(s.ctx, path, dir)
 		err = errors.Join(err, e)
 	}
 	return err
 }
 
-func (s *Session) fileOperationClients(
-	sel fileOpSelector, path string, dir bool,
-) []*Client {
+func (s *Session) fileOperationClients(sel fileOpSelector, path string, dir bool) []*Client {
 	var out []*Client
 	for _, client := range s.servers.allClients() {
 		if client.fileOperationInterested(sel, path, dir) {
@@ -205,18 +187,14 @@ func (s *Session) fileOperationClients(
 	return out
 }
 
-func (s *Session) applyFileOperationEdit(
-	client *Client, edit *protocol.WorkspaceEdit,
-) error {
+func (s *Session) applyFileOperationEdit(client *Client, edit *protocol.WorkspaceEdit) error {
 	if edit == nil {
 		return nil
 	}
 	return s.applyWorkspaceEdit(*edit, client.OffsetEncoding())
 }
 
-func (c *Client) fileOperationInterested(
-	sel fileOpSelector, path string, dir bool,
-) bool {
+func (c *Client) fileOperationInterested(sel fileOpSelector, path string, dir bool) bool {
 	caps, ok := c.Capabilities()
 	if !ok || caps.Workspace == nil || caps.Workspace.FileOperations == nil {
 		return false
@@ -224,39 +202,27 @@ func (c *Client) fileOperationInterested(
 	return fileOperationMatches(sel(caps.Workspace.FileOperations), path, dir)
 }
 
-func fileOpWillCreate(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpWillCreate(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.WillCreate
 }
 
-func fileOpDidCreate(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpDidCreate(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.DidCreate
 }
 
-func fileOpWillRename(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpWillRename(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.WillRename
 }
 
-func fileOpDidRename(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpDidRename(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.DidRename
 }
 
-func fileOpWillDelete(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpWillDelete(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.WillDelete
 }
 
-func fileOpDidDelete(
-	o *protocol.FileOperationOptions,
-) protocol.FileOperationRegistrationOptions {
+func fileOpDidDelete(o *protocol.FileOperationOptions) protocol.FileOperationRegistrationOptions {
 	return o.DidDelete
 }
 
@@ -290,9 +256,7 @@ func fileOperationSchemeOK(scheme *string) bool {
 	return scheme == nil || *scheme == "file"
 }
 
-func fileOperationKindOK(
-	kind protocol.FileOperationPatternKind, dir bool,
-) bool {
+func fileOperationKindOK(kind protocol.FileOperationPatternKind, dir bool) bool {
 	switch kind {
 	case protocol.FileOperationPatternKindFile:
 		return !dir

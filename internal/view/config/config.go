@@ -15,8 +15,7 @@ type (
 		AfterDelay AutoSaveAfterDelay `toml:"after-delay"`
 	}
 
-	// AutoSaveAfterDelay is the idle-timeout save trigger and its timeout in
-	// milliseconds
+	// AutoSaveAfterDelay is the idle-timeout save trigger and its timeout in milliseconds
 	AutoSaveAfterDelay struct {
 		Enable  *bool `toml:"enable"`
 		Timeout *int  `toml:"timeout"`
@@ -43,8 +42,7 @@ func LoadRawConfig(path string) (map[string]any, bool) {
 	return toml.LoadMerged([]string{path}, 3)
 }
 
-// LoadRawConfigForDir returns user config merged with dir's trusted workspace
-// config
+// LoadRawConfigForDir returns user config merged with dir's trusted workspace config
 func LoadRawConfigForDir(dir string) (map[string]any, bool) {
 	if path, ok := loader.ConfigFile(); ok {
 		return LoadRawConfigForWorkspace(loader.WorkspaceFiles{
@@ -57,9 +55,7 @@ func LoadRawConfigForDir(dir string) (map[string]any, bool) {
 }
 
 // LoadRawConfigForWorkspace merges the user and workspace config TOML
-func LoadRawConfigForWorkspace(
-	args loader.WorkspaceFiles,
-) (map[string]any, bool) {
+func LoadRawConfigForWorkspace(args loader.WorkspaceFiles) (map[string]any, bool) {
 	global := args.Global
 	paths := []string{global}
 	insecure := false

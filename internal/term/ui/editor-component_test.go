@@ -111,8 +111,8 @@ func TestMouseMiddleClick(t *testing.T) {
 }
 
 func TestMouseWheelScroll(t *testing.T) {
-	// renderedModel gives a 40×8 window, row 7 is the pane statusline, which
-	// is outside the content area
+	// renderedModel gives a 40×8 window, row 7 is the pane statusline, which is outside the
+	// content area
 
 	t.Run("wheel over pane scrolls that pane", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
@@ -140,8 +140,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
-		// 40×8 window, no bufferline: the pane fills the frame, so Y=7 is
-		// its own status bar row (not content)
+		// 40×8 window, no bufferline: the pane fills the frame, so Y=7 is its own status bar row
+		// (not content)
 		m2, _ := m.Update(tea.MouseWheelMsg{
 			X: 5, Y: 7, Button: tea.MouseWheelDown,
 		})
@@ -163,8 +163,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		hOff := v.Offset().HorizontalOffset
 		assert.Greater(t, hOff, 0)
 
-		// The cursor is at column 0, so without free scroll the next render
-		// would snap the offset back to it
+		// The cursor is at column 0, so without free scroll the next render would snap the offset
+		// back to it
 		_ = m2.(ui.Model).View()
 		assert.Equal(t, hOff, v.Offset().HorizontalOffset)
 	})
@@ -219,8 +219,8 @@ func TestMouseClickPositioning(t *testing.T) {
 		m = m2.(ui.Model)
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
 
-		// the bottom row of the 8-high window is the pane statusline, never
-		// editor content, so a click there must leave the cursor put
+		// the bottom row of the 8-high window is the pane statusline, never editor content, so a
+		// click there must leave the cursor put
 		m3, _ := m.Update(tea.MouseClickMsg{
 			X: 1, Y: 7, Button: tea.MouseLeft,
 		})
@@ -370,8 +370,8 @@ func TestMouseDragBounds(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		// dragging above the pane's top row clamps to it instead of being a
-		// no-op, so a drag started at the top edge still extends
+		// dragging above the pane's top row clamps to it instead of being a no-op, so a drag
+		// started at the top edge still extends
 		m2, _ = m.Update(tea.MouseMotionMsg{
 			X: 8, Y: -1, Button: tea.MouseLeft,
 		})
@@ -424,16 +424,16 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
-		// dragging past the pane's bottom edge starts an auto-scroll tick
-		// instead of just clamping the selection in place
+		// dragging past the pane's bottom edge starts an auto-scroll tick instead of just clamping
+		// the selection in place
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: 0, Y: 100, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
 
-		// fire exactly one tick. It reschedules itself, but we only need to
-		// prove a single step scrolls forward, not drive it to completion
+		// fire exactly one tick. It reschedules itself, but we only need to prove a single step
+		// scrolls forward, not drive it to completion
 		msg := cmd()
 		m2, _ = m.Update(msg)
 		_ = m2.(ui.Model)
@@ -469,8 +469,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m2, _ = m.Update(cmd())
 		m = m2.(ui.Model)
 
-		// a render used to let normal scrolloff re-centering fight the tick
-		// and jump the viewport further than the deliberate one-line step
+		// a render used to let normal scrolloff re-centering fight the tick and jump the viewport
+		// further than the deliberate one-line step
 		_ = m.View()
 
 		afterLine, err := doc.Text().CharToLine(v.Offset().Anchor)
@@ -498,8 +498,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		before := v.Offset().Anchor
 
-		// a pane at the screen's top edge has no row above to drag into, so the
-		// trigger zone must live inside its own top scrolloff margin
+		// a pane at the screen's top edge has no row above to drag into, so the trigger zone must
+		// live inside its own top scrolloff margin
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: 0, Y: 1, Button: tea.MouseLeft,
 		})
@@ -536,8 +536,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 			return time.Since(start)
 		}
 
-		// row 1 is barely inside the top margin, far off-screen is pinned
-		// against the pane's edge, where ticks should fire faster
+		// row 1 is barely inside the top margin, far off-screen is pinned against the pane's edge,
+		// where ticks should fire faster
 		nearMargin := tickDelay(1)
 		atEdge := tickDelay(-100)
 		assert.Greater(t, nearMargin, atEdge)
@@ -575,8 +575,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 			lines = append(lines, line)
 		}
 
-		// each one-row mouse move must shift the cursor at most one line,
-		// where entering the margin zone used to jump several at once
+		// each one-row mouse move must shift the cursor at most one line, where entering the margin
+		// zone used to jump several at once
 		for i := 1; i < len(lines); i++ {
 			assert.LessOrEqual(t, lines[i-1]-lines[i], 1)
 		}
@@ -599,8 +599,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
 
-		// a second motion inside the same edge zone must not reschedule the
-		// tick, or a fast mouse-motion stream never lets the timer fire
+		// a second motion inside the same edge zone must not reschedule the tick, or a fast
+		// mouse-motion stream never lets the timer fire
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
 			X: 1, Y: 100, Button: tea.MouseLeft,
 		})
@@ -660,8 +660,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		// the trigger zone must reach area.X+minWidth, the first text column,
-		// rather than require the drag to be over the gutter itself
+		// the trigger zone must reach area.X+minWidth, the first text column, rather than require
+		// the drag to be over the gutter itself
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: area.X + minWidth, Y: 0, Button: tea.MouseLeft,
 		})
@@ -690,8 +690,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		cmd()
 		firstTick := time.Since(start)
 
-		// the terminal clamps out-of-window coordinates, so a drag held
-		// outside keeps reporting this same row with no further movement
+		// the terminal clamps out-of-window coordinates, so a drag held outside keeps reporting
+		// this same row with no further movement
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
 			X: 0, Y: 0, Button: tea.MouseLeft,
 		})
@@ -750,8 +750,8 @@ func TestFreeScroll(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset()
 
-		// the last content row before the status/command line sits inside the
-		// default 5-line scrolloff margin, so re-coupling scrolls to honor it
+		// the last content row before the status/command line sits inside the default 5-line
+		// scrolloff margin, so re-coupling scrolls to honor it
 		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		clickY := -1
 		for y := len(lines) - 2; y >= 0; y-- {
@@ -784,8 +784,8 @@ func TestFreeScroll(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		// row 1 holds "short" scrolled fully off left, so the click resolves
-		// outside the window and a verbatim repeat changes no selection
+		// row 1 holds "short" scrolled fully off left, so the click resolves outside the window and
+		// a verbatim repeat changes no selection
 		for range 2 {
 			off := v.Offset()
 			off.HorizontalOffset = 100
@@ -921,8 +921,8 @@ func TestGotoLineKeySequence(t *testing.T) {
 	t.Run("a wide toast leaves the last cell blank", func(t *testing.T) {
 		m, e := newModel(t)
 		m = settled(resize(m, 8, 6))
-		// a toast as wide as the frame would fill the final column without
-		// the guard, and writing it auto-wraps the terminal
+		// a toast as wide as the frame would fill the final column without the guard, and writing
+		// it auto-wraps the terminal
 		e.SetStatusMsg("1234567")
 		m = resize(m, 8, 6)
 		lines := strings.Split(stripANSI(viewContent(m)), "\n")
@@ -968,8 +968,8 @@ func TestCountMotionKeySequence(t *testing.T) {
 		m = sendKey(m, '3')
 		_ = sendKey(m, 'w')
 
-		// count 3 advances past aa/bb/cc into the run before "dd". A plain w
-		// stops one word short, so this asserts the count took effect
+		// count 3 advances past aa/bb/cc into the run before "dd". A plain w stops one word short,
+		// so this asserts the count took effect
 		assert.Equal(t, 8, testutil.CursorPos(t, e))
 	})
 }
@@ -1048,8 +1048,7 @@ func TestSyncEditorMessages(t *testing.T) {
 		m := ui.New(e, km)
 		// No LSP sets "No configured language server"
 		bindNormalTestAction(
-			km, "goto_decl", m.GotoDeclarationAction,
-			[]command.KeyEvent{char('g')},
+			km, "goto_decl", m.GotoDeclarationAction, []command.KeyEvent{char('g')},
 		)
 		m = settled(resize(m, 80, 24))
 
@@ -1126,9 +1125,7 @@ func TestAutoSaveCmd(t *testing.T) {
 	})
 }
 
-func renderedTextPoint(
-	t *testing.T, m ui.Model, text string, off int,
-) geom.Point {
+func renderedTextPoint(t *testing.T, m ui.Model, text string, off int) geom.Point {
 	t.Helper()
 	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {
@@ -1188,9 +1185,7 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 		core.TextChange(core.Span{From: 0, To: 0}, text),
 	})
 	assert.NoError(t, err)
-	tx := core.NewTransaction(rope).
-		WithChanges(cs).
-		WithSelection(core.PointSelection(0))
+	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))
 	assert.NoError(t, e.Apply(tx))
 	return e
 }

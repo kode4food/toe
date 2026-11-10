@@ -6,8 +6,7 @@ import (
 	"go.lsp.dev/protocol"
 )
 
-// Feature names an LSP capability group the editor can query before issuing
-// requests
+// Feature names an LSP capability group the editor can query before issuing requests
 type Feature int
 
 // Feature constants name the LSP capability groups the editor supports
@@ -37,9 +36,7 @@ const (
 )
 
 // SupportsFeature reports whether the capability set supports the named feature
-func SupportsFeature(
-	capabilities protocol.ServerCapabilities, feature Feature,
-) bool {
+func SupportsFeature(capabilities protocol.ServerCapabilities, feature Feature) bool {
 	switch feature {
 	case FeatureFormat:
 		return capabilityEnabled(capabilities.DocumentFormattingProvider)

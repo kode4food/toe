@@ -10,9 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-func newDocument(
-	id DocumentId, opts *Options, registry *language.Registry,
-) *Document {
+func newDocument(id DocumentId, opts *Options, registry *language.Registry) *Document {
 	d := &Document{
 		identity: identityState{id: id},
 		content: contentState{
@@ -73,9 +71,7 @@ func (d *Document) ensureLoaded() {
 	if p == nil {
 		return
 	}
-	loaded, err := openDocument(
-		d.identity.id, d.content.path, p.opts, d.format.registry,
-	)
+	loaded, err := openDocument(d.identity.id, d.content.path, p.opts, d.format.registry)
 	if err != nil {
 		return
 	}
@@ -92,9 +88,7 @@ func (d *Document) ensureLoaded() {
 		d.content.lang = loaded.content.lang
 		d.format.language = loaded.format.language
 	}
-	d.views.lastSelection = clampSelection(
-		d.views.lastSelection, d.content.text.LenChars(),
-	)
+	d.views.lastSelection = clampSelection(d.views.lastSelection, d.content.text.LenChars())
 }
 
 func openDocument(

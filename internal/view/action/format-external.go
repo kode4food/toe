@@ -18,9 +18,8 @@ type RunFormatterArgs struct {
 	Argv    []string
 }
 
-// RunFormatter runs an external formatter as a subprocess over the document's
-// text and applies its output as a single edit, replacing the document text
-// only when the formatter changed it
+// RunFormatter runs an external formatter as a subprocess over the document's text and applies its
+// output as a single edit, replacing the document text only when the formatter changed it
 func RunFormatter(a RunFormatterArgs) error {
 	text := a.Doc.Text().String()
 	cmd := exec.Command(a.Command, a.Argv...)

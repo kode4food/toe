@@ -13,8 +13,7 @@ type (
 		TabWidth int
 	}
 
-	// GraphemeStep is a starting char index and a count of grapheme clusters
-	// to move by
+	// GraphemeStep is a starting char index and a count of grapheme clusters to move by
 	GraphemeStep struct {
 		From  int
 		Count int
@@ -26,8 +25,7 @@ func TabWidthAt(at TabStop) int {
 	return at.TabWidth - (at.Column % at.TabWidth)
 }
 
-// NthPrevGraphemeBoundary returns the char index Count grapheme clusters
-// before the step's start
+// NthPrevGraphemeBoundary returns the char index Count grapheme clusters before the step's start
 func NthPrevGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	charIdx := step.From
 	n := step.Count
@@ -39,17 +37,15 @@ func NthPrevGraphemeBoundary(doc Rope, step GraphemeStep) int {
 		return 0
 	}
 	text := s.String()
-	// Ring of size n+1 tracks the last n+1 boundary positions so we avoid
-	// collecting all boundaries for large documents
+	// Ring of size n+1 tracks the last n+1 boundary positions so we avoid collecting all boundaries
+	// for large documents
 	ring := make([]int, n+1)
 	ring[0] = 0
 	count := 1
 	pos := 0
 	state := -1
 	for text != "" {
-		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(
-			text, state,
-		)
+		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(text, state)
 		pos += utf8.RuneCountInString(cl)
 		text = rest
 		state = newState
@@ -62,8 +58,7 @@ func NthPrevGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	return ring[(count-1-n)%(n+1)]
 }
 
-// NthNextGraphemeBoundary returns the char index Count grapheme clusters
-// after the step's start
+// NthNextGraphemeBoundary returns the char index Count grapheme clusters after the step's start
 func NthNextGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	charIdx := step.From
 	n := step.Count
@@ -90,20 +85,18 @@ func NthNextGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	return pos
 }
 
-// PrevGraphemeBoundary returns the char index one grapheme cluster before
-// charIdx
+// PrevGraphemeBoundary returns the char index one grapheme cluster before charIdx
 func PrevGraphemeBoundary(doc Rope, charIdx int) int {
 	return NthPrevGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
 }
 
-// NextGraphemeBoundary returns the char index one grapheme cluster after
-// charIdx
+// NextGraphemeBoundary returns the char index one grapheme cluster after charIdx
 func NextGraphemeBoundary(doc Rope, charIdx int) int {
 	return NthNextGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
 }
 
-// EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary if it
-// is not already on one
+// EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary if it is not already on
+// one
 func EnsureGraphemeBoundaryNext(doc Rope, charIdx int) int {
 	if charIdx == 0 {
 		return charIdx
@@ -111,8 +104,8 @@ func EnsureGraphemeBoundaryNext(doc Rope, charIdx int) int {
 	return NextGraphemeBoundary(doc, charIdx-1)
 }
 
-// EnsureGraphemeBoundaryPrev snaps charIdx to the previous grapheme boundary if
-// it is not already on one
+// EnsureGraphemeBoundaryPrev snaps charIdx to the previous grapheme boundary if it is not already
+// on one
 func EnsureGraphemeBoundaryPrev(doc Rope, charIdx int) int {
 	total := doc.LenChars()
 	if charIdx == total {

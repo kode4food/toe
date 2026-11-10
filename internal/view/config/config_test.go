@@ -26,9 +26,7 @@ soft-wrap.enable = true
 soft-wrap.wrap-indicator = "↪ "
 `)
 		work := filepath.Join(root, "work")
-		workspaceDir := filepath.Join(work,
-			loader.WorkspaceDirName,
-		)
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
 		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
 		assert.NoError(t, err)
 		err = os.MkdirAll(workspaceDir, 0o755)
@@ -68,9 +66,7 @@ name = "markdown"
 text-width = 80
 `)
 		work := filepath.Join(root, "work")
-		workspaceDir := filepath.Join(work,
-			loader.WorkspaceDirName,
-		)
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
 		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
 		assert.NoError(t, err)
 		err = os.MkdirAll(workspaceDir, 0o755)
@@ -335,9 +331,7 @@ func TestWorkspaceConfigPath(t *testing.T) {
 
 		path := loader.WorkspaceConfigFile(nested)
 
-		assert.Equal(t,
-			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
-			path)
+		assert.Equal(t, filepath.Join(work, loader.WorkspaceDirName, "config.toml"), path)
 	})
 
 	t.Run("falls back to start directory", func(t *testing.T) {
@@ -347,9 +341,7 @@ func TestWorkspaceConfigPath(t *testing.T) {
 
 		path := loader.WorkspaceConfigFile(root)
 
-		assert.Equal(t,
-			filepath.Join(root, loader.WorkspaceDirName, "config.toml"),
-			path)
+		assert.Equal(t, filepath.Join(root, loader.WorkspaceDirName, "config.toml"), path)
 	})
 }
 
@@ -360,9 +352,7 @@ func TestLogFilePath(t *testing.T) {
 	path, ok := loader.LogFile()
 
 	assert.True(t, ok)
-	assert.Equal(t,
-		filepath.Join(root, loader.DirName, loader.LogFileName),
-		path)
+	assert.Equal(t, filepath.Join(root, loader.DirName, loader.LogFileName), path)
 }
 
 func TestWorkspaceTrust(t *testing.T) {
@@ -394,9 +384,7 @@ func TestTextFormat(t *testing.T) {
 			WrapIndicator: new("» ")}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForConfig(
-			new(language.Registry).Get("go"), nil, sw, 80,
-		)
+		format := language.TextFormatForConfig(new(language.Registry).Get("go"), nil, sw, 80)
 
 		assert.True(t, format.SoftWrap)
 		assert.Equal(t, "» ", format.WrapIndicator)
@@ -408,9 +396,7 @@ func TestTextFormat(t *testing.T) {
 			WrapAtTextWidth: new(true)}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForConfig(
-			new(language.Registry).Get("go"), new(40), sw, 80,
-		)
+		format := language.TextFormatForConfig(new(language.Registry).Get("go"), new(40), sw, 80)
 
 		assert.True(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
@@ -424,9 +410,7 @@ func TestTextFormat(t *testing.T) {
 			WrapAtTextWidth: new(true)}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForConfig(
-			new(language.Registry).Get("go"), new(80), sw, 40,
-		)
+		format := language.TextFormatForConfig(new(language.Registry).Get("go"), new(80), sw, 40)
 
 		assert.False(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
@@ -657,9 +641,7 @@ func writeLanguages(t *testing.T, root, text string) string {
 	return path
 }
 
-func findLanguage(
-	langs language.Languages, name string,
-) (language.Language, bool) {
+func findLanguage(langs language.Languages, name string) (language.Language, bool) {
 	var found language.Language
 	ok := false
 	for _, lang := range langs.Languages {

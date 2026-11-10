@@ -14,8 +14,8 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 )
 
-// Register installs the default command registry for an editor and
-// returns the registry so callers can apply TOML config to module sections
+// Register installs the default command registry for an editor and returns the registry so callers
+// can apply TOML config to module sections
 func Register(model ui.Model, km *command.Keymaps) (*command.Registry, error) {
 	r := command.NewRegistry(km)
 	if err := registerDefaultCommands(r, model); err != nil {

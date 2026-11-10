@@ -13,8 +13,8 @@ type (
 	// KeyModifiers is a bitmask of modifier keys
 	KeyModifiers uint8
 
-	// Special enumerates the non-printable keys. SpecialNone means the key is
-	// a printable [KeyCode.Char] instead
+	// Special enumerates the non-printable keys. SpecialNone means the key is a printable
+	// [KeyCode.Char] instead
 	Special uint8
 
 	// KeyCode represents a single keyboard key
@@ -30,9 +30,9 @@ type (
 		Mods KeyModifiers
 	}
 
-	// Continuation is called with subsequent keys while an action is in
-	// progress. Its result tells the key-entry UI how the interaction moved.
-	// ContinuationStay with nil retains the current callback
+	// Continuation is called with subsequent keys while an action is in progress. Its result tells
+	// the key-entry UI how the interaction moved. ContinuationStay with nil retains the current
+	// callback
 	Continuation func(*view.Editor, KeyEvent) (Continuation, Transition)
 
 	// Transition describes how an interaction handled a key
@@ -85,8 +85,7 @@ var (
 	ErrInvalidKey = i18n.NewError(i18n.ErrorInvalidKey)
 )
 
-// specialNames gives the compact keycap form for each special key, indexed by
-// its [Special] value
+// specialNames gives the compact keycap form for each special key, indexed by its [Special] value
 var specialNames = []string{
 	SpecialUnknown: "?",
 	Enter:          "ret",
@@ -183,9 +182,9 @@ func (k KeyEvent) WithMods(m KeyModifiers) KeyEvent {
 	return k
 }
 
-// IsTypable reports whether k is a printable character that should be accepted
-// as literal text input: Char is set and neither Ctrl nor Alt is held.
-// ModShift alone is fine, already reflected in the Char value
+// IsTypable reports whether k is a printable character that should be accepted as literal text
+// input: Char is set and neither Ctrl nor Alt is held. ModShift alone is fine, already reflected in
+// the Char value
 func (k KeyEvent) IsTypable() bool {
 	return k.Code.Char != 0 && !k.Mods.Has(ModCtrl) && !k.Mods.Has(ModAlt)
 }

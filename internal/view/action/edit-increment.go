@@ -81,9 +81,7 @@ func incrementImpl(e *view.Editor, sign int) {
 		return
 	}
 	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 

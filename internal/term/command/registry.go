@@ -32,9 +32,7 @@ func NewRegistry(km *Keymaps) *Registry {
 
 // RegisterModule adds a module's commands, options, and bindings
 func (r *Registry) RegisterModule(m Module) error {
-	tr := make(i18n.Translations,
-		len(m.Commands)+len(m.Options)+len(m.Translations),
-	)
+	tr := make(i18n.Translations, len(m.Commands)+len(m.Options)+len(m.Translations))
 	for _, c := range m.Commands {
 		tr[docStringKey(kebabName(c.Name))] = c.DocString
 	}
@@ -86,9 +84,9 @@ func (r *Registry) RegisterCommand(name string, c Command) error {
 	return nil
 }
 
-// ApplyTOML resets all sections to defaults, decodes the merged TOML map into
-// each section, then calls each section's Apply to push typed values into
-// editor Options. Pass an empty map when no config file is present
+// ApplyTOML resets all sections to defaults, decodes the merged TOML map into each section, then
+// calls each section's Apply to push typed values into editor Options. Pass an empty map when no
+// config file is present
 func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 	for _, s := range r.sections {
 		s.Reset()
@@ -143,8 +141,7 @@ func (r *Registry) OptionKeys() []string {
 	return keys
 }
 
-// OptionValues returns the current string value for every registered runtime
-// option
+// OptionValues returns the current string value for every registered runtime option
 func (r *Registry) OptionValues(e *view.Editor) (map[string]string, error) {
 	out := map[string]string{}
 	for _, key := range r.OptionKeys() {
@@ -168,11 +165,9 @@ func (r *Registry) OptionValues(e *view.Editor) (map[string]string, error) {
 	return out, nil
 }
 
-// ChangedOptionValues returns the option values that differ from the editor's
-// base options. With no base recorded, every option counts as changed
-func (r *Registry) ChangedOptionValues(
-	e *view.Editor,
-) (map[string]string, error) {
+// ChangedOptionValues returns the option values that differ from the editor's base options. With no
+// base recorded, every option counts as changed
+func (r *Registry) ChangedOptionValues(e *view.Editor) (map[string]string, error) {
 	values, err := r.OptionValues(e)
 	if err != nil {
 		return nil, err
@@ -187,11 +182,8 @@ func (r *Registry) ChangedOptionValues(
 	return out, nil
 }
 
-// ApplyOptionValues applies a set of runtime option strings through the same
-// handlers used by :set
-func (r *Registry) ApplyOptionValues(
-	e *view.Editor, values map[string]string,
-) error {
+// ApplyOptionValues applies a set of runtime option strings through the same handlers used by :set
+func (r *Registry) ApplyOptionValues(e *view.Editor, values map[string]string) error {
 	for key, value := range values {
 		o := r.LookupOption(key)
 		if o == nil {
@@ -242,9 +234,9 @@ func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	}
 }
 
-// OptionValueCompleter completes an option's value, dispatching to the
-// completer registered against the option named by the already-parsed first
-// positional argument (e.g. the key in "set <key> <value>")
+// OptionValueCompleter completes an option's value, dispatching to the completer registered against
+// the option named by the already-parsed first positional argument (e.g. the key in "set <key>
+// <value>")
 func (r *Registry) OptionValueCompleter() CompletionFunc {
 	return func(e *view.Editor, args *Args, input string) []Completion {
 		key, ok := args.Get(0)
@@ -289,9 +281,7 @@ func normalizeOptionKey(key string) string {
 	return strings.ToLower(strings.TrimSpace(key))
 }
 
-func completeOptionValue(
-	e *view.Editor, args *Args, input string, o *Option,
-) []Completion {
+func completeOptionValue(e *view.Editor, args *Args, input string, o *Option) []Completion {
 	if o == nil {
 		return nil
 	}
@@ -310,9 +300,7 @@ func completeOptionValue(
 	return markCurrentOption(items, current, nerd)
 }
 
-func markCurrentOption(
-	items []Completion, current string, nerd bool,
-) []Completion {
+func markCurrentOption(items []Completion, current string, nerd bool) []Completion {
 	marker := currentOptionMarkerAscii
 	if nerd {
 		marker = currentOptionMarkerIcon
@@ -326,9 +314,7 @@ func markCurrentOption(
 			display = items[i].Text
 		}
 		items[i].Display = display + " " + marker
-		items[i].Indices = append(
-			items[i].Indices, utf8.RuneCountInString(display)+1,
-		)
+		items[i].Indices = append(items[i].Indices, utf8.RuneCountInString(display)+1)
 	}
 	return items
 }

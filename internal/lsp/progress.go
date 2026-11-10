@@ -28,8 +28,8 @@ type (
 
 const progressDot = "\u00b7" // '·' - middle dot
 
-// Busy reports whether any language server has an in-flight progress
-// notification, for the status-line activity spinner
+// Busy reports whether any language server has an in-flight progress notification, for the
+// status-line activity spinner
 func (s *Session) Busy() bool {
 	s.progress.RLock()
 	defer s.progress.RUnlock()
@@ -43,9 +43,7 @@ func (s *Session) createProgress(server string, token protocol.ProgressToken) {
 	s.redraw()
 }
 
-func (s *Session) updateProgress(
-	server string, params *protocol.ProgressParams,
-) {
+func (s *Session) updateProgress(server string, params *protocol.ProgressParams) {
 	if params == nil {
 		return
 	}
@@ -107,9 +105,7 @@ func (s *Session) reportProgress(
 	s.showProgress(server, entry)
 }
 
-func (s *Session) endProgress(
-	server string, token protocol.ProgressToken, value protocol.LSPAny,
-) {
+func (s *Session) endProgress(server string, token protocol.ProgressToken, value protocol.LSPAny) {
 	var end protocol.WorkDoneProgressEnd
 	if err := protocol.Unmarshal(value, &end); err != nil {
 		return
@@ -126,9 +122,7 @@ func (s *Session) endProgress(
 	s.showProgress(server, entry)
 }
 
-func (s *Session) storeProgress(
-	server string, token protocol.ProgressToken, entry progressEntry,
-) {
+func (s *Session) storeProgress(server string, token protocol.ProgressToken, entry progressEntry) {
 	s.progress.Lock()
 	defer s.progress.Unlock()
 	s.progress.forServer(server)[progressTokenKey(token)] = entry

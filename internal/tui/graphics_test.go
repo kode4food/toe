@@ -44,9 +44,7 @@ func TestColor(t *testing.T) {
 	})
 
 	t.Run("ImageColor encodes id", func(t *testing.T) {
-		assert.Equal(t,
-			tui.ColorRGB(0x12, 0x34, 0x56), tui.ImageColor(0x123456),
-		)
+		assert.Equal(t, tui.ColorRGB(0x12, 0x34, 0x56), tui.ImageColor(0x123456))
 	})
 
 	t.Run("Darkened scales rgb toward black", func(t *testing.T) {
@@ -76,23 +74,17 @@ func TestColor(t *testing.T) {
 
 	// per-channel rounding sends this one to navy 17
 	t.Run("Quantized picks the nearest entry", func(t *testing.T) {
-		assert.Equal(t,
-			tui.ColorIndexed(236), tui.ColorRGB(0x24, 0x27, 0x3a).Quantized(),
-		)
+		assert.Equal(t, tui.ColorIndexed(236), tui.ColorRGB(0x24, 0x27, 0x3a).Quantized())
 	})
 
 	t.Run("Quantized keeps an exact match", func(t *testing.T) {
-		assert.Equal(t,
-			tui.ColorIndexed(240), tui.ColorRGB(88, 88, 88).Quantized(),
-		)
+		assert.Equal(t, tui.ColorIndexed(240), tui.ColorRGB(88, 88, 88).Quantized())
 	})
 
 	t.Run("Quantized leaves non-rgb alone", func(t *testing.T) {
 		assert.Equal(t, tui.ColorReset, tui.ColorReset.Quantized())
 		assert.Equal(t, tui.ColorRed, tui.ColorRed.Quantized())
-		assert.Equal(t,
-			tui.ColorIndexed(42), tui.ColorIndexed(42).Quantized(),
-		)
+		assert.Equal(t, tui.ColorIndexed(42), tui.ColorIndexed(42).Quantized())
 	})
 }
 
@@ -118,9 +110,7 @@ func TestStyle(t *testing.T) {
 	})
 
 	t.Run("builder methods return new style", func(t *testing.T) {
-		s := tui.Style{}.
-			Fg(tui.ColorRGB(1, 2, 3)).
-			Bg(tui.ColorIndexed(240)).
+		s := tui.Style{}.Fg(tui.ColorRGB(1, 2, 3)).Bg(tui.ColorIndexed(240)).
 			UlColor(tui.ColorRGB(4, 5, 6)).
 			UlStyle(tui.UnderlineCurl).
 			Mod(tui.ModifierBold | tui.ModifierItalic)
@@ -128,9 +118,7 @@ func TestStyle(t *testing.T) {
 		assert.Equal(t, tui.ColorIndexed(240), s.BgColor())
 		assert.Equal(t, tui.ColorRGB(4, 5, 6), s.UnderlineColor())
 		assert.Equal(t, tui.UnderlineCurl, s.UnderlineStyle())
-		assert.Equal(t,
-			tui.ModifierBold|tui.ModifierItalic, s.Modifier(),
-		)
+		assert.Equal(t, tui.ModifierBold|tui.ModifierItalic, s.Modifier())
 		assert.True(t, s.HasMod(tui.ModifierBold))
 		assert.True(t, s.HasMod(tui.ModifierItalic))
 		assert.False(t, s.HasMod(tui.ModifierReversed))
@@ -164,17 +152,13 @@ func TestStyle(t *testing.T) {
 	})
 
 	t.Run("Mod accumulates bits", func(t *testing.T) {
-		s := tui.Style{}.
-			Mod(tui.ModifierBold).
-			Mod(tui.ModifierItalic)
+		s := tui.Style{}.Mod(tui.ModifierBold).Mod(tui.ModifierItalic)
 		assert.True(t, s.HasMod(tui.ModifierBold))
 		assert.True(t, s.HasMod(tui.ModifierItalic))
 	})
 
 	t.Run("darkens fg, bg, and underline", func(t *testing.T) {
-		s := tui.Style{}.
-			Fg(tui.ColorRGB(200, 100, 50)).
-			Bg(tui.ColorRGB(200, 100, 50)).
+		s := tui.Style{}.Fg(tui.ColorRGB(200, 100, 50)).Bg(tui.ColorRGB(200, 100, 50)).
 			UlColor(tui.ColorRGB(200, 100, 50)).
 			Darkened(50)
 		assert.Equal(t, tui.ColorRGB(100, 50, 25), s.FgColor())

@@ -52,8 +52,8 @@ var (
 	//go:embed translations/*.json
 	translationFS embed.FS
 
-	// localeRE extracts the locale from a translation file's basename, as in
-	// the "de" of "i18n/config.de.json"
+	// localeRE extracts the locale from a translation file's basename, as in the "de" of
+	// "i18n/config.de.json"
 	localeRE = regexp.MustCompile(`(?:^|[/.])([^./]+)\.json$`)
 
 	messages = store{
@@ -66,9 +66,8 @@ func NewError[S ~string](key S) *Error {
 	return &Error{key: Key(key)}
 }
 
-// LoadTranslations loads and resolves every locale file in files. Each embedded
-// set holds exactly one module's translations, so the whole tree is taken
-// rather than a caller-supplied glob
+// LoadTranslations loads and resolves every locale file in files. Each embedded set holds exactly
+// one module's translations, so the whole tree is taken rather than a caller-supplied glob
 func LoadTranslations(files fs.FS) Translations {
 	names, err := jsonFiles(files)
 	if err != nil {

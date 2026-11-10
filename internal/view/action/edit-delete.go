@@ -50,8 +50,8 @@ func DeleteCharForward(e *view.Editor) {
 	})
 }
 
-// DeleteWordBackward deletes from the cursor to the start of the previous
-// word, for use in insert mode (C-w)
+// DeleteWordBackward deletes from the cursor to the start of the previous word, for use in insert
+// mode (C-w)
 func DeleteWordBackward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -76,9 +76,7 @@ func DeleteWordBackward(e *view.Editor) {
 			continue
 		}
 		seen[pos] = true
-		wordStart := core.MovePrevWordStart(
-			text, core.PointRange(pos), 1,
-		).From()
+		wordStart := core.MovePrevWordStart(text, core.PointRange(pos), 1).From()
 		changes = append(changes, core.DeleteChange(core.Span{
 			From: wordStart,
 			To:   pos,
@@ -92,8 +90,8 @@ func DeleteWordBackward(e *view.Editor) {
 	})
 }
 
-// DeleteWordForward deletes from the cursor to the end of the next word,
-// for use in insert mode (A-d)
+// DeleteWordForward deletes from the cursor to the end of the next word, for use in insert mode
+// (A-d)
 func DeleteWordForward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

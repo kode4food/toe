@@ -71,8 +71,7 @@ func transmitRaw(t testing.TB, path string) string {
 func writeRenderJPEG(t testing.TB, dir string, w, h int) string {
 	t.Helper()
 	var buf bytes.Buffer
-	assert.NoError(t,
-		jpeg.Encode(&buf, image.NewRGBA(image.Rect(0, 0, w, h)), nil))
+	assert.NoError(t, jpeg.Encode(&buf, image.NewRGBA(image.Rect(0, 0, w, h)), nil))
 	path := filepath.Join(dir, "pic.jpg")
 	assert.NoError(t, os.WriteFile(path, buf.Bytes(), 0o644))
 	return path

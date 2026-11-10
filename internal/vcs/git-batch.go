@@ -12,8 +12,8 @@ import (
 )
 
 type (
-	// blobs are keyed by object id, which addresses their content, so a cached
-	// blob never goes stale
+	// blobs are keyed by object id, which addresses their content, so a cached blob never goes
+	// stale
 	gitRepo struct {
 		root  string
 		index string
@@ -42,8 +42,8 @@ const (
 	catFileTrailer      = 1
 )
 
-// cat-file cannot take a newline in an object name, and a failed process has
-// nothing to serve, so both fall back to a one-shot git show
+// cat-file cannot take a newline in an object name, and a failed process has nothing to serve, so
+// both fall back to a one-shot git show
 func (g *Git) readBlob(repo *gitRepo, spec string) ([]byte, error) {
 	if strings.ContainsRune(spec, '\n') {
 		return runGit(repo.root, "show", spec)
@@ -94,8 +94,8 @@ func (g *gitRepo) blob(spec string) ([]byte, error) {
 	return data, nil
 }
 
-// cat-file loads the index once and never rereads it, so the process restarts
-// whenever git rewrites the index file
+// cat-file loads the index once and never rereads it, so the process restarts whenever git rewrites
+// the index file
 func (g *gitRepo) ensureBatch() error {
 	info, _ := os.Stat(g.index)
 	if g.batch != nil && !g.indexMoved(info) {

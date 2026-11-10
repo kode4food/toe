@@ -10,8 +10,8 @@ import (
 )
 
 type (
-	// Completion replaces prompt input from Start to the end of the line.
-	// Detail describes the entry beside it, and is never matched against
+	// Completion replaces prompt input from Start to the end of the line. Detail describes the
+	// entry beside it, and is never matched against
 	Completion struct {
 		Start   int
 		Text    string
@@ -26,8 +26,8 @@ type (
 		Raw         CompletionFunc
 	}
 
-	// CompletionFunc returns completions for command-line input, given the
-	// arguments already parsed for the current command
+	// CompletionFunc returns completions for command-line input, given the arguments already parsed
+	// for the current command
 	CompletionFunc func(*view.Editor, *Args, string) []Completion
 
 	scoredCompletion struct {
@@ -50,9 +50,7 @@ func StaticCompleter[T ~string](items ...T) CompletionFunc {
 }
 
 // Complete returns argument completions for a command signature
-func (c Completer) Complete(
-	e *view.Editor, sig Signature, input string,
-) []Completion {
+func (c Completer) Complete(e *view.Editor, sig Signature, input string) []Completion {
 	start, token := completionToken(input)
 	args, err := ParseArgs(input, sig, false, nil)
 	if err != nil {
@@ -147,9 +145,7 @@ func matchFuzzy[T ~string](items []T, input string) []Completion {
 		})
 	}
 	slices.SortStableFunc(matches, func(a, b scoredCompletion) int {
-		return cmp.Or(
-			cmp.Compare(b.score, a.score), cmp.Compare(a.order, b.order),
-		)
+		return cmp.Or(cmp.Compare(b.score, a.score), cmp.Compare(a.order, b.order))
 	})
 	out := make([]Completion, len(matches))
 	for i, m := range matches {

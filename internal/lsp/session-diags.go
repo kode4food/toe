@@ -94,24 +94,18 @@ func (s *Session) publishDiagnostics(
 	}
 	target.ReplaceDiagnostics(
 		provider,
-		s.convertDiagnostics(
-			provider, target, params.Diagnostics, s.offsetForProvider(provider),
-		),
+		s.convertDiagnostics(provider, target, params.Diagnostics, s.offsetForProvider(provider)),
 	)
 	return nil
 }
 
 func (s *Session) applyDiagnosticReport(
-	doc *view.Document, provider string, client *Client,
-	report protocol.DocumentDiagnosticReport,
+	doc *view.Document, provider string, client *Client, report protocol.DocumentDiagnosticReport,
 ) {
 	switch r := report.(type) {
 	case *protocol.RelatedFullDocumentDiagnosticReport:
 		doc.ReplaceDiagnostics(
-			provider,
-			s.convertDiagnostics(
-				provider, doc, r.Items, client.OffsetEncoding(),
-			),
+			provider, s.convertDiagnostics(provider, doc, r.Items, client.OffsetEncoding()),
 		)
 		s.docs.setPreviousDiagnosticID(doc.ID(), provider, r.ResultID)
 	case *protocol.RelatedUnchangedDocumentDiagnosticReport:
@@ -160,9 +154,7 @@ func (s *Session) convertDiagnostics(
 	return out
 }
 
-func diagnosticSeverity(
-	severity protocol.DiagnosticSeverity,
-) view.DiagnosticSeverity {
+func diagnosticSeverity(severity protocol.DiagnosticSeverity) view.DiagnosticSeverity {
 	if severity == 0 || int(severity) >= len(diagnosticSeverities) {
 		return view.DiagnosticSeverityHint
 	}

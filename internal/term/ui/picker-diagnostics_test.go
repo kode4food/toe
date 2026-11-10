@@ -96,9 +96,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.Equal(t, row, rowContaining(out, "b.go"))
 		assert.Equal(t, -1, sectionRow(out, "path"))
 		// grouping is shared with the current-file picker
-		assert.Greater(t,
-			sectionRow(out, "Warnings"), sectionRow(out, "Errors"),
-		)
+		assert.Greater(t, sectionRow(out, "Warnings"), sectionRow(out, "Errors"))
 	})
 
 	t.Run("orders by document, then position", func(t *testing.T) {
@@ -146,9 +144,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		out := stripANSI(viewContent(m))
 
 		rows := map[int]bool{}
-		for _, want := range []string{
-			"expected type", "found other", "in this call",
-		} {
+		for _, want := range []string{"expected type", "found other", "in this call"} {
 			row := rowContaining(out, want)
 			assert.GreaterOrEqual(t, row, 0, want)
 			rows[row] = true
@@ -234,8 +230,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "main.go")
-			assert.NoError(t,
-				os.WriteFile(path, []byte("package main\n"), 0o644))
+			assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 
 			e := view.NewEditor(dir)
 			v, err := e.OpenFile(path)
@@ -268,9 +263,7 @@ func rowContaining(out, want string) int {
 	return -1
 }
 
-func openDiagnosticPicker(
-	t *testing.T, e *view.Editor, fn ui.PickerFunc, key rune,
-) ui.Model {
+func openDiagnosticPicker(t *testing.T, e *view.Editor, fn ui.PickerFunc, key rune) ui.Model {
 	t.Helper()
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
@@ -280,10 +273,7 @@ func openDiagnosticPicker(
 	if key >= 'A' && key <= 'Z' {
 		event = event.WithMods(command.ModShift)
 	}
-	bindNormalTestAction(
-		km, "diagnostic_picker", m.PickerAction(fn),
-		[]command.KeyEvent{event},
-	)
+	bindNormalTestAction(km, "diagnostic_picker", m.PickerAction(fn), []command.KeyEvent{event})
 	m = resize(m, 120, 30)
 	if key >= 'A' && key <= 'Z' {
 		return sendSpecialText(m, key, string(key))

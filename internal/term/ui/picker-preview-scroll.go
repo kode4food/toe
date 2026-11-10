@@ -2,8 +2,8 @@ package ui
 
 import "github.com/kode4food/toe/internal/core"
 
-// previewScroll is the preview's vertical position: it follows the renderer's
-// anchor until the wheel or the scrollbar moves it
+// previewScroll is the preview's vertical position: it follows the renderer's anchor until the
+// wheel or the scrollbar moves it
 type previewScroll struct {
 	top      core.VisualPos
 	end      core.VisualPos
@@ -11,8 +11,8 @@ type previewScroll struct {
 	scrolled bool
 }
 
-// resolve applies the wheel's pending rows and keeps the top at or before end,
-// the top of the last full page
+// resolve applies the wheel's pending rows and keeps the top at or before end, the top of the last
+// full page
 func (s *previewScroll) resolve(
 	anchor core.VisualPos, walk core.VisualRowWalk, height int,
 ) core.VisualPos {

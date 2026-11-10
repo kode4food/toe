@@ -9,11 +9,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// FileCompleter completes a positional argument against filesystem entries
-// under the editor's working directory
-func FileCompleter(
-	e *view.Editor, _ *command.Args, input string,
-) []command.Completion {
+// FileCompleter completes a positional argument against filesystem entries under the editor's
+// working directory
+func FileCompleter(e *view.Editor, _ *command.Args, input string) []command.Completion {
 	dir, pfx := filepath.Split(input)
 	base := dir
 	if base == "" {
@@ -50,9 +48,7 @@ func FileSig(sig command.Signature) command.Signature {
 
 // StaticSig attaches fixed-choice completion to a signature's positionals
 func StaticSig(sig command.Signature, items ...string) command.Signature {
-	sig.Completer = command.PositionalCompleter(
-		command.StaticCompleter(items...),
-	)
+	sig.Completer = command.PositionalCompleter(command.StaticCompleter(items...))
 	return sig
 }
 

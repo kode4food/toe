@@ -14,8 +14,8 @@ import (
 )
 
 type (
-	// Git reads HEAD and index contents through one long-running cat-file
-	// process per repository, and shells out to git for everything else
+	// Git reads HEAD and index contents through one long-running cat-file process per repository,
+	// and shells out to git for everything else
 	Git struct {
 		mu       sync.Mutex
 		dirs     map[string]*gitRepo
@@ -55,8 +55,8 @@ var (
 
 var _ Provider = (*Git)(nil)
 
-// DiffBase returns the HEAD contents of path. No eol/ident smudge filtering
-// is applied. A .gitattributes eol conversion may cause phantom diffs
+// DiffBase returns the HEAD contents of path. No eol/ident smudge filtering is applied. A
+// .gitattributes eol conversion may cause phantom diffs
 func (g *Git) DiffBase(path string) ([]byte, error) {
 	path = g.realPath(path)
 	repo, err := g.repo(filepath.Dir(path))
@@ -70,8 +70,7 @@ func (g *Git) DiffBase(path string) ([]byte, error) {
 	return g.readBlob(repo, "HEAD:"+filepath.ToSlash(rel))
 }
 
-// HeadName returns the current branch name, or a short commit hash when the
-// head is detached
+// HeadName returns the current branch name, or a short commit hash when the head is detached
 func (g *Git) HeadName(path string) (string, error) {
 	dir := filepath.Dir(path)
 	out, err := runGit(dir, "rev-parse", "--abbrev-ref", "HEAD")
@@ -97,16 +96,15 @@ func (g *Git) HeadID(path string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// ChangedFiles reports the working-tree changes for the repository containing
-// cwd, with absolute paths
+// ChangedFiles reports the working-tree changes for the repository containing cwd, with absolute
+// paths
 func (g *Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	repo, err := g.repo(cwd)
 	if err != nil {
 		return nil, err
 	}
 	out, err := runGit(
-		cwd, "status", "--porcelain", "-z", "--untracked-files=all",
-		"--find-renames",
+		cwd, "status", "--porcelain", "-z", "--untracked-files=all", "--find-renames",
 	)
 	if err != nil {
 		return nil, err
@@ -117,8 +115,8 @@ func (g *Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	})
 }
 
-// Stage adds the working-tree state of path to the staging area, recording an
-// added, modified, or deleted file alike
+// Stage adds the working-tree state of path to the staging area, recording an added, modified, or
+// deleted file alike
 func (g *Git) Stage(cwd, path string) error {
 	_, err := runGit(cwd, "add", "--", path)
 	return err
@@ -129,14 +127,14 @@ func (g *Git) Unstage(cwd, path string) error {
 	if _, err := runGit(cwd, "restore", "--staged", "--", path); err == nil {
 		return nil
 	}
-	// a repository without a first commit has no HEAD to restore from, so the
-	// index entry itself is dropped
+	// a repository without a first commit has no HEAD to restore from, so the index entry itself is
+	// dropped
 	_, err := runGit(cwd, "rm", "--cached", "-q", "--", path)
 	return err
 }
 
-// Discard restores the working-tree state of path from the index. An untracked
-// file has no index state to restore, so it is deleted instead
+// Discard restores the working-tree state of path from the index. An untracked file has no index
+// state to restore, so it is deleted instead
 func (g *Git) Discard(cwd, path string) error {
 	if !tracked(cwd, path) {
 		return os.Remove(path)
@@ -145,8 +143,8 @@ func (g *Git) Discard(cwd, path string) error {
 	return err
 }
 
-// Ignore appends path to the repository's root .gitignore, anchored so it names
-// that one file rather than every file sharing its name
+// Ignore appends path to the repository's root .gitignore, anchored so it names that one file
+// rather than every file sharing its name
 func (g *Git) Ignore(cwd, path string) error {
 	repo, err := g.repo(cwd)
 	if err != nil {
@@ -156,9 +154,7 @@ func (g *Git) Ignore(cwd, path string) error {
 	if err != nil {
 		return err
 	}
-	return appendIgnore(
-		filepath.Join(repo.root, gitIgnoreName), "/"+filepath.ToSlash(rel),
-	)
+	return appendIgnore(filepath.Join(repo.root, gitIgnoreName), "/"+filepath.ToSlash(rel))
 }
 
 // Tracked reports whether the repository containing cwd has path in its index
@@ -166,8 +162,7 @@ func (g *Git) Tracked(cwd, path string) bool {
 	return tracked(cwd, path)
 }
 
-// IndexText returns the staged blob for path, erroring when the file has no
-// entry in the index
+// IndexText returns the staged blob for path, erroring when the file has no entry in the index
 func (g *Git) IndexText(cwd, path string) ([]byte, error) {
 	path = g.realPath(path)
 	repo, err := g.repo(cwd)
@@ -190,17 +185,15 @@ func (g *Git) Close() {
 	}
 }
 
-// a directory's repository is resolved once; a failed lookup is not cached, so
-// a later git init is picked up
+// a directory's repository is resolved once; a failed lookup is not cached, so a later git init is
+// picked up
 func (g *Git) repo(dir string) (*gitRepo, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	if r, ok := g.dirs[dir]; ok {
 		return r, nil
 	}
-	out, err := runGit(
-		dir, "rev-parse", "--show-toplevel", "--absolute-git-dir",
-	)
+	out, err := runGit(dir, "rev-parse", "--show-toplevel", "--absolute-git-dir")
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +218,8 @@ func (g *Git) repo(dir string) (*gitRepo, error) {
 	return r, nil
 }
 
-// a directory's real path is resolved once, like its repository, so only the
-// file itself is checked for a symlink on each call
+// a directory's real path is resolved once, like its repository, so only the file itself is checked
+// for a symlink on each call
 func (g *Git) realPath(path string) string {
 	info, err := os.Lstat(path)
 	if err == nil && info.Mode()&os.ModeSymlink != 0 {
@@ -350,8 +343,7 @@ func isGitConflict(code statusCode) bool {
 		(x == 'A' && y == 'A')
 }
 
-// an ignore file that does not end in a newline would swallow the pattern into
-// its last line
+// an ignore file that does not end in a newline would swallow the pattern into its last line
 func appendIgnore(file, pattern string) error {
 	data, err := os.ReadFile(file)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -380,8 +372,7 @@ func runGit(dir string, args ...string) ([]byte, error) {
 		exitErr, ok := errors.AsType[*exec.ExitError](err)
 		if ok && len(exitErr.Stderr) > 0 {
 			return nil, fmt.Errorf(
-				"%w: %s", ErrGitCommand,
-				strings.TrimSpace(string(exitErr.Stderr)),
+				"%w: %s", ErrGitCommand, strings.TrimSpace(string(exitErr.Stderr)),
 			)
 		}
 		return nil, fmt.Errorf("%w: %v", ErrGitCommand, err)

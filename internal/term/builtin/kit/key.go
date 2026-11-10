@@ -87,14 +87,14 @@ func AltKey(b command.KeyBinding) command.KeyBinding {
 	return modified(b, command.ModAlt)
 }
 
-// Or unions its arguments into a single binding of alternative sequences, so
-// any one of them triggers the command or enters the shared prefix state
+// Or unions its arguments into a single binding of alternative sequences, so any one of them
+// triggers the command or enters the shared prefix state
 func Or(alts ...command.KeyBinding) command.KeyBinding {
 	return slices.Concat(alts...)
 }
 
-// Seq concatenates parts into sequences, expanding an Or at any position into
-// the cross-product of the alternatives around it
+// Seq concatenates parts into sequences, expanding an Or at any position into the cross-product of
+// the alternatives around it
 func Seq(parts ...command.KeyBinding) command.KeyBinding {
 	out := command.KeyBinding{nil}
 	for _, part := range parts {
@@ -130,19 +130,15 @@ func Leader(ch rune) map[view.Mode]command.KeyBinding {
 	}
 }
 
-// Window binds each sub under the Ctrl-w window chord or the leader's w menu,
-// so window management shares the leader wherever the leader is reachable
-func Window(
-	subs ...command.KeyBinding,
-) map[view.Mode]command.KeyBinding {
+// Window binds each sub under the Ctrl-w window chord or the leader's w menu, so window management
+// shares the leader wherever the leader is reachable
+func Window(subs ...command.KeyBinding) map[view.Mode]command.KeyBinding {
 	prefix := Prefixed(Or(Ctrl('w'), LeaderPrefix(Char('w'))))
 	return map[view.Mode]command.KeyBinding{view.ModeAny: prefix(subs...)}
 }
 
 // Label names a prefix key sequence for the pending-key hint popup
-func Label(
-	label string, prefix command.KeyBinding, modes view.Mode,
-) command.PrefixLabel {
+func Label(label string, prefix command.KeyBinding, modes view.Mode) command.PrefixLabel {
 	return command.PrefixLabel{Modes: modes, Seq: prefix, Label: label}
 }
 
@@ -196,15 +192,11 @@ func RegisterHints(e *view.Editor) []command.KeyHint {
 	return out
 }
 
-func single(
-	code command.KeyCode, mods command.KeyModifiers,
-) command.KeyBinding {
+func single(code command.KeyCode, mods command.KeyModifiers) command.KeyBinding {
 	return command.KeyBinding{{{Code: code, Mods: mods}}}
 }
 
-func modified(
-	b command.KeyBinding, mods command.KeyModifiers,
-) command.KeyBinding {
+func modified(b command.KeyBinding, mods command.KeyModifiers) command.KeyBinding {
 	out := make(command.KeyBinding, 0, len(b))
 	for _, seq := range b {
 		next := slices.Clone(seq)

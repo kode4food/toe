@@ -92,12 +92,8 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("line ending accepts lf and crlf", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		assert.NotContains(t, test.RunCmdArgs(t,
-			km, e, "set_line_ending", "crlf").Message, "error",
-		)
-		assert.NotContains(t, test.RunCmdArgs(t,
-			km, e, "set_line_ending", "lf").Message, "error",
-		)
+		assert.NotContains(t, test.RunCmdArgs(t, km, e, "set_line_ending", "crlf").Message, "error")
+		assert.NotContains(t, test.RunCmdArgs(t, km, e, "set_line_ending", "lf").Message, "error")
 	})
 
 	t.Run("line ending accepts native", func(t *testing.T) {
@@ -115,10 +111,8 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("indent style accepts tabs and spaces", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Contains(t,
-			test.RunCmdArgs(t, km, e, "indent_style", "t").Message, "indent")
-		assert.Contains(t,
-			test.RunCmdArgs(t, km, e, "indent_style", "4").Message, "indent")
+		assert.Contains(t, test.RunCmdArgs(t, km, e, "indent_style", "t").Message, "indent")
+		assert.Contains(t, test.RunCmdArgs(t, km, e, "indent_style", "4").Message, "indent")
 	})
 
 	t.Run("indent style rejects out-of-range", func(t *testing.T) {
@@ -156,12 +150,7 @@ func TestConfigDocumentOptions(t *testing.T) {
 }
 
 func TestConfigOptions(t *testing.T) {
-	boolCases := []string{
-		"mouse",
-		"insecure",
-		"editor-config",
-		"auto-session",
-	}
+	boolCases := []string{"mouse", "insecure", "editor-config", "auto-session"}
 	for _, key := range boolCases {
 		t.Run("toggle "+key, func(t *testing.T) {
 			e, km := test.Env(t, "")
@@ -188,9 +177,7 @@ func TestConfigOptions(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "set_option", "statusline.edges bad")
 		assert.NotEmpty(t, res.Message)
-		assert.Equal(t,
-			view.StatusLineEdgesArrow, e.Options().StatusLineEdges(),
-		)
+		assert.Equal(t, view.StatusLineEdgesArrow, e.Options().StatusLineEdges())
 	})
 
 	t.Run("get/set statusline items", func(t *testing.T) {
@@ -226,12 +213,9 @@ func TestConfigOptions(t *testing.T) {
 
 	t.Run("get/set cursor-shape select", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		test.RunCmdArgs(t,
-			km, e, "set_option", "cursor-shape.select underline")
+		test.RunCmdArgs(t, km, e, "set_option", "cursor-shape.select underline")
 		res := test.RunCmdArgs(t, km, e, "get_option", "cursor-shape.select")
-		assert.Equal(t,
-			"cursor-shape.select: underline", res.Message,
-		)
+		assert.Equal(t, "cursor-shape.select: underline", res.Message)
 	})
 
 	t.Run("get/set cursor-shape insert", func(t *testing.T) {
@@ -317,9 +301,7 @@ func TestConfigThemeExtra(t *testing.T) {
 
 	t.Run("cursor-shape invalid value errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(
-			t, km, e, "set_option", "cursor-shape.normal bogus_invalid",
-		)
+		res := test.RunCmdArgs(t, km, e, "set_option", "cursor-shape.normal bogus_invalid")
 		assert.Contains(t, res.Message, "error")
 	})
 
@@ -333,22 +315,16 @@ func TestConfigThemeExtra(t *testing.T) {
 func TestConfigCommands(t *testing.T) {
 	t.Run("toggle non-toggleable option errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(
-			t, km, e, "toggle_option", "default-line-ending",
-		)
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "default-line-ending")
 		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("toggle cycles through given values", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(
-			t, km, e, "toggle_option", "default-line-ending crlf lf",
-		)
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "default-line-ending crlf lf")
 		assert.Contains(t, res.Message, "crlf")
 
-		res = test.RunCmdArgs(
-			t, km, e, "toggle_option", "default-line-ending crlf lf",
-		)
+		res = test.RunCmdArgs(t, km, e, "toggle_option", "default-line-ending crlf lf")
 		assert.Contains(t, res.Message, "lf")
 	})
 
@@ -356,9 +332,7 @@ func TestConfigCommands(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "default-line-ending lf")
 
-		res := test.RunCmdArgs(
-			t, km, e, "toggle_option", "default-line-ending lf crlf",
-		)
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "default-line-ending lf crlf")
 
 		assert.Contains(t, res.Message, "crlf")
 	})
@@ -430,8 +404,8 @@ func TestConfigCommands(t *testing.T) {
 		wsDir := filepath.Join(dir, loader.WorkspaceDirName)
 		assert.NoError(t, os.MkdirAll(wsDir, 0o755))
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(wsDir, "languages.toml"),
-			[]byte("[[language]]\nname = \"wslang\"\n"), 0o644,
+			filepath.Join(wsDir, "languages.toml"), []byte("[[language]]\nname = \"wslang\"\n"),
+			0o644,
 		))
 		t.Chdir(dir)
 		e, km := test.Env(t, "")

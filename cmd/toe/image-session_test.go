@@ -24,9 +24,7 @@ func TestImageSession(t *testing.T) {
 	first := startTUI(t, dir)
 	first.waitFor("NOR")
 	first.send(":e pic.png\r")
-	if !assert.Eventually(t,
-		first.transmittedImage, waitTimeout, pollPause,
-	) {
+	if !assert.Eventually(t, first.transmittedImage, waitTimeout, pollPause) {
 		return
 	}
 	first.send(":save-session\r")
@@ -35,9 +33,7 @@ func TestImageSession(t *testing.T) {
 	next := startTUI(t, dir)
 	next.waitFor("NOR")
 	next.send(":restore-session\r")
-	assert.Eventually(t,
-		next.transmittedImage, waitTimeout, pollPause,
-	)
+	assert.Eventually(t, next.transmittedImage, waitTimeout, pollPause)
 	next.quit()
 }
 

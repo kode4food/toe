@@ -98,9 +98,7 @@ func (s *Session) DocumentSymbols(doc *view.Document) ([]view.Symbol, error) {
 }
 
 // WorkspaceSymbols returns workspace symbols from all running servers
-func (s *Session) WorkspaceSymbols(
-	doc *view.Document, query string,
-) ([]view.Symbol, error) {
+func (s *Session) WorkspaceSymbols(doc *view.Document, query string) ([]view.Symbol, error) {
 	_, err := s.clientsForDocumentResult(doc)
 	s.ensureWorkspaceServers()
 	var out []view.Symbol
@@ -145,9 +143,7 @@ func (s *Session) workspaceSymbols(
 	}
 }
 
-func (s *Session) flatSymbols(
-	client *Client, symbols []protocol.SymbolInformation,
-) []view.Symbol {
+func (s *Session) flatSymbols(client *Client, symbols []protocol.SymbolInformation) []view.Symbol {
 	out := make([]view.Symbol, 0, len(symbols))
 	for _, sym := range symbols {
 		loc, ok := s.viewLocation(client, sym.Location)
@@ -217,9 +213,7 @@ func (s *Session) nestedSymbols(
 	return out
 }
 
-func workspaceSymbolLocation(
-	sym protocol.WorkspaceSymbol,
-) (protocol.Location, bool) {
+func workspaceSymbolLocation(sym protocol.WorkspaceSymbol) (protocol.Location, bool) {
 	if loc, ok := sym.Location.(*protocol.Location); ok && loc != nil {
 		return *loc, true
 	}

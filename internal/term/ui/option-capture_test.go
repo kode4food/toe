@@ -103,8 +103,7 @@ func TestOptionCapture(t *testing.T) {
 			Button: tea.MouseWheelDown,
 		})
 
-		// the wheel is swallowed, so neither the popup nor the picker under
-		// it moves
+		// the wheel is swallowed, so neither the popup nor the picker under it moves
 		assert.Equal(t, before, viewContent(m))
 	})
 
@@ -113,23 +112,21 @@ func TestOptionCapture(t *testing.T) {
 
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 100, Height: 30})
 
-		// a message the popup has no answer for falls through to the layers
-		// below, which re-lay it out rather than closing it
+		// a message the popup has no answer for falls through to the layers below, which re-lay it
+		// out rather than closing it
 		assert.Contains(t, stripANSI(viewContent(m)), "Discard changes")
 	})
 
 	t.Run("a long question wraps inside the popup", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		name := strings.Repeat("long-name-", 6) + ".txt"
-		path := testutil.GitCommitFile(t,
-			repo, testutil.GitName(name), []byte("one\n"),
-		)
+		path := testutil.GitCommitFile(t, repo, testutil.GitName(name), []byte("one\n"))
 		testutil.WriteFile(t, path, []byte("two\n"))
 
 		m := sendCtrl(changedFilePicker(t, repo), 'r')
 
-		// the question outgrows the popup's width cap, so it takes two rows
-		// and the buttons still sit under it
+		// the question outgrows the popup's width cap, so it takes two rows and the buttons still
+		// sit under it
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Discard changes to")
 		assert.Contains(t, out, name[:20])
@@ -139,8 +136,8 @@ func TestOptionCapture(t *testing.T) {
 	t.Run("a danger capture tints its ground", func(t *testing.T) {
 		_, m := discardCapture(t)
 
-		// the popup ground is tinted toward the error color, so it differs
-		// from the picker's own popup background behind it
+		// the popup ground is tinted toward the error color, so it differs from the picker's own
+		// popup background behind it
 		question := styledRuneStyles(popupRow(m, "Discard changes"))
 		picker := styledRuneStyles(popupRow(m, "Changed Files"))
 		assert.Equal(t, "48;2;87;67;88", question['D'].bg)

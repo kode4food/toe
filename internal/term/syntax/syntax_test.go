@@ -87,8 +87,7 @@ func TestTokenize(t *testing.T) {
 				assert.Less(t, sp.Start, sp.End, "span must have Start < End")
 			}
 			for i := 1; i < len(spans); i++ {
-				assert.LessOrEqual(t, spans[i-1].Start, spans[i].Start,
-					"spans must be ordered")
+				assert.LessOrEqual(t, spans[i-1].Start, spans[i].Start, "spans must be ordered")
 			}
 		})
 	}
@@ -160,8 +159,8 @@ func TestTokenizeHTMLInjections(t *testing.T) {
 }
 
 func TestTokenizeGoRich(t *testing.T) {
-	// Rich source to trigger overlapping tree-sitter captures at different
-	// start positions (exercises buildSpans c.end <= pos branch)
+	// Rich source to trigger overlapping tree-sitter captures at different start positions
+	// (exercises buildSpans c.end <= pos branch)
 	src := `package main
 
 import (
@@ -189,8 +188,7 @@ var _ = DefaultPort
 	spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
 	assert.NotEmpty(t, spans)
 	for i := 1; i < len(spans); i++ {
-		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start,
-			"spans must not overlap")
+		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start, "spans must not overlap")
 	}
 }
 
@@ -246,8 +244,7 @@ func TestTokenizeNonOverlapping(t *testing.T) {
 	spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
 
 	for i := 1; i < len(spans); i++ {
-		assert.LessOrEqual(t,
-			spans[i-1].End, spans[i].Start, "spans must not overlap")
+		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start, "spans must not overlap")
 	}
 }
 

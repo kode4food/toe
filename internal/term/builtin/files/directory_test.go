@@ -23,9 +23,7 @@ func TestDirectoryChange(t *testing.T) {
 
 	t.Run("cd to a missing directory errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t,
-			km, e, "change_directory", filepath.Join(e.Cwd(), "nope"),
-		)
+		res := test.RunCmdArgs(t, km, e, "change_directory", filepath.Join(e.Cwd(), "nope"))
 		assert.Contains(t, res.Message, "error")
 	})
 
@@ -52,9 +50,7 @@ func TestDirectoryStack(t *testing.T) {
 
 		test.RunCmdArgs(t, km, e, "push_directory", sub)
 		assert.True(t, strings.HasSuffix(e.Cwd(), "sub"))
-		assert.NotEmpty(t,
-			test.RunCmd(t, km, e, "show_directory_stack").Message,
-		)
+		assert.NotEmpty(t, test.RunCmd(t, km, e, "show_directory_stack").Message)
 
 		test.RunCmd(t, km, e, "pop_directory")
 		assert.Equal(t, start, e.Cwd())

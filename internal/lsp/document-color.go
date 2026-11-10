@@ -35,9 +35,7 @@ func (c *Client) DocumentColors(
 }
 
 // DocumentColors returns document-wide colors and stores them on the document
-func (s *Session) DocumentColors(
-	doc *view.Document,
-) ([]view.DocumentColor, error) {
+func (s *Session) DocumentColors(doc *view.Document) ([]view.DocumentColor, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		doc.ClearDocumentColors()
@@ -84,9 +82,7 @@ func documentColors(
 ) []view.DocumentColor {
 	out := make([]view.DocumentColor, 0, len(colors))
 	for _, color := range colors {
-		cr, ok := lspRangeToChars(
-			doc, color.Range, client.OffsetEncoding(),
-		)
+		cr, ok := lspRangeToChars(doc, color.Range, client.OffsetEncoding())
 		if !ok {
 			continue
 		}

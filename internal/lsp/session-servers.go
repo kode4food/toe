@@ -38,9 +38,7 @@ var langInitOptions = map[string]initOptionsFunc{
 }
 
 // RestartLanguageServers stops and restarts the named servers for the document
-func (s *Session) RestartLanguageServers(
-	doc *view.Document, names []string,
-) ([]string, error) {
+func (s *Session) RestartLanguageServers(doc *view.Document, names []string) ([]string, error) {
 	lang := s.languageForDocument(doc)
 	if lang == nil {
 		return nil, view.ErrNoLanguageServer
@@ -61,9 +59,7 @@ func (s *Session) RestartLanguageServers(
 }
 
 // StopLanguageServers shuts down the named language servers for the document
-func (s *Session) StopLanguageServers(
-	doc *view.Document, names []string,
-) ([]string, error) {
+func (s *Session) StopLanguageServers(doc *view.Document, names []string) ([]string, error) {
 	lang := s.languageForDocument(doc)
 	if lang == nil {
 		return nil, view.ErrNoLanguageServer
@@ -78,9 +74,7 @@ func (s *Session) StopLanguageServers(
 }
 
 // ExecuteWorkspaceCommand runs a named workspace command on the matching server
-func (s *Session) ExecuteWorkspaceCommand(
-	doc *view.Document, name string, args []string,
-) error {
+func (s *Session) ExecuteWorkspaceCommand(doc *view.Document, name string, args []string) error {
 	clients := s.clientsForDocument(doc)
 	var matches []*Client
 	for _, client := range clients {
@@ -129,9 +123,7 @@ func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 	return out
 }
 
-func (s *Session) languageForDocument(
-	doc *view.Document,
-) *language.Language {
+func (s *Session) languageForDocument(doc *view.Document) *language.Language {
 	if doc == nil {
 		return nil
 	}
@@ -198,18 +190,14 @@ func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
 	return out
 }
 
-func (s *Session) offsetForProvider(
-	provider string,
-) protocol.PositionEncodingKind {
+func (s *Session) offsetForProvider(provider string) protocol.PositionEncodingKind {
 	if client := s.servers.client(provider); client != nil {
 		return client.OffsetEncoding()
 	}
 	return protocol.PositionEncodingKindUTF16
 }
 
-func (s *Session) workspaceRoot(
-	doc *view.Document, lang *language.Language,
-) string {
+func (s *Session) workspaceRoot(doc *view.Document, lang *language.Language) string {
 	if root, ok := s.resolveWorkspaceRoot(doc.Path(), lang); ok {
 		return root
 	}
@@ -219,9 +207,7 @@ func (s *Session) workspaceRoot(
 	return s.cwd
 }
 
-func (s *Session) resolveWorkspaceRoot(
-	path string, lang *language.Language,
-) (string, bool) {
+func (s *Session) resolveWorkspaceRoot(path string, lang *language.Language) (string, bool) {
 	return ResolveWorkspace(WorkspaceRequest{
 		FilePath:       path,
 		Workspace:      s.cwd,
@@ -380,9 +366,7 @@ func serverNames(names []string) []string {
 	return out
 }
 
-func selectLanguageServers(
-	lang *language.Language, requested []string,
-) ([]string, error) {
+func selectLanguageServers(lang *language.Language, requested []string) ([]string, error) {
 	names := serverNames(lang.LanguageServers)
 	if len(requested) == 0 {
 		return names, nil
@@ -394,9 +378,7 @@ func selectLanguageServers(
 	out := make([]string, 0, len(requested))
 	for _, name := range requested {
 		if !valid[name] {
-			return nil, fmt.Errorf("%w: %s",
-				view.ErrUnknownLanguageServer, name,
-			)
+			return nil, fmt.Errorf("%w: %s", view.ErrUnknownLanguageServer, name)
 		}
 		out = append(out, name)
 	}
@@ -405,9 +387,7 @@ func selectLanguageServers(
 
 func clientSupportsCommand(client *Client, name string) bool {
 	if capabilities, ok := client.Capabilities(); ok {
-		return slices.Contains(
-			capabilities.ExecuteCommandProvider.Commands, name,
-		)
+		return slices.Contains(capabilities.ExecuteCommandProvider.Commands, name)
 	}
 	return false
 }

@@ -91,11 +91,8 @@ func newConfirmation(
 	})
 }
 
-// HandleEvent picks an answer, moves between the buttons, or dismisses the
-// popup unanswered
-func (o *optionCapture) HandleEvent(
-	cx *Context, msg tea.Msg,
-) (EventResult, tea.Cmd) {
+// HandleEvent picks an answer, moves between the buttons, or dismisses the popup unanswered
+func (o *optionCapture) HandleEvent(cx *Context, msg tea.Msg) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return o.handleKey(cx, FromTeaKey(msg))
@@ -113,15 +110,11 @@ func (o *optionCapture) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
-// Layout centers the popup on the screen, wide enough for the question or the
-// row of buttons, whichever needs more
-func (o *optionCapture) Layout(
-	_ *Context, screen geom.Size,
-) (geom.Area, bool) {
+// Layout centers the popup on the screen, wide enough for the question or the row of buttons,
+// whichever needs more
+func (o *optionCapture) Layout(_ *Context, screen geom.Size) (geom.Area, bool) {
 	chrome := 2 + 2*overlayPadX
-	o.lines = popupTextLines(
-		o.question, min(screen.Width, captureMaxWidth)-chrome,
-	)
+	o.lines = popupTextLines(o.question, min(screen.Width, captureMaxWidth)-chrome)
 	width := max(popupTextWidth(o.lines), o.buttonsWidth()) + chrome
 	size := geom.Size{
 		Width:  min(max(width, 2), screen.Width),
@@ -158,9 +151,7 @@ func (o *optionCapture) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	})
 }
 
-func (o *optionCapture) handleKey(
-	cx *Context, k command.KeyEvent,
-) (EventResult, tea.Cmd) {
+func (o *optionCapture) handleKey(cx *Context, k command.KeyEvent) (EventResult, tea.Cmd) {
 	if k.Mods == 0 {
 		for _, opt := range o.options {
 			if k.Code.Char == opt.key {
@@ -183,9 +174,7 @@ func (o *optionCapture) handleKey(
 	return consumed(), nil
 }
 
-func (o *optionCapture) answer(
-	cx *Context, opt captureOption,
-) (EventResult, tea.Cmd) {
+func (o *optionCapture) answer(cx *Context, opt captureOption) (EventResult, tea.Cmd) {
 	if opt.choose == nil {
 		return consumedWith(popLayer), nil
 	}
@@ -220,9 +209,7 @@ func (o *optionCapture) styles(cx *Context) captureStyles {
 	return st
 }
 
-func (o *optionCapture) paintButtons(
-	buf *tui.Buffer, at geom.Point, width int, st captureStyles,
-) {
+func (o *optionCapture) paintButtons(buf *tui.Buffer, at geom.Point, width int, st captureStyles) {
 	at.X += max((width-o.buttonsWidth())/2, 0)
 	for i, opt := range o.options {
 		if i > 0 {
@@ -230,9 +217,7 @@ func (o *optionCapture) paintButtons(
 		}
 		base := st.option
 		if i == o.cursor {
-			base = base.Bg(base.FgColor()).
-				Fg(st.content.BgColor()).
-				Mod(tui.ModifierBold)
+			base = base.Bg(base.FgColor()).Fg(st.content.BgColor()).Mod(tui.ModifierBold)
 		}
 		text := captureButtonText(opt)
 		buf.SetString(at, text, base)

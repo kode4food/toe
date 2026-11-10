@@ -161,11 +161,7 @@ func TestPickerPreview(t *testing.T) {
 		path := filepath.Join(tmp, "indent.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("\t\tneedle"), 0o644))
 		cfg := "root = true\n[*.txt]\ntab_width = 2\n"
-		assert.NoError(t,
-			os.WriteFile(
-				filepath.Join(tmp, ".editorconfig"), []byte(cfg), 0o644,
-			),
-		)
+		assert.NoError(t, os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(cfg), 0o644))
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
@@ -221,17 +217,14 @@ func TestPickerPreview(t *testing.T) {
 				km := command.NewKeymaps()
 				m := ui.New(e, km)
 				bindNormalTestAction(
-					km, "file_picker",
-					m.PickerAction(files.NewFilePickerInDir(tmp)),
+					km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 					[]command.KeyEvent{char('p')},
 				)
 				m = resize(m, 100, 18)
 				m = sendKey(m, 'p')
 				out := stripANSI(viewContent(m))
 				assert.Regexp(t,
-					fmt.Sprintf("(?m)^.{%d,}┆   ┆   needle",
-						testPickerPreviewWidth/2,
-					), out,
+					fmt.Sprintf("(?m)^.{%d,}┆   ┆   needle", testPickerPreviewWidth/2), out,
 				)
 			})
 		}
@@ -250,8 +243,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -259,8 +251,8 @@ func TestPickerPreview(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := viewContent(m)
 
-		// mocha base is rgb(30,30,46) and popup surface0 is rgb(49,50,68).
-		// Cells carry the popup bg, not the editor bg or terminal default
+		// mocha base is rgb(30,30,46) and popup surface0 is rgb(49,50,68). Cells carry the popup
+		// bg, not the editor bg or terminal default
 		assert.NotContains(t, out, "48;2;30;30;46mplain")
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "plain") {
@@ -284,8 +276,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -293,8 +284,8 @@ func TestPickerPreview(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := viewContent(m)
 
-		// "package" is syntax-colored (mauve fg), its cells must still carry
-		// the popup bg (49;50;68), not terminal default from a bg reset
+		// "package" is syntax-colored (mauve fg), its cells must still carry the popup bg
+		// (49;50;68), not terminal default from a bg reset
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "package") {
 				assert.NotContains(t, line, "\x1b[49m")
@@ -320,8 +311,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -335,8 +325,8 @@ func TestPickerPreview(t *testing.T) {
 			border := strings.LastIndex(raw, "│")
 			assert.NotEqual(t, -1, border)
 			tail := raw[max(0, border-80):]
-			// right padding must not carry the editor document background,
-			// the pane provides the background via its outer render
+			// right padding must not carry the editor document background, the pane provides the
+			// background via its outer render
 			assert.NotRegexp(t,
 				regexp.MustCompile(`48;2;30;30;46[0-9;]*m +\x1b\[[0-9;]*m│`),
 				tail,
@@ -357,8 +347,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -387,8 +376,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -414,8 +402,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, testPickerPreviewWidth, 24)
@@ -434,8 +421,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, testPickerPreviewWidth, 24)
@@ -467,8 +453,7 @@ func TestPickerPreview(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -499,8 +484,7 @@ max-indent-retain = 40
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -520,8 +504,8 @@ max-indent-retain = 40
 enable = true
 wrap-indicator = "↪ "
 `)
-		// the preview must not render more rows than fit its area, so wrap
-		// markers stay bounded by preview height rather than line length
+		// the preview must not render more rows than fit its area, so wrap markers stay bounded by
+		// preview height rather than line length
 		path := filepath.Join(tmp, "notes.md")
 		err := os.WriteFile(path, []byte(strings.Repeat("word ", 200)), 0o644)
 		assert.NoError(t, err)
@@ -531,8 +515,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker",
-			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -559,8 +542,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('b')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 30)
@@ -570,8 +552,8 @@ wrap-indicator = "↪ "
 		}
 		out := viewContent(m)
 
-		// "package" keeps its mauve syntax fg (203;166;247) over the surface1
-		// highlight bg (69;71;90), in separate or combined SGR form
+		// "package" keeps its mauve syntax fg (203;166;247) over the surface1 highlight bg
+		// (69;71;90), in separate or combined SGR form
 		found := false
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "package") &&
@@ -588,8 +570,8 @@ wrap-indicator = "↪ "
 	t.Run("re-renders to new width after resize", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		// after a resize the cached spans must lay out at the new width, so no
-		// frame line may exceed the narrow window
+		// after a resize the cached spans must lay out at the new width, so no frame line may
+		// exceed the narrow window
 		path := filepath.Join(tmp, "long.go")
 		long := "package main // " + strings.Repeat("x", 300)
 		assert.NoError(t, os.WriteFile(path, []byte(long+"\n"), 0o644))
@@ -600,8 +582,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(bufferPicker),
-			[]command.KeyEvent{char('b')},
+			km, "buffer_picker", m.PickerAction(bufferPicker), []command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 120, 30)
@@ -628,8 +609,8 @@ wrap-indicator = "↪ "
 		path := filepath.Join(tmp, "big.txt")
 		assert.NoError(t, os.WriteFile(path, []byte(b.String()), 0o644))
 
-		// file picker over a fresh editor: the scratch buffer behind the
-		// overlay is empty, so only the preview pane shows the LINE-NN lines
+		// file picker over a fresh editor: the scratch buffer behind the overlay is empty, so only
+		// the preview pane shows the LINE-NN lines
 		e := view.NewEditor(tmp)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -652,8 +633,8 @@ wrap-indicator = "↪ "
 		assert.Contains(t, out, "LINE-00")
 		assert.NotContains(t, out, "LINE-79")
 
-		// scroll down hard: the last line is pinned to the bottom of the pane,
-		// the top has scrolled away, and content has not run off the top
+		// scroll down hard: the last line is pinned to the bottom of the pane, the top has scrolled
+		// away, and content has not run off the top
 		wheel(tea.MouseWheelDown, 40)
 		out = stripANSI(viewContent(m))
 		assert.NotContains(t, out, "LINE-00")
@@ -713,9 +694,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		for i := range data {
 			data[i] = byte(i)
 		}
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(tmp, "binary.bin"), data, 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(tmp, "binary.bin"), data, 0o644))
 		e := view.NewEditor(tmp)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -764,9 +743,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		dir := t.TempDir()
 		sub := filepath.Join(dir, "subdir")
 		assert.NoError(t, os.Mkdir(sub, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "file.txt"), []byte("text\n"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte("text\n"), 0o644))
 
 		e := view.NewEditor(dir)
 		km := command.NewKeymaps()
@@ -791,9 +768,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		path := filepath.Join(tmp, "huge.txt")
 		f, err := os.Create(path)
 		assert.NoError(t, err)
-		_, err = f.WriteString(strings.Repeat(
-			"a", ui.PickerMaxPreview+1,
-		))
+		_, err = f.WriteString(strings.Repeat("a", ui.PickerMaxPreview+1))
 		assert.NoError(t, err)
 		assert.NoError(t, f.Close())
 
@@ -862,9 +837,7 @@ func TestPickerPreviewColorSwatches(t *testing.T) {
 	t.Run("hex colors get swatches", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("COLORTERM", "truecolor")
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(tmp, "theme.css"), []byte("a #f00 b"), 0o644,
-		))
+		assert.NoError(t, os.WriteFile(filepath.Join(tmp, "theme.css"), []byte("a #f00 b"), 0o644))
 		e := view.NewEditor(tmp)
 		e.Options().NerdFonts = false
 		km := command.NewKeymaps()
@@ -925,9 +898,7 @@ func previewEditor(t *testing.T) (*view.Editor, string) {
 	t.Setenv("COLORTERM", "truecolor")
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "long.txt")
-	assert.NoError(t,
-		os.WriteFile(path, []byte(numberedLines(200)), 0o644),
-	)
+	assert.NoError(t, os.WriteFile(path, []byte(numberedLines(200)), 0o644))
 	e := view.NewEditor(tmp)
 	e.Options().Theme = "mocha"
 	return e, path

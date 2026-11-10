@@ -27,9 +27,7 @@ func (w fileWatch) match(path string) bool {
 	})
 }
 
-func fileWatches(
-	opts protocol.DidChangeWatchedFilesRegistrationOptions,
-) []fileWatch {
+func fileWatches(opts protocol.DidChangeWatchedFilesRegistrationOptions) []fileWatch {
 	out := make([]fileWatch, 0, len(opts.Watchers))
 	for _, watcher := range opts.Watchers {
 		if watch, ok := fileWatchFor(watcher.GlobPattern); ok {

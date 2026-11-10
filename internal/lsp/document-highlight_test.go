@@ -141,9 +141,7 @@ func TestDocumentHighlightLifecycle(t *testing.T) {
 	})
 }
 
-func openHighlightSession(
-	t *testing.T,
-) (*lsp.Session, *view.Document, *view.View) {
+func openHighlightSession(t *testing.T) (*lsp.Session, *view.Document, *view.View) {
 	t.Helper()
 	exe, err := os.Executable()
 	assert.NoError(t, err)
@@ -182,9 +180,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -211,9 +207,7 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -226,7 +220,5 @@ name = "session"
 language-id = "session"
 file-types = ["session"]
 `
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 }

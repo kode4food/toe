@@ -16,8 +16,8 @@ func TestNormalizeNewlines(t *testing.T) {
 }
 
 func TestTokenizeUnknown(t *testing.T) {
-	// Unknown lang falls back to Chroma's Fallback lexer, so spans may be empty
-	// but we should not panic
+	// Unknown lang falls back to Chroma's Fallback lexer, so spans may be empty but we should not
+	// panic
 	spans := highlight.Tokenize(core.Source{
 		Text: "hello world",
 		Lang: "totally-unknown-lang-xyzzy",
@@ -45,8 +45,7 @@ func main() {
 
 	// Spans must be ordered by Start
 	for i := 1; i < len(spans); i++ {
-		assert.LessOrEqual(t, spans[i-1].Start, spans[i].Start,
-			"spans must be ordered")
+		assert.LessOrEqual(t, spans[i-1].Start, spans[i].Start, "spans must be ordered")
 	}
 }
 
@@ -135,8 +134,7 @@ func TestDefaultStyle(t *testing.T) {
 	})
 
 	t.Run("parent scope fallback", func(t *testing.T) {
-		// "keyword.function" has its own entry, "keyword.unknown" should
-		// fall back to "keyword"
+		// "keyword.function" has its own entry, "keyword.unknown" should fall back to "keyword"
 		full := highlight.DefaultStyle("keyword.function")
 		fallback := highlight.DefaultStyle("keyword.unknown")
 		parent := highlight.DefaultStyle("keyword")

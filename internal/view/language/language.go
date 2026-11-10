@@ -14,15 +14,15 @@ import (
 )
 
 type (
-	// Languages is the loaded language configuration: every known language and
-	// the language servers they refer to by name
+	// Languages is the loaded language configuration: every known language and the language servers
+	// they refer to by name
 	Languages struct {
 		Languages       []Language
 		LanguageServers map[string]Server
 	}
 
-	// Language describes one language: how files are recognized as it, and the
-	// comment, indent, wrap, and server behavior that follows
+	// Language describes one language: how files are recognized as it, and the comment, indent,
+	// wrap, and server behavior that follows
 	Language struct {
 		Name           string `toml:"name"`
 		LanguageID     string `toml:"language-id"`
@@ -47,8 +47,7 @@ type (
 		Formatter       *Formatter
 	}
 
-	// Indent is a language's indentation style, with a nil TabWidth deferring
-	// to the editor default
+	// Indent is a language's indentation style, with a nil TabWidth deferring to the editor default
 	Indent struct {
 		TabWidth *int
 		Unit     string
@@ -76,16 +75,15 @@ type (
 		Args    []string
 	}
 
-	// AutoPairConfig is a language's bracket-pairing behavior. Present marks
-	// the section as configured, separating an explicit disable from silence
+	// AutoPairConfig is a language's bracket-pairing behavior. Present marks the section as
+	// configured, separating an explicit disable from silence
 	AutoPairConfig struct {
 		Present bool
 		Enable  *bool
 		Pairs   [][2]rune
 	}
 
-	// SoftWrap is a language's wrapping behavior, each nil field deferring to
-	// the editor setting
+	// SoftWrap is a language's wrapping behavior, each nil field deferring to the editor setting
 	SoftWrap struct {
 		Enable          *bool   `toml:"enable"`
 		WrapIndicator   *string `toml:"wrap-indicator"`
@@ -93,10 +91,12 @@ type (
 	}
 )
 
-var ErrInvalidAutoPairConfig = errors.New("invalid auto-pair config")
+var (
+	ErrInvalidAutoPairConfig = errors.New("invalid auto-pair config")
+)
 
-// MinSoftWrapWidth is the width soft-wrap must exceed to engage, below which
-// the wrapped rows are too narrow to read
+// MinSoftWrapWidth is the width soft-wrap must exceed to engage, below which the wrapped rows are
+// too narrow to read
 const MinSoftWrapWidth = 10
 
 // OrDefault returns the configured pairs, or the built-in set when unset

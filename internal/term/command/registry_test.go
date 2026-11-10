@@ -84,9 +84,7 @@ func TestRegistry(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t,
-			"Translated", km.ResolveCommand("localized_command").DocString,
-		)
+		assert.Equal(t, "Translated", km.ResolveCommand("localized_command").DocString)
 	})
 
 	t.Run("Bindings returns registered sequences", func(t *testing.T) {
@@ -111,10 +109,7 @@ func TestRegistry(t *testing.T) {
 
 	t.Run("OptionKeys returns sorted option keys", func(t *testing.T) {
 		reg := registryWithOptions(t)
-		assert.Equal(t, []string{
-			"cursorline",
-			"scrolloff",
-		}, reg.OptionKeys())
+		assert.Equal(t, []string{"cursorline", "scrolloff"}, reg.OptionKeys())
 	})
 
 	t.Run("BoolOptionKeys returns toggleable keys", func(t *testing.T) {
@@ -175,8 +170,7 @@ func TestRegistry(t *testing.T) {
 		reg := registryWithPrefixOption(t, store)
 
 		err := reg.ApplyOptionValues(
-			view.NewEditor(t.TempDir()),
-			map[string]string{"editor.test.beta": "2"},
+			view.NewEditor(t.TempDir()), map[string]string{"editor.test.beta": "2"},
 		)
 
 		assert.NoError(t, err)
@@ -298,9 +292,7 @@ func TestRegistry(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().CursorLine = true
 		reg := registryWithLiveOptions(t)
-		args, err := command.ParseArgs(
-			"cursorline", command.Signature{}, false, nil,
-		)
+		args, err := command.ParseArgs("cursorline", command.Signature{}, false, nil)
 		assert.NoError(t, err)
 
 		results := reg.OptionValueCompleter()(e, args, "")
@@ -433,9 +425,7 @@ func registryWithFailingOption(t *testing.T) *command.Registry {
 	return reg
 }
 
-func registryWithPrefixOption(
-	t *testing.T, store *prefixStore,
-) *command.Registry {
+func registryWithPrefixOption(t *testing.T, store *prefixStore) *command.Registry {
 	t.Helper()
 	reg := command.NewRegistry(command.NewKeymaps())
 	err := reg.RegisterModule(command.Module{

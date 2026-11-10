@@ -29,8 +29,7 @@ type (
 )
 
 func (s *Session) applyAdditionalCompletionEdits(
-	doc *view.Document, edits []protocol.TextEdit,
-	enc protocol.PositionEncodingKind,
+	doc *view.Document, edits []protocol.TextEdit, enc protocol.PositionEncodingKind,
 ) error {
 	if len(edits) == 0 {
 		return nil
@@ -56,9 +55,7 @@ func (s *Session) applyAdditionalCompletionEdits(
 	return s.editor.Apply(tx)
 }
 
-func (s *Session) applyCompletionCommand(
-	client *Client, command protocol.Command,
-) error {
+func (s *Session) applyCompletionCommand(client *Client, command protocol.Command) error {
 	if command.Command == "" {
 		return nil
 	}
@@ -76,9 +73,7 @@ type completionTransactionArgs struct {
 	viewID   view.Id
 }
 
-func completionTransaction(
-	args completionTransactionArgs,
-) (core.Transaction, error) {
+func completionTransaction(args completionTransactionArgs) (core.Transaction, error) {
 	doc := args.doc
 	sel := doc.SelectionFor(args.viewID)
 	text := doc.Text()
@@ -120,9 +115,7 @@ func completionTransaction(
 	return tx, nil
 }
 
-func completionPrimaryRange(
-	text core.Rope, r core.Range, cursor int,
-) core.Range {
+func completionPrimaryRange(text core.Rope, r core.Range, cursor int) core.Range {
 	word := findCompletionRange(text, cursor)
 	if r.From() <= word.From() && r.To() >= word.To() {
 		return r
@@ -135,9 +128,7 @@ func completionEdit(
 ) (*completionEditOffset, string, error) {
 	switch edit := item.TextEdit.(type) {
 	case *protocol.TextEdit:
-		if cr, ok := lspRangeToChars(
-			ctx.doc, edit.Range, ctx.encoding,
-		); ok {
+		if cr, ok := lspRangeToChars(ctx.doc, edit.Range, ctx.encoding); ok {
 			return &completionEditOffset{
 				from: cr.From() - ctx.cursor,
 				to:   cr.To() - ctx.cursor,
@@ -145,9 +136,7 @@ func completionEdit(
 		}
 		return nil, "", ErrCompletionUnavailable
 	case *protocol.InsertReplaceEdit:
-		if cr, ok := lspRangeToChars(
-			ctx.doc, edit.Insert, ctx.encoding,
-		); ok {
+		if cr, ok := lspRangeToChars(ctx.doc, edit.Insert, ctx.encoding); ok {
 			return &completionEditOffset{
 				from: cr.From() - ctx.cursor,
 				to:   cr.To() - ctx.cursor,
@@ -187,18 +176,14 @@ func completionChanges(
 	return changes, nil
 }
 
-func completionRangeForCursor(
-	text core.Rope, offset *completionEditOffset, cursor int,
-) core.Range {
+func completionRangeForCursor(text core.Rope, offset *completionEditOffset, cursor int) core.Range {
 	if r, ok := completionRange(text, offset, cursor); ok {
 		return r
 	}
 	return findCompletionRange(text, cursor)
 }
 
-func completionRange(
-	text core.Rope, offset *completionEditOffset, cursor int,
-) (core.Range, bool) {
+func completionRange(text core.Rope, offset *completionEditOffset, cursor int) (core.Range, bool) {
 	if offset == nil {
 		return findCompletionRange(text, cursor), true
 	}

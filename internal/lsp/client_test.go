@@ -35,9 +35,7 @@ func TestClient(t *testing.T) {
 			initialized: make(chan struct{}),
 			exited:      make(chan struct{}),
 		}
-		_, serverRPC, _ := protocol.NewServer(
-			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-		)
+		_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
@@ -59,33 +57,20 @@ func TestClient(t *testing.T) {
 			initialized: make(chan struct{}),
 			exited:      make(chan struct{}),
 		}
-		_, serverRPC, _ := protocol.NewServer(
-			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-		)
+		_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
 		defer func() { _ = client.Close() }()
 
-		result, err := client.Initialize(
-			ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}),
-		)
+		result, err := client.Initialize(ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}))
 		assert.NoError(t, err)
-		assert.Equal(t,
-			protocol.PositionEncodingKindUTF8,
-			result.Capabilities.PositionEncoding,
-		)
+		assert.Equal(t, protocol.PositionEncodingKindUTF8, result.Capabilities.PositionEncoding)
 		assert.Equal(t, lsp.ClientInitialized, client.State())
-		assert.Equal(t,
-			protocol.PositionEncodingKindUTF8,
-			client.OffsetEncoding(),
-		)
+		assert.Equal(t, protocol.PositionEncodingKindUTF8, client.OffsetEncoding())
 		capabilities, ok := client.Capabilities()
 		assert.True(t, ok)
-		assert.Equal(t,
-			protocol.PositionEncodingKindUTF8,
-			capabilities.PositionEncoding,
-		)
+		assert.Equal(t, protocol.PositionEncodingKindUTF8, capabilities.PositionEncoding)
 		assert.True(t, client.SupportsFeature(lsp.FeatureHover))
 		assert.False(t, client.SupportsFeature(lsp.FeatureCompletion))
 		assert.True(t, waitFor(server.initialized))
@@ -107,16 +92,12 @@ func TestClient(t *testing.T) {
 			initialized:  make(chan struct{}),
 			exited:       make(chan struct{}),
 		}
-		_, serverRPC, _ := protocol.NewServer(
-			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
-		)
+		_, serverRPC, _ := protocol.NewServer(ctx, server, jsonrpc2.NewHeaderStream(serverConn))
 		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
 		defer func() { _ = client.Close() }()
-		_, err := client.Initialize(
-			ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}),
-		)
+		_, err := client.Initialize(ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}))
 		assert.NoError(t, err)
 
 		path := filepath.Join(t.TempDir(), "main.go")
@@ -151,9 +132,7 @@ func (s *lifecycleServer) Initialize(
 	}, nil
 }
 
-func (s *lifecycleServer) Initialized(
-	context.Context, *protocol.InitializedParams,
-) error {
+func (s *lifecycleServer) Initialized(context.Context, *protocol.InitializedParams) error {
 	close(s.initialized)
 	return nil
 }
@@ -174,9 +153,7 @@ func (s *lifecycleServer) WillCreateFiles(
 	return nil, nil
 }
 
-func (s *lifecycleServer) DidCreateFiles(
-	context.Context, *protocol.CreateFilesParams,
-) error {
+func (s *lifecycleServer) DidCreateFiles(context.Context, *protocol.CreateFilesParams) error {
 	s.fileOps <- "didCreate"
 	return nil
 }

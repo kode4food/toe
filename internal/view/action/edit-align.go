@@ -8,9 +8,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// AlignSelections inserts spaces before each cursor so all cursors sit at the
-// same visual column (the maximum column among all cursors). Only operates
-// when there are multiple selection ranges, all on different lines
+// AlignSelections inserts spaces before each cursor so all cursors sit at the same visual column
+// (the maximum column among all cursors). Only operates when there are multiple selection ranges,
+// all on different lines
 func AlignSelections(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -70,14 +70,11 @@ func AlignSelections(e *view.Editor) {
 		return
 	}
 	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 
-// ReplaceChar replaces every grapheme in each selection with ch and exits
-// select mode
+// ReplaceChar replaces every grapheme in each selection with ch and exits select mode
 func ReplaceChar(e *view.Editor, ch rune) {
 	v := e.FocusedView()
 	if v == nil {

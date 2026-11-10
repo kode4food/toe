@@ -38,8 +38,7 @@ func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 	return out, nil
 }
 
-// Invert returns the change set undoing this one, given the document it was
-// built against
+// Invert returns the change set undoing this one, given the document it was built against
 func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 	if original.LenChars() != c.charCount {
 		return ChangeSet{}, fmt.Errorf("%w: %d != %d",
@@ -66,8 +65,8 @@ func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 	return out, nil
 }
 
-// MapPos rebases a position onto the resulting document. The assoc argument
-// decides which side of an insertion at pos it lands on
+// MapPos rebases a position onto the resulting document. The assoc argument decides which side of
+// an insertion at pos it lands on
 func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
 	if pos < 0 || pos > c.charCount {
 		return 0, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)

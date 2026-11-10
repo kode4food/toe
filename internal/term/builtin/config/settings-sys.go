@@ -33,9 +33,7 @@ func systemCmds() []command.Command {
 			Name:      actConfigOpen,
 			DocString: "Open the user config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				return openFromPath(
-					e, loader.ConfigFile, errConfigUnavailable,
-				)
+				return openFromPath(e, loader.ConfigFile, errConfigUnavailable)
 			},
 			Modes: command.PaneModes,
 		},
@@ -43,9 +41,7 @@ func systemCmds() []command.Command {
 			Name:      actConfigOpenWorkspace,
 			DocString: "Open the workspace config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				if !loader.QueryWorkspaceTrust(
-					e.Cwd(), e.Options().Insecure,
-				) {
+				if !loader.QueryWorkspaceTrust(e.Cwd(), e.Options().Insecure) {
 					return command.Result{Error: errWorkspaceUntrusted}
 				}
 				path := loader.WorkspaceConfigFile(e.Cwd())
@@ -106,9 +102,7 @@ func systemCmds() []command.Command {
 
 func themeCmds(r *command.Registry) []command.Command {
 	sig := kit.OptionalArg()
-	sig.Completer = command.PositionalCompleter(
-		r.OptionValueCompleterFor("theme"),
-	)
+	sig.Completer = command.PositionalCompleter(r.OptionValueCompleterFor("theme"))
 	return []command.Command{
 		{
 			Name: actTheme,
@@ -162,9 +156,7 @@ func languageNames() []string {
 	return names
 }
 
-func openFromPath(
-	e *view.Editor, pathFn pathProvider, unavailable error,
-) command.Result {
+func openFromPath(e *view.Editor, pathFn pathProvider, unavailable error) command.Result {
 	path, ok := pathFn()
 	if !ok {
 		return command.Result{Error: unavailable}

@@ -23,9 +23,7 @@ func TestDetectLanguage(t *testing.T) {
 	t.Run("detects clang dotfiles as yaml", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		r := new(language.Registry)
-		for _, path := range []string{
-			".clang-format", "src/.clang-tidy", ".clangd",
-		} {
+		for _, path := range []string{".clang-format", "src/.clang-tidy", ".clangd"} {
 			name := r.Detect(language.DetectArgs{Path: path})
 			assert.Equal(t, "yaml", name)
 		}
@@ -210,20 +208,12 @@ func TestLoadBundledLanguages(t *testing.T) {
 					"graphql.config.js",
 					"graphql.config.ts",
 				},
-				"javascript": {
-					"package.json", "tsconfig.json", "jsconfig.json",
-				},
-				"typescript": {
-					"package.json", "tsconfig.json", "jsconfig.json",
-				},
-				"tsx": {
-					"package.json", "tsconfig.json", "jsconfig.json",
-				},
-				"markdown": {".marksman.toml"},
-				"zig":      {"build.zig"},
-				"c": {
-					"compile_commands.json", "compile_flags.txt", ".clangd",
-				},
+				"javascript": {"package.json", "tsconfig.json", "jsconfig.json"},
+				"typescript": {"package.json", "tsconfig.json", "jsconfig.json"},
+				"tsx":        {"package.json", "tsconfig.json", "jsconfig.json"},
+				"markdown":   {".marksman.toml"},
+				"zig":        {"build.zig"},
+				"c":          {"compile_commands.json", "compile_flags.txt", ".clangd"},
 			},
 			roots,
 		)
@@ -376,8 +366,6 @@ func setUserLangs(t *testing.T, text string) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "toe")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }

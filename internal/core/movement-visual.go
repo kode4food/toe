@@ -9,16 +9,16 @@ type (
 		Row  int
 	}
 
-	// VisualRowWalk steps through Lines lines whose visual row counts come from
-	// Rows; a nil Rows makes every line one row
+	// VisualRowWalk steps through Lines lines whose visual row counts come from Rows; a nil Rows
+	// makes every line one row
 	VisualRowWalk struct {
 		Rows  func(line int) int
 		Lines int
 	}
 )
 
-// VisualRows returns the number of visual (soft-wrapped) rows the given text
-// line occupies. It returns 1 when soft-wrap is inactive
+// VisualRows returns the number of visual (soft-wrapped) rows the given text line occupies. It
+// returns 1 when soft-wrap is inactive
 func (vf *VisualMoveFormat) VisualRows(doc Rope, line int) int {
 	if vf == nil || vf.ViewportWidth <= 0 {
 		return 1
@@ -33,8 +33,8 @@ type VisualRowOfOffsetArgs struct {
 	CharOff int
 }
 
-// VisualRowOfOffset returns the zero-based visual row within its text line on
-// which the character at CharOff (relative to line start) is displayed
+// VisualRowOfOffset returns the zero-based visual row within its text line on which the character
+// at CharOff (relative to line start) is displayed
 func (vf *VisualMoveFormat) VisualRowOfOffset(args VisualRowOfOffsetArgs) int {
 	if vf == nil || vf.ViewportWidth <= 0 {
 		return 0
@@ -42,11 +42,8 @@ func (vf *VisualMoveFormat) VisualRowOfOffset(args VisualRowOfOffsetArgs) int {
 	return newVisualLine(args.Doc, args.Line, vf).posOf(args.CharOff).Y
 }
 
-// VisualScrollUp moves up rows from a visual position, clamped at the document
-// start
-func (vf *VisualMoveFormat) VisualScrollUp(
-	doc Rope, at VisualPos, up int,
-) VisualPos {
+// VisualScrollUp moves up rows from a visual position, clamped at the document start
+func (vf *VisualMoveFormat) VisualScrollUp(doc Rope, at VisualPos, up int) VisualPos {
 	walk := VisualRowWalk{Lines: doc.LenLines()}
 	if vf != nil && vf.ViewportWidth > 0 {
 		walk.Rows = func(line int) int {
@@ -100,9 +97,7 @@ func (w VisualRowWalk) Down(at VisualPos, n int) VisualPos {
 	return at
 }
 
-func (v visualMover) moveVertically(
-	doc Rope, r Range, mv VerticalMove,
-) (Range, int) {
+func (v visualMover) moveVertically(doc Rope, r Range, mv VerticalMove) (Range, int) {
 	vf := v.format
 	if vf == nil || vf.ViewportWidth <= 0 {
 		return r.MoveVertically(doc, mv)

@@ -10,8 +10,8 @@ import (
 )
 
 func TestChangeSetCompose(t *testing.T) {
-	// Verify composition by applying each step individually and via compose,
-	// then checking both paths produce the same result
+	// Verify composition by applying each step individually and via compose, then checking both
+	// paths produce the same result
 	apply := func(
 		t *testing.T, doc core.Rope, changes []core.Change,
 	) (core.Rope, core.ChangeSet) {

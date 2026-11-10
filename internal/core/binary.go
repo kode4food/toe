@@ -24,12 +24,12 @@ const (
 )
 
 const (
-	// BinarySampleSize is how much of a file LooksBinary inspects. Callers can
-	// read just this much before deciding whether to load the rest
+	// BinarySampleSize is how much of a file LooksBinary inspects. Callers can read just this much
+	// before deciding whether to load the rest
 	BinarySampleSize = 1024
 
-	// valid UTF-8 is a strong text signal, so maxControlRatio stays loose.
-	// Invalid UTF-8 (legacy 8-bit or binary) gets the stricter legacy ratio
+	// valid UTF-8 is a strong text signal, so maxControlRatio stays loose. Invalid UTF-8 (legacy
+	// 8-bit or binary) gets the stricter legacy ratio
 	maxControlRatio    = 0.30
 	legacyControlRatio = 0.10
 )
@@ -49,9 +49,8 @@ var binarySignatures = [][]byte{
 	{0xCF, 0xFA, 0xED, 0xFE},       // Mach-O 64 LE
 }
 
-// LoadText reads path, returning ErrBinaryFile without reading past the leading
-// sample if the content looks binary, so a huge binary file is never fully
-// loaded just to be rejected
+// LoadText reads path, returning ErrBinaryFile without reading past the leading sample if the
+// content looks binary, so a huge binary file is never fully loaded just to be rejected
 func LoadText(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -77,9 +76,8 @@ func LoadText(path string) ([]byte, error) {
 	return append(sample, rest...), nil
 }
 
-// LooksBinary reports whether data appears to be non-text content, biased
-// toward false negatives: garbled binary is recoverable, a refused-open text
-// file is not
+// LooksBinary reports whether data appears to be non-text content, biased toward false negatives:
+// garbled binary is recoverable, a refused-open text file is not
 func LooksBinary(data []byte) bool {
 	if len(data) == 0 {
 		return false

@@ -10,9 +10,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Differ tracks the hunks between a version-control base text and a live
-// document text. Updates are debounced so rapid keystrokes coalesce into one
-// diff
+// Differ tracks the hunks between a version-control base text and a live document text. Updates are
+// debounced so rapid keystrokes coalesce into one diff
 type Differ struct {
 	mu         sync.RWMutex
 	base       core.Rope
@@ -24,12 +23,12 @@ type Differ struct {
 	notify     func()
 }
 
-// diffDebounce is how long a differ waits for further updates before
-// recomputing. The gutter trails a keystroke by this much
+// diffDebounce is how long a differ waits for further updates before recomputing. The gutter trails
+// a keystroke by this much
 const diffDebounce = 50 * time.Millisecond
 
-// NewDiffer starts a differ for the given base and document text. notify is
-// invoked from a background goroutine after every recompute
+// NewDiffer starts a differ for the given base and document text. notify is invoked from a
+// background goroutine after every recompute
 func NewDiffer(sides view.DiffSides, notify func()) *Differ {
 	d := &Differ{
 		base:       sides.Base,

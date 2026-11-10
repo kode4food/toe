@@ -34,9 +34,7 @@ const (
 
 func TestScrollbarImage(t *testing.T) {
 	t.Run("falls back to glyphs without graphics", func(t *testing.T) {
-		for _, key := range []string{
-			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
-		} {
+		for _, key := range []string{"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM"} {
 			t.Setenv(key, "")
 		}
 		m := scrollbarImageModel(t)
@@ -58,9 +56,7 @@ func TestScrollbarImage(t *testing.T) {
 
 	t.Run("resume retransmits", func(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
-		m, raws := scrollbarImageModelFor(t,
-			scrollbarImageEditor(t), scrollbarTestCell(),
-		)
+		m, raws := scrollbarImageModelFor(t, scrollbarImageEditor(t), scrollbarTestCell())
 		assert.Contains(t, strings.Join(raws, ""), "a=T")
 
 		m2, cmd := m.Update(tea.ResumeMsg{})
@@ -70,16 +66,13 @@ func TestScrollbarImage(t *testing.T) {
 		m, more := collectModelRawMsgs(m2.(ui.Model), cmd)
 
 		assert.Contains(t, strings.Join(append(raws, more...), ""), "a=T")
-		assert.True(t,
-			strings.ContainsRune(viewContent(m), tui.PlaceholderRune),
-		)
+		assert.True(t, strings.ContainsRune(viewContent(m), tui.PlaceholderRune))
 	})
 
 	t.Run("draws nothing until the image is up", func(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
 		m := resize(
-			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
-			scrollbarWidth, scrollbarHeight,
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
 		assertNoScrollbar(t, viewContent(m))
@@ -96,8 +89,7 @@ func TestScrollbarImage(t *testing.T) {
 		}
 		t.Setenv("KITTY_WINDOW_ID", "1")
 		m := resize(
-			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
-			scrollbarWidth, scrollbarHeight,
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 		time.Sleep(scrollbarQuietWait)
 
@@ -140,20 +132,15 @@ func TestScrollbarImage(t *testing.T) {
 		img := decodeScrollbarImage(t, raws)
 
 		assert.Equal(t, scrollbarTestCell().Width, img.Bounds().Dx())
-		assert.Equal(t,
-			scrollbarTestCell().Height*scrollbarRows, img.Bounds().Dy(),
-		)
+		assert.Equal(t, scrollbarTestCell().Height*scrollbarRows, img.Bounds().Dy())
 	})
 
 	t.Run("thumb matches the cell bar", func(t *testing.T) {
-		for _, key := range []string{
-			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
-		} {
+		for _, key := range []string{"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM"} {
 			t.Setenv(key, "")
 		}
 		glyphs := resize(
-			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
-			scrollbarWidth, scrollbarHeight,
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 		rows := 0
 		cells := scrollbarCells(t, viewContent(glyphs), scrollbarRows)
@@ -165,21 +152,15 @@ func TestScrollbarImage(t *testing.T) {
 		assert.NotZero(t, rows)
 
 		t.Setenv("KITTY_WINDOW_ID", "1")
-		_, raws := scrollbarImageModelFor(t,
-			scrollbarImageEditor(t), scrollbarTestCell(),
-		)
+		_, raws := scrollbarImageModelFor(t, scrollbarImageEditor(t), scrollbarTestCell())
 		img := decodeScrollbarImage(t, raws)
 
-		assert.Equal(t,
-			rows*scrollbarTestCell().Height, scrollbarThumbEnd(img),
-		)
+		assert.Equal(t, rows*scrollbarTestCell().Height, scrollbarThumbEnd(img))
 	})
 
 	t.Run("window resize redraws pixels", func(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
-		m, _ := scrollbarImageModelFor(t,
-			scrollbarImageEditor(t), scrollbarTestCell(),
-		)
+		m, _ := scrollbarImageModelFor(t, scrollbarImageEditor(t), scrollbarTestCell())
 		height := scrollbarHeight * 2
 
 		m2, _ := m.Update(tea.WindowSizeMsg{
@@ -191,9 +172,7 @@ func TestScrollbarImage(t *testing.T) {
 		_, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
 		img := decodeScrollbarImage(t, raws)
 
-		assert.Equal(t,
-			scrollbarTestCell().Height*(height-1), img.Bounds().Dy(),
-		)
+		assert.Equal(t, scrollbarTestCell().Height*(height-1), img.Bounds().Dy())
 	})
 
 	t.Run("one line scroll retransmits", func(t *testing.T) {
@@ -266,9 +245,7 @@ func scrollbarImageEditor(t *testing.T) *view.Editor {
 
 func scrollbarImageModel(t *testing.T) ui.Model {
 	t.Helper()
-	m, _ := scrollbarImageModelFor(t,
-		scrollbarImageEditor(t), scrollbarTestCell(),
-	)
+	m, _ := scrollbarImageModelFor(t, scrollbarImageEditor(t), scrollbarTestCell())
 	return m
 }
 
@@ -328,9 +305,7 @@ func decodeScrollbarImage(t *testing.T, raws []string) image.Image {
 		if !ok {
 			continue
 		}
-		data, err := base64.StdEncoding.DecodeString(
-			strings.TrimSuffix(payload, "\x1b\\"),
-		)
+		data, err := base64.StdEncoding.DecodeString(strings.TrimSuffix(payload, "\x1b\\"))
 		assert.NoError(t, err)
 		img, err := png.Decode(bytes.NewReader(data))
 		assert.NoError(t, err)

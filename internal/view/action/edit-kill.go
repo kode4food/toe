@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// KillToLineEnd deletes from the cursor to the end of the current line. If the
-// cursor is already at the line ending, the newline itself is deleted
+// KillToLineEnd deletes from the cursor to the end of the current line. If the cursor is already at
+// the line ending, the newline itself is deleted
 func KillToLineEnd(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -66,8 +66,8 @@ func KillToLineEnd(e *view.Editor) {
 	})
 }
 
-// KillToLineStart deletes from the cursor to the start of the current line
-// If the cursor is at the start, deletes the preceding newline (joins lines)
+// KillToLineStart deletes from the cursor to the start of the current line If the cursor is at the
+// start, deletes the preceding newline (joins lines)
 func KillToLineStart(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

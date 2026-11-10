@@ -11,8 +11,7 @@ import (
 )
 
 type (
-	// Document holds an open buffer and its editing, file, view, and render
-	// state
+	// Document holds an open buffer and its editing, file, view, and render state
 	Document struct {
 		identity identityState
 		content  contentState
@@ -70,8 +69,8 @@ type (
 		readOnly bool
 	}
 
-	// overlayState holds all language-server-managed overlays for the document,
-	// protected by an embedded RWMutex so async LSP goroutines write safely
+	// overlayState holds all language-server-managed overlays for the document, protected by an
+	// embedded RWMutex so async LSP goroutines write safely
 	overlayState struct {
 		sync.RWMutex
 		highlights  map[Id][]DocumentHighlight
@@ -86,8 +85,7 @@ type (
 		dirty map[Id]bool
 	}
 
-	// pendingLoad defers reading a restored file until its content is first
-	// accessed
+	// pendingLoad defers reading a restored file until its content is first accessed
 	pendingLoad struct {
 		opts *Options
 		lang string
@@ -102,12 +100,12 @@ type (
 		Err  error
 	}
 
-	// ExternalState describes whether a file-backed document has diverged from
-	// the last disk snapshot toe loaded or wrote
+	// ExternalState describes whether a file-backed document has diverged from the last disk
+	// snapshot toe loaded or wrote
 	ExternalState int
 
-	// DocType is what a document is for: text the user owns, or a log the
-	// editor writes and the user only reads
+	// DocType is what a document is for: text the user owns, or a log the editor writes and the
+	// user only reads
 	DocType uint8
 )
 
@@ -123,8 +121,8 @@ const (
 
 	scratchBufferFmt = "[scratch %d]"
 
-	// EncodingUTF8 and EncodingUTF8BOM are the text-encoding display names
-	// used in config and status display
+	// EncodingUTF8 and EncodingUTF8BOM are the text-encoding display names used in config and
+	// status display
 	EncodingUTF8    = "utf-8"
 	EncodingUTF8BOM = "utf-8-bom"
 )
@@ -141,14 +139,14 @@ const (
 	ExternalStateMissing                      // backing file absent on restore
 )
 
-// RestoreCursor reports whether the next exit from insert mode should move the
-// cursor back by one grapheme
+// RestoreCursor reports whether the next exit from insert mode should move the cursor back by one
+// grapheme
 func (d *Document) RestoreCursor() bool {
 	return d.views.restoreCursor
 }
 
-// SetRestoreCursor marks whether the next insert-mode exit should restore the
-// cursor one grapheme to the left
+// SetRestoreCursor marks whether the next insert-mode exit should restore the cursor one grapheme
+// to the left
 func (d *Document) SetRestoreCursor(v bool) {
 	d.views.restoreCursor = v
 }
@@ -183,8 +181,8 @@ func (d *Document) Path() string {
 	return d.content.path
 }
 
-// SetPath sets the file path for this document, renaming it to match. A log
-// is the editor's own, so it keeps the name the editor gave it
+// SetPath sets the file path for this document, renaming it to match. A log is the editor's own, so
+// it keeps the name the editor gave it
 func (d *Document) SetPath(path string) {
 	if d.identity.docType == DocTypeLog {
 		return
@@ -207,16 +205,15 @@ func (d *Document) Modified() bool {
 	return d.edits.history.CurrentRevision() != d.edits.savePoint
 }
 
-// Loaded reports whether the backing file has been read. A restored session
-// buffer stays unloaded until its content is first accessed
+// Loaded reports whether the backing file has been read. A restored session buffer stays unloaded
+// until its content is first accessed
 func (d *Document) Loaded() bool {
 	d.content.RLock()
 	defer d.content.RUnlock()
 	return d.content.pending == nil
 }
 
-// ExternalState reports any unresolved change made to the backing file by
-// another process
+// ExternalState reports any unresolved change made to the backing file by another process
 func (d *Document) ExternalState() ExternalState {
 	return d.file.external
 }
@@ -228,8 +225,8 @@ func (d *Document) Lang() string {
 	return d.content.lang
 }
 
-// SetLang sets the language identifier and resolves its definition once so
-// the render path reads the cached *language.Language directly
+// SetLang sets the language identifier and resolves its definition once so the render path reads
+// the cached *language.Language directly
 func (d *Document) SetLang(lang string) {
 	d.format.language = d.format.registry.Get(lang)
 	d.content.Lock()
@@ -244,9 +241,7 @@ func (d *Document) TextFormat(w int) *language.TextFormat {
 }
 
 // TextFormatForConfig returns layout options using the supplied editor options
-func (d *Document) TextFormatForConfig(
-	w int, opts *Options,
-) *language.TextFormat {
+func (d *Document) TextFormatForConfig(w int, opts *Options) *language.TextFormat {
 	d.ensureLoaded()
 	langDef := d.format.language
 	if d.format.editorConfig != nil &&
@@ -255,9 +250,7 @@ func (d *Document) TextFormatForConfig(
 		cpy.TextWidth = d.format.editorConfig.MaxLineLength
 		langDef = &cpy
 	}
-	format := language.TextFormatForConfig(
-		langDef, opts.TextWidth, opts.SoftWrap, w,
-	)
+	format := language.TextFormatForConfig(langDef, opts.TextWidth, opts.SoftWrap, w)
 	format.TabWidth = d.format.tabWidth
 	return format
 }
@@ -296,8 +289,7 @@ func (d *Document) LineEnding() core.LineEnding {
 	return d.format.lineEnding
 }
 
-// HasBOM reports whether the document was loaded with a UTF-8 BOM, which is
-// preserved on save
+// HasBOM reports whether the document was loaded with a UTF-8 BOM, which is preserved on save
 func (d *Document) HasBOM() bool {
 	d.ensureLoaded()
 	return d.format.hasBOM
@@ -322,8 +314,8 @@ func (d *Document) SetDisplayName(name string) {
 	d.content.Unlock()
 }
 
-// RelativeName returns the path relative to basedir, or the display name when
-// no file backs the document
+// RelativeName returns the path relative to basedir, or the display name when no file backs the
+// document
 func (d *Document) RelativeName(basedir string) string {
 	path := d.Path()
 	if path == "" {
@@ -351,8 +343,8 @@ func (d *Document) Selection() core.Selection {
 	return core.PointSelection(0)
 }
 
-// SetSelectionFor sets the selection for a view. Changing the selection clears
-// any search-match highlighting for that view
+// SetSelectionFor sets the selection for a view. Changing the selection clears any search-match
+// highlighting for that view
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 	if old, ok := d.views.selections[vid]; !ok || !old.Equal(sel) {
 		d.markViewDirty(vid)
@@ -361,8 +353,8 @@ func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 	delete(d.views.searchHighlights, vid)
 }
 
-// ShowSearchHighlights marks a view's search matches as visible. Search actions
-// call this after moving the selection to their match
+// ShowSearchHighlights marks a view's search matches as visible. Search actions call this after
+// moving the selection to their match
 func (d *Document) ShowSearchHighlights(vid Id) {
 	if d.views.searchHighlights == nil {
 		d.views.searchHighlights = make(map[Id]bool)
@@ -370,8 +362,7 @@ func (d *Document) ShowSearchHighlights(vid Id) {
 	d.views.searchHighlights[vid] = true
 }
 
-// SearchHighlightsActive reports whether search matches should be highlighted
-// for a view
+// SearchHighlightsActive reports whether search matches should be highlighted for a view
 func (d *Document) SearchHighlightsActive(vid Id) bool {
 	return d.views.searchHighlights[vid]
 }
@@ -409,15 +400,15 @@ func (d *Document) MarkDirty() {
 	if d.render.dirty == nil {
 		d.render.dirty = map[Id]bool{}
 	}
-	// render.dirty is the reliable registry of visible views, where
-	// views.selections stays empty until a view's own cursor first moves
+	// render.dirty is the reliable registry of visible views, where views.selections stays empty
+	// until a view's own cursor first moves
 	for vid := range d.render.dirty {
 		d.render.dirty[vid] = true
 	}
 }
 
-// ConsumeDirty reports whether vid's rendered state changed since the last
-// call for vid, clearing the flag. A vid never seen before is dirty
+// ConsumeDirty reports whether vid's rendered state changed since the last call for vid, clearing
+// the flag. A vid never seen before is dirty
 func (d *Document) ConsumeDirty(vid Id) bool {
 	d.render.Lock()
 	defer d.render.Unlock()

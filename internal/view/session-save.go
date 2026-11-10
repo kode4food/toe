@@ -13,8 +13,8 @@ type SessionWriter struct {
 	base     string
 }
 
-// SaveSession stores this view's document state in w. A view onto a buffer
-// the editor generates records only that it was showing it
+// SaveSession stores this view's document state in w. A view onto a buffer the editor generates
+// records only that it was showing it
 func (v *View) SaveSession(w *SessionWriter) {
 	doc, ok := v.editor.documents.byID[v.docID]
 	if !ok {
@@ -96,9 +96,7 @@ func (e *Editor) sessionDocument(d *Document, base string) sessDocument {
 	}
 }
 
-func (e *Editor) sessionNodeFor(
-	id Id, docIndex map[DocumentId]int, base string,
-) sessNode {
+func (e *Editor) sessionNodeFor(id Id, docIndex map[DocumentId]int, base string) sessNode {
 	n := e.panes.tree.nodes[id]
 	if n.pane != nil {
 		w := &SessionWriter{docIndex: docIndex, base: base}

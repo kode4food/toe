@@ -5,8 +5,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// InsertChar inserts a character at every cursor position in insert mode
-// Auto-pairs are applied when the character matches an opener or closer
+// InsertChar inserts a character at every cursor position in insert mode Auto-pairs are applied
+// when the character matches an opener or closer
 func InsertChar(e *view.Editor, ch rune) {
 	v := e.FocusedView()
 	if v == nil {
@@ -112,15 +112,11 @@ func InsertText(e *view.Editor, value string) {
 		return
 	}
 	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
+		_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 	}
 }
 
-func autoPairsForDocument(
-	e *view.Editor, doc *view.Document,
-) (core.AutoPairs, bool) {
+func autoPairsForDocument(e *view.Editor, doc *view.Document) (core.AutoPairs, bool) {
 	global, ok := e.Options().AutoPairs()
 	if !ok {
 		return core.AutoPairs{}, false

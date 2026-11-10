@@ -6,9 +6,7 @@ type surroundSearch struct {
 	nth int
 }
 
-func (r Rope) surroundFindNthOpen(
-	pair BracketPair, at surroundSearch,
-) (int, bool) {
+func (r Rope) surroundFindNthOpen(pair BracketPair, at surroundSearch) (int, bool) {
 	pos := at.pos
 	if pos >= r.LenChars() {
 		return 0, false
@@ -47,9 +45,7 @@ func (r Rope) surroundFindNthOpen(
 	return pos, true
 }
 
-func (r Rope) surroundFindNthClose(
-	pair BracketPair, at surroundSearch,
-) (int, bool) {
+func (r Rope) surroundFindNthClose(pair BracketPair, at surroundSearch) (int, bool) {
 	pos := at.pos
 	if pos >= r.LenChars() {
 		return 0, false

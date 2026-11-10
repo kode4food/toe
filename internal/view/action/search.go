@@ -15,21 +15,20 @@ const (
 	StatusRegisterSet   i18n.Key = "status.registerSet"
 )
 
-// SearchSelection stores the joined selection text as the search pattern (no
-// word-boundary detection) and sets it in the '/' register
+// SearchSelection stores the joined selection text as the search pattern (no word-boundary
+// detection) and sets it in the '/' register
 func SearchSelection(e *view.Editor) {
 	searchSelectionImpl(e, false)
 }
 
-// SearchSelectionWord stores the selection text as the search
-// pattern, adding \b word-boundary anchors where the selection touches word
-// boundaries
+// SearchSelectionWord stores the selection text as the search pattern, adding \b word-boundary
+// anchors where the selection touches word boundaries
 func SearchSelectionWord(e *view.Editor) {
 	searchSelectionImpl(e, true)
 }
 
-// MakeSearchWordBounded wraps the current search pattern with \b word-boundary
-// anchors if they are not already present
+// MakeSearchWordBounded wraps the current search pattern with \b word-boundary anchors if they are
+// not already present
 func MakeSearchWordBounded(e *view.Editor) {
 	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
@@ -52,8 +51,8 @@ func MakeSearchWordBounded(e *view.Editor) {
 	setRegisterStatus(e, view.RegisterSearch, out)
 }
 
-// SearchForward executes a forward search with the given pattern, storing it
-// in the '/' register, and moves each cursor to the first match
+// SearchForward executes a forward search with the given pattern, storing it in the '/' register,
+// and moves each cursor to the first match
 func SearchForward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
 		editor:  e,
@@ -63,8 +62,8 @@ func SearchForward(e *view.Editor, pattern string) error {
 	})
 }
 
-// SearchBackward executes a backward search with the given pattern, storing
-// it in the '/' register, and moves each cursor to the previous match
+// SearchBackward executes a backward search with the given pattern, storing it in the '/' register,
+// and moves each cursor to the previous match
 func SearchBackward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
 		editor:  e,
@@ -194,8 +193,8 @@ func searchImpl(args searchArgs) error {
 	if doc == nil {
 		return nil
 	}
-	// text and its string form are stable across repeats, only the selection
-	// advances, so compile the regex and materialize the text once
+	// text and its string form are stable across repeats, only the selection advances, so compile
+	// the regex and materialize the text once
 	text := doc.Text()
 	fullStr := text.String()
 

@@ -18,8 +18,8 @@ const (
 	compGap     = 2
 )
 
-// recalculateCompletion refreshes the list, leaving it unselected so the typed
-// line stands on its own until Tab or an arrow reaches for a suggestion
+// recalculateCompletion refreshes the list, leaving it unselected so the typed line stands on its
+// own until Tab or an arrow reaches for a suggestion
 func (p *PromptComponent) recalculateCompletion() {
 	p.completion.done = true
 	p.completion.list = listScroll{cursor: -1}
@@ -37,8 +37,8 @@ func (p *PromptComponent) changeCompletion(dir int) {
 		return
 	}
 	p.completion.list.count = n
-	// the typed line is the slot before the first item, so stepping past either
-	// end of the list lands back on it
+	// the typed line is the slot before the first item, so stepping past either end of the list
+	// lands back on it
 	slots := n + 1
 	pos := p.completion.list.cursor + 1 + dir
 	p.selectCompletion((pos%slots+slots)%slots - 1)
@@ -59,8 +59,8 @@ func (p *PromptComponent) selectCompletion(idx int) {
 	p.ensureCompletionVisible()
 }
 
-// acceptCompletion takes the highlighted item, or the top match when nothing is
-// highlighted, and reports whether it took one
+// acceptCompletion takes the highlighted item, or the top match when nothing is highlighted, and
+// reports whether it took one
 func (p *PromptComponent) acceptCompletion() bool {
 	idx := max(p.completion.list.cursor, 0)
 	if idx >= len(p.completion.items) {
@@ -148,8 +148,7 @@ func (p *PromptComponent) paintCompletions(buf *tui.Buffer, bounds geom.Area) {
 		x := p.completion.nameWidth + compGap
 		buf.SetString(
 			at.Add(geom.Point{X: x}),
-			runewidth.Truncate(item.Detail, bounds.Width-x, promptEllipsis),
-			style.Fg(detail),
+			runewidth.Truncate(item.Detail, bounds.Width-x, promptEllipsis), style.Fg(detail),
 		)
 	}
 }
@@ -210,9 +209,7 @@ func completeCommandLine(cx *Context, input string) []promptCompletion {
 	if cmd == nil {
 		return nil
 	}
-	items := cmd.Signature.Completer.Complete(
-		cx.Editor, cmd.Signature, line.Rest,
-	)
+	items := cmd.Signature.Completer.Complete(cx.Editor, cmd.Signature, line.Rest)
 	out := make([]promptCompletion, 0, len(items))
 	offset := len(line.Name) + 1
 	for _, item := range items {

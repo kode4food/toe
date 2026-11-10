@@ -155,12 +155,8 @@ func writeFormatterConfig(t *testing.T, fmtToml string) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "toe")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	content := fmt.Sprintf(
-		"[[language]]\nname = \"text\"\n[language.formatter]\n%s\n", fmtToml,
-	)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(content), 0o644,
-	))
+	content := fmt.Sprintf("[[language]]\nname = \"text\"\n[language.formatter]\n%s\n", fmtToml)
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(content), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -174,9 +170,7 @@ func writeAutoFormatConfig(t *testing.T, fmtToml string) {
 			"[language.formatter]\n%s\n",
 		fmtToml,
 	)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(content), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(content), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
@@ -186,9 +180,7 @@ func writeAutoFormatLSPConfig(t *testing.T) {
 	dir := filepath.Join(root, "toe")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	content := "[[language]]\nname = \"text\"\nauto-format = true\n"
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(content), 0o644,
-	))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(content), 0o644))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 

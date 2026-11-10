@@ -4,9 +4,7 @@ import "strings"
 
 func fillHardWrap(uw *hardWrapUnfilled, width int) string {
 	body := strings.TrimSuffix(uw.text, uw.ending)
-	words := hardWrapWordItems(
-		hardWrapWords(body), hardWrapCapacity(uw, width),
-	)
+	words := hardWrapWordItems(hardWrapWords(body), hardWrapCapacity(uw, width))
 	if len(words) == 0 {
 		return ""
 	}
@@ -55,9 +53,7 @@ func hardWrapWordItems(words []string, capacity int) []hardWrapWord {
 	return res
 }
 
-func hardWrapBreaks(
-	words []hardWrapWord, uw *hardWrapUnfilled, width int,
-) []int {
+func hardWrapBreaks(words []hardWrapWord, uw *hardWrapUnfilled, width int) []int {
 	n := len(words)
 	cost := make([]int, n+1)
 	next := make([]int, n)

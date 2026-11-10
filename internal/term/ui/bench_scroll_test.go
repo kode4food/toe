@@ -52,14 +52,14 @@ func BenchmarkScrollSmallFile(b *testing.B) {
 	benchmarkScroll(b, largeGoSource(40))
 }
 
-// BenchmarkScrollColorDense scrolls a file carrying hex color literals on
-// every line, the worst case for the color swatch scan
+// BenchmarkScrollColorDense scrolls a file carrying hex color literals on every line, the worst
+// case for the color swatch scan
 func BenchmarkScrollColorDense(b *testing.B) {
 	benchmarkScroll(b, colorDenseSource(2000))
 }
 
-// BenchmarkScrollTwoPanes scrolls with two panes showing two different
-// documents, exercises the per-document render caches under split layout
+// BenchmarkScrollTwoPanes scrolls with two panes showing two different documents, exercises the
+// per-document render caches under split layout
 func BenchmarkScrollTwoPanes(b *testing.B) {
 	root := b.TempDir()
 	pathA := filepath.Join(root, "a.go")

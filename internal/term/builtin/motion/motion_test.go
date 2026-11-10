@@ -152,9 +152,7 @@ func TestMotionJumpKeys(t *testing.T) {
 			Mods: command.ModCtrl,
 		}
 		for _, key := range []command.KeyEvent{shiftTab, ctrlO} {
-			match, ok := km.Lookup(
-				view.ModeNormal, []command.KeyEvent{key},
-			)
+			match, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{key})
 			assert.True(t, ok)
 			assert.Equal(t, "jump_backward", match.Name)
 		}

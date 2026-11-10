@@ -12,20 +12,20 @@ type posChar struct {
 	char rune
 }
 
-// SelectTextObjectAround selects around the text object identified by ch
-// Plaintext objects: w=word, W=WORD, p=paragraph, m or bracket = surround pair
+// SelectTextObjectAround selects around the text object identified by ch Plaintext objects: w=word,
+// W=WORD, p=paragraph, m or bracket = surround pair
 func SelectTextObjectAround(e *view.Editor, ch rune) {
 	textObjectSelect(e, ch, core.TextObjectAround)
 }
 
-// SelectTextObjectInside selects inside the text object identified by ch
-// Plaintext objects: w=word, W=WORD, p=paragraph, m or bracket = surround pair
+// SelectTextObjectInside selects inside the text object identified by ch Plaintext objects: w=word,
+// W=WORD, p=paragraph, m or bracket = surround pair
 func SelectTextObjectInside(e *view.Editor, ch rune) {
 	textObjectSelect(e, ch, core.TextObjectInside)
 }
 
-// SurroundAdd wraps each selection with the pair that matches ch, then switches
-// to normal mode. ch may be either the opening or closing bracket character
+// SurroundAdd wraps each selection with the pair that matches ch, then switches to normal mode. ch
+// may be either the opening or closing bracket character
 func SurroundAdd(e *view.Editor, ch rune) {
 	v := e.FocusedView()
 	if v == nil {
@@ -71,16 +71,16 @@ func SurroundAdd(e *view.Editor, ch rune) {
 	e.SetMode(view.ModeNormal)
 }
 
-// SurroundDelete removes the surrounding pair identified by ch around each
-// selection, then switches to normal mode
+// SurroundDelete removes the surrounding pair identified by ch around each selection, then switches
+// to normal mode
 func SurroundDelete(e *view.Editor, ch rune) {
 	if res, ok := resolveSurroundPos(e, ch); ok {
 		SurroundDeleteAt(e, res.text, res.positions)
 	}
 }
 
-// SurroundDeleteAt deletes the brackets at flat [open, close, ...] positions
-// and switches to normal mode
+// SurroundDeleteAt deletes the brackets at flat [open, close, ...] positions and switches to normal
+// mode
 func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	slices.Sort(positions)
 	rawChanges := make([]core.Change, len(positions))
@@ -95,27 +95,25 @@ func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	e.SetMode(view.ModeNormal)
 }
 
-// SurroundReplaceArgs names the surrounding pair to replace and the pair to
-// replace it with, each identified by either of its brackets
+// SurroundReplaceArgs names the surrounding pair to replace and the pair to replace it with, each
+// identified by either of its brackets
 type SurroundReplaceArgs struct {
 	Editor  *view.Editor
 	Current rune
 	Wanted  rune
 }
 
-// SurroundReplace replaces the surrounding pair identified by Current with the
-// pair matching Wanted. Called after two key prompts resolved by the model
+// SurroundReplace replaces the surrounding pair identified by Current with the pair matching
+// Wanted. Called after two key prompts resolved by the model
 func SurroundReplace(args SurroundReplaceArgs) {
 	if res, ok := resolveSurroundPos(args.Editor, args.Current); ok {
 		SurroundReplaceAt(args.Editor, res.text, res.positions, args.Wanted)
 	}
 }
 
-// SurroundReplaceAt replaces brackets at flat [open, close, ...] positions with
-// the pair matching to, then switches to normal mode
-func SurroundReplaceAt(
-	e *view.Editor, text core.Rope, positions []int, to rune,
-) {
+// SurroundReplaceAt replaces brackets at flat [open, close, ...] positions with the pair matching
+// to, then switches to normal mode
+func SurroundReplaceAt(e *view.Editor, text core.Rope, positions []int, to rune) {
 	pair := core.GetPair(to)
 	sorted := make([]posChar, 0, len(positions))
 	for i := 0; i < len(positions); i += 2 {

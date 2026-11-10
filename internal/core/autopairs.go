@@ -1,8 +1,7 @@
 package core
 
 type (
-	// AutoPairs holds the set of active bracket pairs, keyed by both
-	// opener and closer
+	// AutoPairs holds the set of active bracket pairs, keyed by both opener and closer
 	AutoPairs map[rune]Pair
 
 	// Pair describes one opener/closer bracket pair
@@ -50,8 +49,8 @@ func (p Pair) Same() bool {
 	return p.Open == p.Close
 }
 
-// ShouldClose reports whether typing this pair's close character at range
-// should insert the closing character rather than skip past an existing one
+// ShouldClose reports whether typing this pair's close character at range should insert the closing
+// character rather than skip past an existing one
 func (p Pair) ShouldClose(doc Rope, r Range) bool {
 	ok := nextIsNotAlphaPair(doc, r)
 	if p.Same() {
@@ -60,11 +59,9 @@ func (p Pair) ShouldClose(doc Rope, r Range) bool {
 	return ok
 }
 
-// HookInsert returns a Change and updated Range when ch should trigger an
-// auto-pair action, or ok=false when no action is needed
-func HookInsert(
-	doc Rope, r Range, ch rune, pairs AutoPairs,
-) (Change, Range, bool) {
+// HookInsert returns a Change and updated Range when ch should trigger an auto-pair action, or
+// ok=false when no action is needed
+func HookInsert(doc Rope, r Range, ch rune, pairs AutoPairs) (Change, Range, bool) {
 	pair, ok := pairs.Get(ch)
 	if !ok {
 		return Change{}, Range{}, false
@@ -81,8 +78,8 @@ func HookInsert(
 	return Change{}, Range{}, false
 }
 
-// HookDelete returns a Span and updated Range when backspace should erase an
-// auto-inserted pair, or ok=false when no action is needed
+// HookDelete returns a Span and updated Range when backspace should erase an auto-inserted pair, or
+// ok=false when no action is needed
 func HookDelete(doc Rope, r Range, pairs AutoPairs) (Span, Range, bool) {
 	cursor := r.Cursor(doc)
 

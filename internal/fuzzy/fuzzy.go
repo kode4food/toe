@@ -8,15 +8,14 @@ import (
 )
 
 type (
-	// Result is a match's rank against a pattern, and the rune offsets in
-	// the matched text to highlight
+	// Result is a match's rank against a pattern, and the rune offsets in the matched text to
+	// highlight
 	Result struct {
 		Score   int
 		Indices []int
 	}
 
-	// Matcher scores repeated texts against one pattern, reusing its
-	// scratch buffers across calls
+	// Matcher scores repeated texts against one pattern, reusing its scratch buffers across calls
 	Matcher struct {
 		pattern []rune
 		text    []rune
@@ -87,8 +86,8 @@ func (m *Matcher) Match(text string) (Result, bool) {
 }
 
 func (m *Matcher) align() (float64, []int) {
-	// end[i][j] scores the best alignment of pattern[:i+1] ending on text[j].
-	// best[i][j] scores the best alignment of pattern[:i+1] within text[:j+1]
+	// end[i][j] scores the best alignment of pattern[:i+1] ending on text[j]. best[i][j] scores the
+	// best alignment of pattern[:i+1] within text[:j+1]
 	n, width := len(m.pattern), len(m.text)
 	m.fillBonuses()
 	m.best = growScores(m.best, n*width)
@@ -112,8 +111,7 @@ func (m *Matcher) align() (float64, []int) {
 					score = float64(j)*gapLeading + m.bonus[j]
 				case j > 0:
 					score = max(
-						m.best[(i-1)*width+j-1]+m.bonus[j],
-						m.end[(i-1)*width+j-1]+consecutive,
+						m.best[(i-1)*width+j-1]+m.bonus[j], m.end[(i-1)*width+j-1]+consecutive,
 					)
 				}
 				m.end[k] = score

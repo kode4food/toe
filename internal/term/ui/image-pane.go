@@ -76,8 +76,8 @@ const (
 	wheelMods = tea.ModCtrl | tea.ModAlt | tea.ModSuper
 )
 
-// ErrInvalidImage reports a file that cannot be decoded as an image
 var (
+	// ErrInvalidImage reports a file that cannot be decoded as an image
 	ErrInvalidImage = errors.New("invalid image")
 )
 

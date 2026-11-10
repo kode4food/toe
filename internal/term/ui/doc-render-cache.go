@@ -20,8 +20,8 @@ type (
 		docCaches map[view.DocumentId]*docRenderCache
 
 		stylesKey styleKey
-		styles    docStyleSet
-		stylesDim docStyleSet
+		styleGen  int
+		styleSets map[styleSetKey]docStyleSet
 
 		viewRowMaps     map[view.Id][]viewRowEntry
 		viewAnnotations map[view.Id][]inlineAnnotation
@@ -44,6 +44,11 @@ type (
 	styleKey struct {
 		gen  int
 		mode view.Mode
+	}
+
+	styleSetKey struct {
+		mode    view.Mode
+		focused bool
 	}
 
 	// docStyleSet bundles a theme's derived style tables so a focused and a
@@ -161,7 +166,24 @@ func newRenderCache() *renderCache {
 		viewRowMaps:     map[view.Id][]viewRowEntry{},
 		viewAnnotations: map[view.Id][]inlineAnnotation{},
 		viewScrollbars:  map[view.Id]*viewScrollbar{},
+		styleSets:       map[styleSetKey]docStyleSet{},
 	}
+}
+
+// styleSet returns the derived styles for a pane's own mode and focus,
+// rebuilding every variant when the theme changes
+func (r *renderCache) styleSet(cx *Context, key styleSetKey) docStyleSet {
+	th := cx.ThemeFor(key.focused)
+	if gen := cx.StyleGen(); r.styleGen != gen {
+		r.styleGen = gen
+		clear(r.styleSets)
+	}
+	if set, ok := r.styleSets[key]; ok {
+		return set
+	}
+	set := newDocStyleSet(th, key.mode)
+	r.styleSets[key] = set
+	return set
 }
 
 type ensureScrollbarArgs struct {

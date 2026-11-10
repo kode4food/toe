@@ -1479,6 +1479,26 @@ func TestDocumentHighlightAndLinkRender(t *testing.T) {
 
 		assert.NotEmpty(t, out)
 	})
+
+	t.Run("links ignore other pane's mode", func(t *testing.T) {
+		e := editorWithText(t, "hello world\n")
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		assert.NoError(t, e.SplitFocused(view.LayoutHorizontal))
+		plain := rawLineContaining(t, viewContent(m), "hello")
+
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 5, Target: "/some/path"},
+		})
+		linked := rawLineContaining(t, viewContent(m), "hello")
+		assert.NotEqual(t, plain, linked)
+
+		e.SetMode(view.ModeInsert)
+		assert.Equal(t,
+			linked, rawLineContaining(t, viewContent(m), "hello"),
+		)
+	})
 }
 
 func TestTextAnnotationRender(t *testing.T) {

@@ -107,13 +107,14 @@ func (r *renderPass) prepareContentRender(
 	})
 	searchMatches := dc.searchSpans
 	docDiagnostics := doc.Diagnostics()
+	mode := v.Mode()
 	var docHighlights []matchSpan
-	if cx.Editor.Mode() != view.ModeSelect &&
+	if mode != view.ModeSelect &&
 		r.editor.mouse.downRange == nil {
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
 	var docLinks []matchSpan
-	if cx.Editor.Mode() == view.ModeNormal {
+	if mode == view.ModeNormal {
 		docLinks = documentLinkSpans(doc.DocumentLinks())
 	}
 	var colors []view.DocumentColor
@@ -127,19 +128,7 @@ func (r *renderPass) prepareContentRender(
 		}
 	}
 
-	// styles rebuilt only when theme or mode changes
-	th := cx.Theme()
-	mode := cx.Editor.Mode()
-	key := styleKey{gen: cx.StyleGen(), mode: mode}
-	if c.stylesKey != key {
-		c.stylesKey = key
-		c.styles = newDocStyleSet(th, mode)
-		c.stylesDim = newDocStyleSet(cx.ThemeFor(false), mode)
-	}
-	set := c.styles
-	if !target.focused {
-		set = c.stylesDim
-	}
+	set := c.styleSet(cx, styleSetKey{mode: mode, focused: target.focused})
 	styles := set.styles
 	highlight := func(scope string) tui.Style {
 		if st, ok := set.hlCache[scope]; ok {
@@ -152,7 +141,7 @@ func (r *renderPass) prepareContentRender(
 
 	diagnostics := diagnosticSpans(docDiagnostics, styles)
 	annotations := c.viewAnnotations[v.ID()][:0]
-	if cx.Editor.Mode() == view.ModeNormal {
+	if mode == view.ModeNormal {
 		annotations = append(
 			annotations,
 			inlayHintAnnotations(doc.InlayHints(v.ID()), styles)...,
@@ -164,14 +153,14 @@ func (r *renderPass) prepareContentRender(
 	})
 	c.viewAnnotations[v.ID()] = annotations
 
-	cursorKind := opts.CursorShapeForMode(cx.Editor.Mode())
+	cursorKind := opts.CursorShapeForMode(mode)
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.editor.focused &&
 		target.focused
 	cursorLineEnabled := opts.CursorLine
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
 	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
-	insertMode := cx.Editor.Mode() == view.ModeInsert
+	insertMode := mode == view.ModeInsert
 
 	format := doc.TextFormatForConfig(
 		target.area.Width-gutterW, cx.Editor.Options(),
@@ -243,7 +232,7 @@ func (r *renderPass) prepareContentRender(
 		cursorLine:    cursorLine,
 		softWrap:      softWrap,
 		cursorIsBlock: cursorIsBlock,
-		mode:          cx.Editor.Mode(),
+		mode:          mode,
 		colStart:      hOff,
 		colWidth:      format.ViewportWidth,
 	}

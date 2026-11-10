@@ -203,6 +203,7 @@ func (r *renderPass) needsFullRedraw(cache *renderCache) bool {
 
 	key := styleKey{gen: cx.StyleGen(), mode: cx.Editor.Mode()}
 	if cache.stylesKey != key {
+		cache.stylesKey = key
 		force = true
 	}
 

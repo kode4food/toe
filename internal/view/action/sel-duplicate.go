@@ -10,8 +10,7 @@ func CopyOnNextLine(e *view.Editor) {
 	copySelectionOnLine(e, true)
 }
 
-// CopyOnPrevLine duplicates each selection range to the same column on the previous line (count
-// times)
+// CopyOnPrevLine duplicates each selection at the same column on the previous line, count times
 func CopyOnPrevLine(e *view.Editor) {
 	copySelectionOnLine(e, false)
 }

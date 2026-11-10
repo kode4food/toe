@@ -234,9 +234,8 @@ func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	}
 }
 
-// OptionValueCompleter completes an option's value, dispatching to the completer registered against
-// the option named by the already-parsed first positional argument (e.g. the key in "set <key>
-// <value>")
+// OptionValueCompleter completes an option's value via the completer registered for the option
+// named by the already-parsed first positional argument (e.g. the key in "set <key> <value>")
 func (r *Registry) OptionValueCompleter() CompletionFunc {
 	return func(e *view.Editor, args *Args, input string) []Completion {
 		key, ok := args.Get(0)

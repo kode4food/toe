@@ -7,8 +7,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// RotateSelectionsForward rotates the primary selection index forward by count steps (wrapping
-// around)
+// RotateSelectionsForward advances the primary selection index by count, wrapping around
 func RotateSelectionsForward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -31,8 +30,7 @@ func RotateSelectionsForward(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-// RotateSelectionsBackward rotates the primary selection index backward by count steps (wrapping
-// around)
+// RotateSelectionsBackward moves the primary selection index back by count, wrapping around
 func RotateSelectionsBackward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

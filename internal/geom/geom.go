@@ -45,8 +45,7 @@ func (s Size) Contains(p Point) bool {
 	return p.X >= 0 && p.Y >= 0 && p.X < s.Width && p.Y < s.Height
 }
 
-// Clamp returns p pinned to the last valid cell of the Size, i.e. into the range [0, Width-1] x [0,
-// Height-1]
+// Clamp pins p to the Size's last valid cell, i.e. into [0, Width-1] x [0, Height-1]
 func (s Size) Clamp(p Point) Point {
 	return Point{
 		X: min(max(p.X, 0), max(s.Width-1, 0)),

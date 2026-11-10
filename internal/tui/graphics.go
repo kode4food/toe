@@ -57,8 +57,7 @@ const (
 	ModifierCrossedOut Modifier = 0b0001_0000_0000
 )
 
-// indices below 16 are terminal-configurable, so their nominal values are not reliable match
-// targets
+// indices below 16 are terminal-configurable, so nominal values are unreliable match targets
 const (
 	paletteFirst = 16
 	paletteSize  = 256

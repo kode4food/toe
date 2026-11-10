@@ -89,8 +89,7 @@ func (t *Theme) Name() string {
 	return t.name
 }
 
-// Dimmed returns a copy of the theme with every style darkened by pct, for rendering unfocused
-// panes
+// Dimmed returns a copy of the theme with every style darkened by pct, for unfocused panes
 func (t *Theme) Dimmed(pct int) *Theme {
 	if pct >= 100 {
 		return t

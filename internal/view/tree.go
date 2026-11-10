@@ -175,8 +175,7 @@ func (t *Tree) ReplacePane(id Id, p Pane) {
 }
 
 // DisplacePane swaps the pane at id for p, stashing the displaced pane on the node so RevertPane
-// can bring it back when p closes. The oldest entry is discarded once the stack exceeds
-// maxPaneHistory
+// can restore it when p closes. The oldest entry drops once the stack exceeds maxPaneHistory
 func (t *Tree) DisplacePane(id Id, p Pane) {
 	n, ok := t.nodes[id]
 	if !ok || n.pane == nil {
@@ -209,8 +208,7 @@ func (t *Tree) RevertPane(id Id) bool {
 	return true
 }
 
-// DiscardHistory discards every pane stashed behind id, for when the slot is vacated without
-// reverting
+// DiscardHistory drops every pane stashed behind id, for a slot vacated without reverting
 func (t *Tree) DiscardHistory(id Id) {
 	n, ok := t.nodes[id]
 	if !ok {

@@ -20,9 +20,8 @@ type jumplistPickerSource struct {
 //go:embed i18n/jumplist.*.json
 var jumplistFS embed.FS
 
-// JumplistModule returns the jumplist picker command. It is registered separately from CursorModule
-// so its position in the space-leader menu can be controlled independently of the cursor-motion
-// commands
+// JumplistModule returns the jumplist picker command. It registers apart from CursorModule so
+// its space-leader menu position is independent of the cursor-motion commands
 func JumplistModule(model ui.Model) command.Module {
 	return command.Module{
 		Translations: i18n.LoadTranslations(jumplistFS),

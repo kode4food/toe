@@ -30,9 +30,8 @@ type (
 		Mods KeyModifiers
 	}
 
-	// Continuation is called with subsequent keys while an action is in progress. Its result tells
-	// the key-entry UI how the interaction moved. ContinuationStay with nil retains the current
-	// callback
+	// Continuation receives keys while an action runs. Its result tells the key-entry UI how the
+	// interaction moved. ContinuationStay with nil keeps the current callback
 	Continuation func(*view.Editor, KeyEvent) (Continuation, Transition)
 
 	// Transition describes how an interaction handled a key

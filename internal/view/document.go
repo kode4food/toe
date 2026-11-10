@@ -139,8 +139,7 @@ const (
 	ExternalStateMissing                      // backing file absent on restore
 )
 
-// RestoreCursor reports whether the next exit from insert mode should move the cursor back by one
-// grapheme
+// RestoreCursor reports whether leaving insert mode should move the cursor back one grapheme
 func (d *Document) RestoreCursor() bool {
 	return d.views.restoreCursor
 }
@@ -314,8 +313,7 @@ func (d *Document) SetDisplayName(name string) {
 	d.content.Unlock()
 }
 
-// RelativeName returns the path relative to basedir, or the display name when no file backs the
-// document
+// RelativeName returns the path relative to basedir, or the display name if no file backs it
 func (d *Document) RelativeName(basedir string) string {
 	path := d.Path()
 	if path == "" {

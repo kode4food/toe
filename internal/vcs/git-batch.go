@@ -12,8 +12,7 @@ import (
 )
 
 type (
-	// blobs are keyed by object id, which addresses their content, so a cached blob never goes
-	// stale
+	// blobs are keyed by object id, which addresses content, so cached blobs never go stale
 	gitRepo struct {
 		root  string
 		index string

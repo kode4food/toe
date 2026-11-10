@@ -19,8 +19,7 @@ func GotoLastAccessedFile(e *view.Editor) {
 	}
 }
 
-// GotoLastModifiedFile switches focus to the most recently modified document that is not currently
-// focused
+// GotoLastModifiedFile focuses the most recently modified document other than the current one
 func GotoLastModifiedFile(e *view.Editor) {
 	curDID := view.InvalidDocumentId
 	if v := e.FocusedView(); v != nil {

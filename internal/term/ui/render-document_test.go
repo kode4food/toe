@@ -35,8 +35,7 @@ const (
 
 	borkGoSrc = "package main\n\nvar x Bork\n"
 
-	// long enough to soft-wrap, and enough lines to widen the gutter past a one-line scratch
-	// buffer's
+	// long enough to soft-wrap, and enough lines to outgrow a one-line scratch buffer's gutter
 	splitPaneProse = "some fairly long prose line that has to wrap\n"
 )
 

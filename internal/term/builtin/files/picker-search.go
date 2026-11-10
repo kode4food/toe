@@ -33,8 +33,7 @@ type (
 	}
 )
 
-// NewGlobalSearchPicker opens a picker that searches file contents in the workspace as the query is
-// typed
+// NewGlobalSearchPicker opens a picker searching workspace file contents as the query is typed
 func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &globalSearchSource{
 		Editor: e,

@@ -21,15 +21,13 @@ type (
 		blank   []Cell
 	}
 
-	// Frame is an immutable snapshot of a Buffer, written to the terminal by the Screen that took
-	// it
+	// Frame is an immutable Buffer snapshot, written to the terminal by the Screen that took it
 	Frame struct {
 		screen *Screen
 		buf    Buffer
 	}
 
-	// scrollMatch is a run of new rows top..bottom that equal the previous frame's rows shifted by
-	// shift
+	// scrollMatch is a run of new rows top..bottom matching previous frame's rows shifted by shift
 	scrollMatch struct {
 		top    int
 		bottom int

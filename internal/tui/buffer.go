@@ -11,8 +11,7 @@ type (
 		Skip   bool
 	}
 
-	// Buffer is a fixed-size grid of cells the renderer draws into and diffs against the previous
-	// frame
+	// Buffer is a fixed-size cell grid the renderer draws into and diffs against the previous frame
 	Buffer struct {
 		cells       []Cell
 		lastANSILen int

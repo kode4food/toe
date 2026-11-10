@@ -179,8 +179,7 @@ func (v *View) ContentHeight() int {
 	return max(v.area.Height-viewStatusRows, 0)
 }
 
-// ContentWidth returns the view's columns for text, excluding its gutter, as last reported by the
-// renderer
+// ContentWidth returns the view's text columns, sans gutter, as last reported by the renderer
 func (v *View) ContentWidth() int {
 	return v.contentWidth
 }
@@ -319,9 +318,8 @@ func (v *View) PushJump(docID DocumentId, anchor int, sel core.Selection) {
 	v.jumps.Push(docID, anchor, sel)
 }
 
-// JumpBackward moves to the previous position in the jump list, recording the current position
-// first when there is nothing ahead of it, so a following JumpForward returns to where the jump
-// started
+// JumpBackward moves to the previous jump-list position. With nothing ahead, it first records the
+// current position, so a following JumpForward returns to where the jump started
 func (v *View) JumpBackward() (DocumentId, int, bool) {
 	if v.jumps.head == len(v.jumps.items) {
 		v.pushCurrentJump()
@@ -470,8 +468,7 @@ func (m Mode) Scope() string {
 	return modeScopes[ModeNormal]
 }
 
-// Split decomposes an ORed set of modes into its constituent single-bit values, in declaration
-// order
+// Split decomposes an ORed set of modes into single-bit values, in declaration order
 func (m Mode) Split() []Mode {
 	out := make([]Mode, 0, len(allModes))
 	for _, v := range allModes {

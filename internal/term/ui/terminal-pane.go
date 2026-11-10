@@ -368,9 +368,8 @@ func (t *TerminalPane) IngestOutput(data []byte) {
 	t.notify()
 }
 
-// ConsumeBell reports whether the bell has rung since it was last consumed. A rung bell only clears
-// when read while focused, so it stays visible in the status line until the pane is actually looked
-// at
+// ConsumeBell reports whether the bell rang since it was last consumed. A rung bell clears only
+// when read while focused, so it stays on the status line until the pane is viewed
 func (t *TerminalPane) ConsumeBell(focused bool) bool {
 	t.metadata.Lock()
 	defer t.metadata.Unlock()

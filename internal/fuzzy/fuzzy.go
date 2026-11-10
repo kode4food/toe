@@ -8,8 +8,7 @@ import (
 )
 
 type (
-	// Result is a match's rank against a pattern, and the rune offsets in the matched text to
-	// highlight
+	// Result is a match's rank against a pattern, plus the rune offsets to highlight in the text
 	Result struct {
 		Score   int
 		Indices []int

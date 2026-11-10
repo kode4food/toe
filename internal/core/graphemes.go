@@ -107,8 +107,7 @@ func NextGraphemeBoundary(doc Rope, charIdx int) int {
 	})
 }
 
-// EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary if it is not already on
-// one
+// EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary, unless already on one
 func EnsureGraphemeBoundaryNext(doc Rope, charIdx int) int {
 	if charIdx == 0 {
 		return charIdx

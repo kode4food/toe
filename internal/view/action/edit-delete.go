@@ -90,8 +90,7 @@ func DeleteWordBackward(e *view.Editor) {
 	})
 }
 
-// DeleteWordForward deletes from the cursor to the end of the next word, for use in insert mode
-// (A-d)
+// DeleteWordForward deletes from the cursor to the end of the next word, for insert mode (A-d)
 func DeleteWordForward(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

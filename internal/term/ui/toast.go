@@ -300,8 +300,7 @@ func (ec *EditorComponent) dismissToastAt(at geom.Point) bool {
 	return true
 }
 
-// draws the queued messages as one popup in the bottom-right corner, its last row above the
-// statusline
+// renderToasts draws queued messages as one bottom-right popup, last row above the statusline
 func (r *renderPass) renderToasts(buf *tui.Buffer) {
 	items := r.editor.toasts.items
 	if len(items) == 0 {

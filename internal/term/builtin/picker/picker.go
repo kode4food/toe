@@ -31,8 +31,7 @@ const (
 //go:embed i18n/picker.*.json
 var pickerFS embed.FS
 
-// Module returns the generic, concern-independent pickers: the command palette and
-// reopen-last-picker
+// Module returns the generic, concern-independent pickers: command palette and reopen-last-picker
 func Module(model ui.Model) command.Module {
 	cfg := new(section)
 
@@ -97,8 +96,7 @@ func scalesOption(model ui.Model) command.Option {
 	)
 }
 
-// a keyed map of floats behind a private option prefix, so each entry saves and restores with the
-// session
+// a keyed float map behind a private option prefix, so entries save and restore with the session
 func floatMapOption(
 	prefix string, get func() map[string]float64, set func(string, float64),
 ) command.Option {

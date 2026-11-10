@@ -7,8 +7,7 @@ import (
 )
 
 type (
-	// Separator describes the position and extent of the gap between two adjacent split panes in a
-	// container
+	// Separator is the gap between two adjacent split panes: its position and extent
 	Separator struct {
 		Layout Layout
 		geom.Area

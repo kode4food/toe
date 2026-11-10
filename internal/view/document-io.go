@@ -13,9 +13,8 @@ type saveTarget struct {
 	dir  string
 }
 
-// Save writes the document to its current path. Unless force is set, it refuses an unsafe overwrite
-// (changed on disk, or read-only). A log has no path of its own, so it can only be copied out with
-// WriteCopy
+// Save writes the document to its current path. Without force, it refuses an unsafe overwrite
+// (changed on disk, or read-only). A log has no path, so only WriteCopy can copy it out
 func (d *Document) Save(opts *Options, force bool) error {
 	if !d.Loaded() {
 		return nil

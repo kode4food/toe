@@ -8,9 +8,8 @@ const (
 	TextObjectInside
 )
 
-// TextObjectWord selects the word under or adjacent to the cursor long=true uses long-word (WORD)
-// semantics: only whitespace is a boundary around=TextObjectAround includes trailing (or leading)
-// whitespace
+// TextObjectWord selects the word under or adjacent to the cursor long=true uses WORD semantics:
+// only whitespace is a boundary around=TextObjectAround includes trailing (or leading) whitespace
 func TextObjectWord(doc Rope, r Range, kind TextObjectKind, long bool) Range {
 	pos := r.Cursor(doc)
 	start := wordBoundaryBackward(doc, pos, long)

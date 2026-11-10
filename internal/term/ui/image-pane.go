@@ -140,9 +140,8 @@ func (i *Image) ContentID() uint32 {
 	return i.id
 }
 
-// HandleEvent handles image mouse input: a left click zooms in, a right or modified left click
-// zooms out, a bare wheel pans, and a modified wheel zooms. Everything else falls through to the
-// editor
+// HandleEvent handles image mouse input: left click zooms in, right or modified left click zooms
+// out, bare wheel pans, modified wheel zooms. Other input falls through to the editor
 func (p *ImagePane) HandleEvent(cx *Context, msg tea.Msg) (EventResult, bool) {
 	switch m := msg.(type) {
 	case tea.MouseClickMsg:
@@ -247,8 +246,7 @@ func (p *ImagePane) Image() *Image {
 	return p.image
 }
 
-// OnDisplace drops the decoded bitmap while the pane is stashed behind another pane, freeing its
-// memory
+// OnDisplace drops the decoded bitmap while the pane is stashed, freeing its memory
 func (p *ImagePane) OnDisplace() {
 	p.image = nil
 }

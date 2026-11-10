@@ -52,8 +52,7 @@ var (
 	//go:embed translations/*.json
 	translationFS embed.FS
 
-	// localeRE extracts the locale from a translation file's basename, as in the "de" of
-	// "i18n/config.de.json"
+	// localeRE extracts the locale from a translation basename, e.g. "de" in "config.de.json"
 	localeRE = regexp.MustCompile(`(?:^|[/.])([^./]+)\.json$`)
 
 	messages = store{

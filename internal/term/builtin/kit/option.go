@@ -32,8 +32,7 @@ func IntOr(p *int, def int) int {
 	return *p
 }
 
-// EditorNullableIntOption builds an option over a nullable int editor value, reporting dflt when
-// unset
+// EditorNullableIntOption builds an option over a nullable editor value, reporting dflt when unset
 func EditorNullableIntOption(
 	key string, dflt int, get EditorGetter[*int], set EditorSetter[*int],
 ) command.Option {

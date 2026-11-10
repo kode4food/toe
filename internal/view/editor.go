@@ -69,8 +69,7 @@ type (
 	// PaneRestorer rebuilds a leaf pane of a given session kind from its persisted state
 	PaneRestorer func(*Editor, *PaneSession) (Pane, error)
 
-	// BaseOptionsLoader resolves the option values in effect once config and init files have been
-	// applied
+	// BaseOptionsLoader resolves option values once config and init files are applied
 	BaseOptionsLoader func() map[string]string
 
 	// PaneSession exposes module-owned state for a restored pane
@@ -196,8 +195,7 @@ func (e *Editor) ReloadConfig() error {
 	return err
 }
 
-// Languages returns the registry that documents and editing actions resolve language definitions
-// through
+// Languages returns the registry documents and editing actions use to resolve language definitions
 func (e *Editor) Languages() *language.Registry {
 	return e.languages
 }

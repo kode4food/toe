@@ -44,8 +44,7 @@ type (
 // it separates without competing with the text
 const dividerBlendPct = 35
 
-// statusEdges is the glyph set for each configured shape; every one but the plain line needs a nerd
-// font
+// statusEdges is the glyph set per configured shape; all but the plain line need a nerd font
 var statusEdges = map[view.StatusLineEdges]statusEdge{
 	view.StatusLineEdgesArrow: {
 		solidRight: "\ue0b0", // '' - nf-pl-left_hard_divider

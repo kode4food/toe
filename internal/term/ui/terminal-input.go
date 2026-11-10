@@ -17,8 +17,7 @@ type terminalDragScrollMsg struct {
 	toLow     bool
 }
 
-// CloseAllTerminalPanes kills every open terminal's shell so the process does not orphan them on
-// exit
+// CloseAllTerminalPanes kills every open terminal shell so none are orphaned on exit
 func CloseAllTerminalPanes(e *view.Editor) {
 	e.Tree().Range(func(p view.Pane) bool {
 		p.Shutdown()

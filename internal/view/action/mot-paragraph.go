@@ -48,8 +48,7 @@ func GotoNextParagraph(e *view.Editor) {
 	})
 }
 
-// GotoPrevParagraph moves (or extends in select mode) each cursor to the start of the previous
-// paragraph
+// GotoPrevParagraph moves each cursor to the previous paragraph start, extending in select mode
 func GotoPrevParagraph(e *view.Editor) {
 	e.SetLastMotion(GotoPrevParagraph)
 	n := e.CountOr(1)

@@ -1,7 +1,6 @@
 package core
 
-// FindNthChar finds the position of the nth matching character, starting from pos in the given
-// direction
+// FindNthChar finds the nth matching character from pos in the given direction
 func (r Rope) FindNthChar(n int, match rune, pos int, dir Direction) (int, bool) {
 	if n == 0 {
 		return 0, false

@@ -157,14 +157,12 @@ func MoveLineEnd(e *view.Editor) {
 	moveLineEnd(e, false)
 }
 
-// MoveLineNonWhitespace moves all cursors to the first non-whitespace character of their current
-// line
+// MoveLineNonWhitespace moves all cursors to the first non-whitespace char on their line
 func MoveLineNonWhitespace(e *view.Editor) {
 	moveToNonWhitespace(e, e.Mode() == view.ModeSelect)
 }
 
-// ExtendToNonWhitespace extends the selection to the first non-whitespace character on the current
-// line
+// ExtendToNonWhitespace extends the selection to the first non-whitespace char on the line
 func ExtendToNonWhitespace(e *view.Editor) {
 	moveToNonWhitespace(e, true)
 }
@@ -188,9 +186,8 @@ func GotoLine(e *view.Editor, n int) {
 	GotoPosition(e, core.Position{Line: n})
 }
 
-// GotoPosition moves (or extends in select mode) the cursor to a 1-based line and column. A Col <=
-// 1 lands on the line start, otherwise the cursor is clamped to the line end. A Line <= 0 is a
-// no-op
+// GotoPosition moves (or extends in select mode) the cursor to a 1-based line and column. Col <= 1
+// lands on the line start, otherwise clamps to the line end. Line <= 0 is a no-op
 func GotoPosition(e *view.Editor, at core.Position) {
 	if at.Line <= 0 {
 		return

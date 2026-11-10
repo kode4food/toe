@@ -82,8 +82,7 @@ func SurroundDelete(e *view.Editor, ch rune) {
 	}
 }
 
-// SurroundDeleteAt deletes the brackets at flat [open, close, ...] positions and switches to normal
-// mode
+// SurroundDeleteAt deletes brackets at flat [open, close, ...] positions and enters normal mode
 func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	slices.Sort(positions)
 	rawChanges := make([]core.Change, len(positions))

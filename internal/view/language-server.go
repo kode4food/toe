@@ -189,8 +189,7 @@ var (
 	// configured language server
 	ErrWorkspaceCommand = errors.New("workspace command unavailable")
 
-	// ErrFormatSelection reports that range formatting cannot be performed for the current
-	// selection
+	// ErrFormatSelection reports that range formatting cannot run on the current selection
 	ErrFormatSelection = errors.New("format selection unsupported")
 )
 

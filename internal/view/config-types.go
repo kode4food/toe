@@ -48,8 +48,7 @@ type (
 	// BufferLine is when the buffer line is shown
 	BufferLine string
 
-	// Whitespace is how invisible characters are drawn: which kinds render, and the glyph each one
-	// uses
+	// Whitespace sets which invisible characters render, and the glyph each one uses
 	Whitespace struct {
 		Render     WhitespaceRender     `toml:"render"`
 		Characters WhitespaceCharacters `toml:"characters"`
@@ -84,9 +83,8 @@ type (
 		SkipLevels *int   `toml:"skip-levels"`
 	}
 
-	// Gutter controls which gutters are shown and in what order. In TOML it can be an array of type
-	// strings or a table with layout/line-numbers. Present tracks whether the config was explicitly
-	// set
+	// Gutter sets which gutters show and their order. TOML may be an array of type strings or a
+	// table with layout/line-numbers. Present tracks whether it was explicitly set
 	Gutter struct {
 		Present     bool
 		Layout      []GutterType      `toml:"layout"`

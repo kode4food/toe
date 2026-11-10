@@ -39,8 +39,7 @@ func (t Transaction) Invert(original Rope) (Transaction, error) {
 	return Transaction{changes: cs}, nil
 }
 
-// Compose returns a transaction equivalent to applying this one then other, keeping other's
-// selection
+// Compose returns one transaction equal to this one followed by other, keeping other's selection
 func (t Transaction) Compose(other Transaction) (Transaction, error) {
 	cs, err := t.changes.Compose(other.changes)
 	if err != nil {

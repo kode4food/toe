@@ -70,8 +70,7 @@ func (r Rope) Slice(s Span) (Rope, error) {
 	return Rope{root: splitRopeNode(rest, s.Len()).left}, nil
 }
 
-// SliceString returns the substring the span covers without constructing a new rope. Faster than
-// Slice(s).String()
+// SliceString returns the span's substring without a new rope. Faster than Slice(s).String()
 func (r Rope) SliceString(s Span) (string, error) {
 	if err := r.checkSpan(s); err != nil {
 		return "", err

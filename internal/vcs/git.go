@@ -96,8 +96,7 @@ func (g *Git) HeadID(path string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// ChangedFiles reports the working-tree changes for the repository containing cwd, with absolute
-// paths
+// ChangedFiles reports working-tree changes in cwd's repository, as absolute paths
 func (g *Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	repo, err := g.repo(cwd)
 	if err != nil {

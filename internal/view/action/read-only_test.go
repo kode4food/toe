@@ -15,42 +15,150 @@ func TestReadOnlyActions(t *testing.T) {
 		name string
 		fn   func(*view.Editor)
 	}{
-		{"align selections", action.AlignSelections},
-		{"change selection", action.ChangeSelection},
-		{"change no yank", action.ChangeSelectionNoYank},
-		{"delete backward", action.DeleteCharBackward},
-		{"delete forward", action.DeleteCharForward},
-		{"delete selection", action.DeleteSelection},
-		{"delete no yank", action.DeleteSelectionNoYank},
-		{"delete word backward", action.DeleteWordBackward},
-		{"delete word forward", action.DeleteWordForward},
-		{"increment", action.Increment},
-		{"decrement", action.Decrement},
-		{"indent", action.Indent},
-		{"insert char", func(e *view.Editor) { action.InsertChar(e, 'x') }},
-		{"insert newline", action.InsertNewline},
-		{"insert tab", action.InsertTab},
-		{"join", action.JoinSelections},
-		{"join space", action.JoinSelectionsSpace},
-		{"kill line end", action.KillToLineEnd},
-		{"kill line start", action.KillToLineStart},
-		{"open above", action.OpenAbove},
-		{"add newline below", action.AddNewlineBelow},
-		{"open below", action.OpenBelow},
-		{"paste after", action.PasteAfter},
-		{"paste before", action.PasteBefore},
-		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},
-		{"replace yanked", action.ReplaceWithYanked},
-		{"rotate contents backward", action.RotateContentsBackward},
-		{"rotate contents forward", action.RotateContentsForward},
-		{"insert tab", action.InsertTab},
-		{"switch case", action.SwitchCase},
-		{"lowercase", action.SwitchToLowercase},
-		{"uppercase", action.SwitchToUppercase},
-		{"toggle block comments", action.ToggleBlockComments},
-		{"toggle comments", action.ToggleComments},
-		{"toggle line comments", action.ToggleLineComments},
-		{"unindent", action.Unindent},
+		{
+			"align selections",
+			action.AlignSelections,
+		},
+		{
+			"change selection",
+			action.ChangeSelection,
+		},
+		{
+			"change no yank",
+			action.ChangeSelectionNoYank,
+		},
+		{
+			"delete backward",
+			action.DeleteCharBackward,
+		},
+		{
+			"delete forward",
+			action.DeleteCharForward,
+		},
+		{
+			"delete selection",
+			action.DeleteSelection,
+		},
+		{
+			"delete no yank",
+			action.DeleteSelectionNoYank,
+		},
+		{
+			"delete word backward",
+			action.DeleteWordBackward,
+		},
+		{
+			"delete word forward",
+			action.DeleteWordForward,
+		},
+		{
+			"increment",
+			action.Increment,
+		},
+		{
+			"decrement",
+			action.Decrement,
+		},
+		{
+			"indent",
+			action.Indent,
+		},
+		{
+			"insert char",
+			func(e *view.Editor) { action.InsertChar(e, 'x') },
+		},
+		{
+			"insert newline",
+			action.InsertNewline,
+		},
+		{
+			"insert tab",
+			action.InsertTab,
+		},
+		{
+			"join",
+			action.JoinSelections,
+		},
+		{
+			"join space",
+			action.JoinSelectionsSpace,
+		},
+		{
+			"kill line end",
+			action.KillToLineEnd,
+		},
+		{
+			"kill line start",
+			action.KillToLineStart,
+		},
+		{
+			"open above",
+			action.OpenAbove,
+		},
+		{
+			"add newline below",
+			action.AddNewlineBelow,
+		},
+		{
+			"open below",
+			action.OpenBelow,
+		},
+		{
+			"paste after",
+			action.PasteAfter,
+		},
+		{
+			"paste before",
+			action.PasteBefore,
+		},
+		{
+			"replace char",
+			func(e *view.Editor) { action.ReplaceChar(e, 'x') },
+		},
+		{
+			"replace yanked",
+			action.ReplaceWithYanked,
+		},
+		{
+			"rotate contents backward",
+			action.RotateContentsBackward,
+		},
+		{
+			"rotate contents forward",
+			action.RotateContentsForward,
+		},
+		{
+			"insert tab",
+			action.InsertTab,
+		},
+		{
+			"switch case",
+			action.SwitchCase,
+		},
+		{
+			"lowercase",
+			action.SwitchToLowercase,
+		},
+		{
+			"uppercase",
+			action.SwitchToUppercase,
+		},
+		{
+			"toggle block comments",
+			action.ToggleBlockComments,
+		},
+		{
+			"toggle comments",
+			action.ToggleComments,
+		},
+		{
+			"toggle line comments",
+			action.ToggleLineComments,
+		},
+		{
+			"unindent",
+			action.Unindent,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

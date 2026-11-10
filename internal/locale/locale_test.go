@@ -49,7 +49,10 @@ func TestEnvironment(t *testing.T) {
 			lang:     "C.UTF-8",
 			expected: []locale.Locale{locale.EnUS, locale.En},
 		},
-		{name: "missing uses English", expected: []locale.Locale{locale.EnUS, locale.En}},
+		{
+			name:     "missing uses English",
+			expected: []locale.Locale{locale.EnUS, locale.En},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

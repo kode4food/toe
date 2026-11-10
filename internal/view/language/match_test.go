@@ -197,10 +197,22 @@ func TestLoadBundledLanguages(t *testing.T) {
 		}
 		assert.Equal(t,
 			map[string][]string{
-				"go":       {"go.work", "go.mod"},
-				"gomod":    {"go.work", "go.mod"},
-				"toml":     {".taplo.toml", "taplo.toml"},
-				"protobuf": {"buf.yaml", "buf.work.yaml"},
+				"go": {
+					"go.work",
+					"go.mod",
+				},
+				"gomod": {
+					"go.work",
+					"go.mod",
+				},
+				"toml": {
+					".taplo.toml",
+					"taplo.toml",
+				},
+				"protobuf": {
+					"buf.yaml",
+					"buf.work.yaml",
+				},
 				"graphql": {
 					".graphqlrc",
 					".graphqlrc.yml",
@@ -214,12 +226,32 @@ func TestLoadBundledLanguages(t *testing.T) {
 					"graphql.config.js",
 					"graphql.config.ts",
 				},
-				"javascript": {"package.json", "tsconfig.json", "jsconfig.json"},
-				"typescript": {"package.json", "tsconfig.json", "jsconfig.json"},
-				"tsx":        {"package.json", "tsconfig.json", "jsconfig.json"},
-				"markdown":   {".marksman.toml"},
-				"zig":        {"build.zig"},
-				"c":          {"compile_commands.json", "compile_flags.txt", ".clangd"},
+				"javascript": {
+					"package.json",
+					"tsconfig.json",
+					"jsconfig.json",
+				},
+				"typescript": {
+					"package.json",
+					"tsconfig.json",
+					"jsconfig.json",
+				},
+				"tsx": {
+					"package.json",
+					"tsconfig.json",
+					"jsconfig.json",
+				},
+				"markdown": {
+					".marksman.toml",
+				},
+				"zig": {
+					"build.zig",
+				},
+				"c": {
+					"compile_commands.json",
+					"compile_flags.txt",
+					".clangd",
+				},
 			},
 			roots,
 		)

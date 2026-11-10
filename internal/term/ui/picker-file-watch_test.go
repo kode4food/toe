@@ -220,14 +220,21 @@ func TestChangedFileRows(t *testing.T) {
 		wantStaged   string
 		wantUnstaged string
 	}{
-		{name: "clean"},
+		{
+			name: "clean",
+		},
 		{
 			name:         "buffer only",
 			inBuffer:     true,
 			wantRows:     1,
 			wantUnstaged: "+ buffer",
 		},
-		{name: "disk only", onDisk: true, wantRows: 1, wantUnstaged: "+ disk"},
+		{
+			name:         "disk only",
+			onDisk:       true,
+			wantRows:     1,
+			wantUnstaged: "+ disk",
+		},
 		{
 			name:         "disk and buffer",
 			onDisk:       true,
@@ -235,7 +242,12 @@ func TestChangedFileRows(t *testing.T) {
 			wantRows:     1,
 			wantUnstaged: "+ buffer",
 		},
-		{name: "staged only", staged: true, wantRows: 1, wantStaged: "+ staged"},
+		{
+			name:       "staged only",
+			staged:     true,
+			wantRows:   1,
+			wantStaged: "+ staged",
+		},
 		{
 			name:         "staged and buffer",
 			staged:       true,

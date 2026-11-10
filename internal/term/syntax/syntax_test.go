@@ -58,21 +58,66 @@ func TestTokenize(t *testing.T) {
 		lang string
 		src  string
 	}{
-		{"go", "package main\n\nfunc main() {}\n"},
-		{"bash", "#!/bin/bash\necho hello\n"},
-		{"c", "int main(void) { return 0; }\n"},
-		{"yaml", "key: value\nlist:\n  - a\n  - b\n"},
-		{"toml", "[section]\nkey = \"value\"\n"},
-		{"hcl", "resource \"x\" \"y\" {\n  name = \"z\"\n}\n"},
-		{"css", "body { color: red; }\n"},
-		{"html", "<html><body>hi</body></html>\n"},
-		{"javascript", "const f = (x) => `Hello ${x + 1}`;\n"},
-		{"typescript", "const x: number = 1;\n"},
-		{"tsx", "const El = () => <div className=\"foo\">{name}</div>;\n"},
-		{"markdown", "# Heading\n\nParagraph text.\n"},
-		{"sql", "SELECT id FROM users WHERE active = 1;\n"},
-		{"scheme", "(define (square x) (* x x))\n"},
-		{"makefile", "all: build\n\t$(CC) -o out main.c\n"},
+		{
+			"go",
+			"package main\n\nfunc main() {}\n",
+		},
+		{
+			"bash",
+			"#!/bin/bash\necho hello\n",
+		},
+		{
+			"c",
+			"int main(void) { return 0; }\n",
+		},
+		{
+			"yaml",
+			"key: value\nlist:\n  - a\n  - b\n",
+		},
+		{
+			"toml",
+			"[section]\nkey = \"value\"\n",
+		},
+		{
+			"hcl",
+			"resource \"x\" \"y\" {\n  name = \"z\"\n}\n",
+		},
+		{
+			"css",
+			"body { color: red; }\n",
+		},
+		{
+			"html",
+			"<html><body>hi</body></html>\n",
+		},
+		{
+			"javascript",
+			"const f = (x) => `Hello ${x + 1}`;\n",
+		},
+		{
+			"typescript",
+			"const x: number = 1;\n",
+		},
+		{
+			"tsx",
+			"const El = () => <div className=\"foo\">{name}</div>;\n",
+		},
+		{
+			"markdown",
+			"# Heading\n\nParagraph text.\n",
+		},
+		{
+			"sql",
+			"SELECT id FROM users WHERE active = 1;\n",
+		},
+		{
+			"scheme",
+			"(define (square x) (* x x))\n",
+		},
+		{
+			"makefile",
+			"all: build\n\t$(CC) -o out main.c\n",
+		},
 		{"diff", "diff --git a/foo.txt b/foo.txt\n" +
 			"index 000..111 100644\n--- a/foo.txt\n+++ b/foo.txt\n" +
 			"@@ -1 +1 @@\n-old\n+new\n"},

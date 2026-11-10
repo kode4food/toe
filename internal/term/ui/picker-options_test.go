@@ -14,7 +14,11 @@ func TestPickerLayoutOptions(t *testing.T) {
 		opts ui.PickerLayoutOptions
 		want float64
 	}{
-		{"defaults zero ratio", ui.PickerLayoutOptions{}, 0.5},
+		{
+			"defaults zero ratio",
+			ui.PickerLayoutOptions{},
+			0.5,
+		},
 		{
 			"clamps low ratio",
 			ui.PickerLayoutOptions{

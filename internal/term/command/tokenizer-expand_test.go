@@ -11,13 +11,34 @@ func TestExpansionDelimiters(t *testing.T) {
 		input    string
 		contains string
 	}{
-		{`%{hello}`, "hello"},
-		{`%(hello)`, "hello"},
-		{`%[hello]`, "hello"},
-		{`%<hello>`, "hello"},
-		{`%'hello'`, "hello"},
-		{`%"hello"`, "hello"},
-		{`%|hello|`, "hello"},
+		{
+			`%{hello}`,
+			"hello",
+		},
+		{
+			`%(hello)`,
+			"hello",
+		},
+		{
+			`%[hello]`,
+			"hello",
+		},
+		{
+			`%<hello>`,
+			"hello",
+		},
+		{
+			`%'hello'`,
+			"hello",
+		},
+		{
+			`%"hello"`,
+			"hello",
+		},
+		{
+			`%|hello|`,
+			"hello",
+		},
 	}
 
 	for _, tc := range cases {
@@ -34,10 +55,18 @@ func TestCommandExpansionKind(t *testing.T) {
 	cases := []struct {
 		input string
 	}{
-		{`%{var}`},
-		{`%u{0041}`},
-		{`%sh{echo hello}`},
-		{`%reg{a}`},
+		{
+			`%{var}`,
+		},
+		{
+			`%u{0041}`,
+		},
+		{
+			`%sh{echo hello}`,
+		},
+		{
+			`%reg{a}`,
+		},
 	}
 
 	for _, tc := range cases {

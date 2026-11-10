@@ -368,10 +368,25 @@ func TestStatuslineElementRegistry(t *testing.T) {
 		setup   func(t *testing.T) *view.Editor
 		want    string
 	}{
-		{element: view.StatusLineMode, want: " NOR "},
-		{element: view.StatusLineFileBaseName, setup: fileEditor, want: "note.txt"},
-		{element: view.StatusLineFileName, setup: fileEditor, want: "note.txt"},
-		{element: view.StatusLineFileAbsolutePath, setup: fileEditor, want: "note.txt"},
+		{
+			element: view.StatusLineMode,
+			want:    " NOR ",
+		},
+		{
+			element: view.StatusLineFileBaseName,
+			setup:   fileEditor,
+			want:    "note.txt",
+		},
+		{
+			element: view.StatusLineFileName,
+			setup:   fileEditor,
+			want:    "note.txt",
+		},
+		{
+			element: view.StatusLineFileAbsolutePath,
+			setup:   fileEditor,
+			want:    "note.txt",
+		},
 		{
 			element: view.StatusLineReadOnly,
 			setup: func(t *testing.T) *view.Editor {
@@ -390,8 +405,14 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			},
 			want: "\uf448",
 		},
-		{element: view.StatusLineFileEncoding, want: " utf-8 "},
-		{element: view.StatusLineFileLineEnding, want: " lf "},
+		{
+			element: view.StatusLineFileEncoding,
+			want:    " utf-8 ",
+		},
+		{
+			element: view.StatusLineFileLineEnding,
+			want:    " lf ",
+		},
 		{
 			element: view.StatusLineFileIndentStyle,
 			setup: func(t *testing.T) *view.Editor {
@@ -403,7 +424,10 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			},
 			want: " tabs ",
 		},
-		{element: view.StatusLineFileType, want: " text "},
+		{
+			element: view.StatusLineFileType,
+			want:    " text ",
+		},
 		{
 			element: view.StatusLineDiagnostics,
 			setup: func(t *testing.T) *view.Editor {
@@ -417,7 +441,10 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			},
 			want: "E:1",
 		},
-		{element: view.StatusLineSelections, want: " 1 sel "},
+		{
+			element: view.StatusLineSelections,
+			want:    " 1 sel ",
+		},
 		{
 			element: view.StatusLinePrimaryLen,
 			setup: func(t *testing.T) *view.Editor {
@@ -429,9 +456,18 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			},
 			want: " 2 ",
 		},
-		{element: view.StatusLinePosition, want: " 1:1 "},
-		{element: view.StatusLinePercent, want: "%"},
-		{element: view.StatusLineTotalLines, want: " 1 "},
+		{
+			element: view.StatusLinePosition,
+			want:    " 1:1 ",
+		},
+		{
+			element: view.StatusLinePercent,
+			want:    "%",
+		},
+		{
+			element: view.StatusLineTotalLines,
+			want:    " 1 ",
+		},
 		{
 			element: view.StatusLineVersionControl,
 			setup: func(t *testing.T) *view.Editor {

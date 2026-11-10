@@ -367,7 +367,10 @@ func (c columnPickerSource) Load() ui.PickerLoad {
 			"internal/term/ui/picker-render-with-a-very-long-name.go",
 			"non-primary columns clip before the primary one",
 		},
-	}, {Display: "second", Columns: []string{"txt", "README.md", "short"}}}
+	}, {
+		Display: "second",
+		Columns: []string{"txt", "README.md", "short"},
+	}}
 	if c.outlier {
 		items[0].Columns[0] = outlierPickerColumn
 		for range 14 {

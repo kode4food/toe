@@ -669,7 +669,9 @@ func (s *syncServer) Completion(
 				InsertText: protocol.NewOptional("Println($1)"),
 				Preselect:  protocol.NewOptional(true),
 			},
-			{Label: "Printf"},
+			{
+				Label: "Printf",
+			},
 		},
 	}, nil
 }

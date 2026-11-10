@@ -259,7 +259,11 @@ func TestCompletionComponent(t *testing.T) {
 		ctl := &completionController{
 			editor: e,
 			items: []*view.CompletionItem{
-				{Label: "Printf", Insert: "Printf", Kind: "function"},
+				{
+					Label:  "Printf",
+					Insert: "Printf",
+					Kind:   "function",
+				},
 				{
 					Label:     "Println",
 					Insert:    "Println",

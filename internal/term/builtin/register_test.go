@@ -488,10 +488,22 @@ func TestOptionCompleters(t *testing.T) {
 		cmd := km.ResolveCommand("set_option")
 		assert.NotNil(t, cmd)
 		cases := []struct{ input, want string }{
-			{input: "theme moc", want: "mocha"},
-			{input: "line-number r", want: "relative"},
-			{input: "bufferline m", want: "multiple"},
-			{input: "whitespace.render n", want: "none"},
+			{
+				input: "theme moc",
+				want:  "mocha",
+			},
+			{
+				input: "line-number r",
+				want:  "relative",
+			},
+			{
+				input: "bufferline m",
+				want:  "multiple",
+			},
+			{
+				input: "whitespace.render n",
+				want:  "none",
+			},
 			{
 				input: "statusline.left [",
 				want:  `["mode"]`,
@@ -500,8 +512,14 @@ func TestOptionCompleters(t *testing.T) {
 				input: "gutters.layout [",
 				want:  `["diagnostics"]`,
 			},
-			{input: "auto-pairs f", want: "false"},
-			{input: "rulers ", want: "[]"},
+			{
+				input: "auto-pairs f",
+				want:  "false",
+			},
+			{
+				input: "rulers ",
+				want:  "[]",
+			},
 		}
 		for _, tc := range cases {
 			t.Run(tc.input, func(t *testing.T) {

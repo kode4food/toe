@@ -70,7 +70,11 @@ func TestParseKeySequence(t *testing.T) {
 		input string
 		want  []command.KeyEvent
 	}{
-		{name: "characters", input: "g d", want: []command.KeyEvent{char('g'), char('d')}},
+		{
+			name:  "characters",
+			input: "g d",
+			want:  []command.KeyEvent{char('g'), char('d')},
+		},
 		{
 			name:  "modifiers",
 			input: "C-S-f",

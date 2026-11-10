@@ -95,7 +95,10 @@ function greet(name) {
     return msg;
 }
 `},
-		{"ruby", `:symbol\nx = :foo\ny = \"hello\"\n`},
+		{
+			"ruby",
+			`:symbol\nx = :foo\ny = \"hello\"\n`,
+		},
 		{"html", `<!DOCTYPE html>
 <html lang="en">
   <head><title>Test</title></head>
@@ -109,9 +112,18 @@ function greet(name) {
 +new line
  context
 `},
-		{"markdown", "# Heading\n\n**bold** _italic_\n\n" + "```go\npkg main\n```\n"},
-		{"yaml", "key: value\nlist:\n  - item1\n  - item2\n"},
-		{"json", `{"name": "toe", "version": 1, "active": true}`},
+		{
+			"markdown",
+			"# Heading\n\n**bold** _italic_\n\n" + "```go\npkg main\n```\n",
+		},
+		{
+			"yaml",
+			"key: value\nlist:\n  - item1\n  - item2\n",
+		},
+		{
+			"json",
+			`{"name": "toe", "version": 1, "active": true}`,
+		},
 	}
 
 	for _, tc := range cases {

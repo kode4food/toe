@@ -27,9 +27,7 @@ func TestPickerConfig(t *testing.T) {
 	t.Run("buffer picker config decodes", func(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"buffer-picker": map[string]any{"start-position": "previous"},
-			},
+			"editor": map[string]any{"buffer-picker": map[string]any{"start-position": "previous"}},
 		})
 
 		assert.NoError(t, err)
@@ -38,9 +36,7 @@ func TestPickerConfig(t *testing.T) {
 	t.Run("buffer picker rejects invalid start", func(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"buffer-picker": map[string]any{"start-position": "middle"},
-			},
+			"editor": map[string]any{"buffer-picker": map[string]any{"start-position": "middle"}},
 		})
 
 		assert.Error(t, err)
@@ -84,9 +80,7 @@ func TestPickerConfig(t *testing.T) {
 
 		err = reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
-				"picker": map[string]any{
-					"split": map[string]any{"Diagnostics": 0.65},
-				},
+				"picker": map[string]any{"split": map[string]any{"Diagnostics": 0.65}},
 			},
 		})
 

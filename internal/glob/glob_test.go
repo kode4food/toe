@@ -16,22 +16,67 @@ func TestGlob(t *testing.T) {
 			path    string
 			want    bool
 		}{
-			{name: "literal", pattern: "cmd/toe", path: "cmd/toe", want: true},
-			{name: "brace", pattern: "*.{go,mod}", path: "main.go", want: true},
-			{name: "prefix", pattern: "*/main.go", path: "cmd/toe/main.go", want: true},
-			{name: "globstar", pattern: "**/*.go", path: "a/b/main.go", want: true},
+			{
+				name:    "literal",
+				pattern: "cmd/toe",
+				path:    "cmd/toe",
+				want:    true,
+			},
+			{
+				name:    "brace",
+				pattern: "*.{go,mod}",
+				path:    "main.go",
+				want:    true,
+			},
+			{
+				name:    "prefix",
+				pattern: "*/main.go",
+				path:    "cmd/toe/main.go",
+				want:    true,
+			},
+			{
+				name:    "globstar",
+				pattern: "**/*.go",
+				path:    "a/b/main.go",
+				want:    true,
+			},
 			{
 				name:    "tail globstar",
 				pattern: "cmd/**",
 				path:    "cmd/toe/main.go",
 				want:    true,
 			},
-			{name: "globstar miss", pattern: "**/*.go", path: "a/b/main.txt"},
-			{name: "path too short", pattern: "cmd/toe/*.go", path: "cmd/toe"},
-			{name: "native", pattern: "cmd/toe/*.go", path: "cmd/toe/main.go", want: true},
-			{name: "mismatch", pattern: "cmd/*.go", path: "cmd/toe/main.go"},
-			{name: "bad pattern", pattern: "[", path: "main.go"},
-			{name: "unclosed brace", pattern: "*.{go", path: "main.go"},
+			{
+				name:    "globstar miss",
+				pattern: "**/*.go",
+				path:    "a/b/main.txt",
+			},
+			{
+				name:    "path too short",
+				pattern: "cmd/toe/*.go",
+				path:    "cmd/toe",
+			},
+			{
+				name:    "native",
+				pattern: "cmd/toe/*.go",
+				path:    "cmd/toe/main.go",
+				want:    true,
+			},
+			{
+				name:    "mismatch",
+				pattern: "cmd/*.go",
+				path:    "cmd/toe/main.go",
+			},
+			{
+				name:    "bad pattern",
+				pattern: "[",
+				path:    "main.go",
+			},
+			{
+				name:    "unclosed brace",
+				pattern: "*.{go",
+				path:    "main.go",
+			},
 		}
 
 		for _, tt := range cases {

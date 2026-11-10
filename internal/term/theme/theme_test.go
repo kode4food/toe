@@ -103,9 +103,7 @@ func TestTheme(t *testing.T) {
 
 	t.Run("underline color implies line", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"diagnostic.warning": map[string]any{
-				"underline": map[string]any{"color": "#ffaa00"},
-			},
+			"diagnostic.warning": map[string]any{"underline": map[string]any{"color": "#ffaa00"}},
 		})
 
 		style := th.Get("diagnostic.warning")
@@ -117,9 +115,7 @@ func TestTheme(t *testing.T) {
 
 	t.Run("invalid underline warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
-			"diagnostic.info": map[string]any{
-				"underline": map[string]any{"bogus": true},
-			},
+			"diagnostic.info": map[string]any{"underline": map[string]any{"bogus": true}},
 		})
 
 		assert.NotEmpty(t, warnings)
@@ -411,9 +407,7 @@ func TestModifiers(t *testing.T) {
 func TestUnderlineInvalidAttr(t *testing.T) {
 	t.Run("unknown underline attribute warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"underline": map[string]any{"thickness": "2px"},
-			},
+			"keyword": map[string]any{"underline": map[string]any{"thickness": "2px"}},
 		})
 		assert.NotEmpty(t, warnings)
 	})

@@ -351,7 +351,9 @@ func registryWithOptions(t *testing.T) *command.Registry {
 	reg := command.NewRegistry(command.NewKeymaps())
 	err := reg.RegisterModule(command.Module{
 		Options: []command.Option{
-			{Key: "scrolloff"},
+			{
+				Key: "scrolloff",
+			},
 			{
 				Key: "cursorline",
 				Toggle: func(*view.Editor) (string, error) {

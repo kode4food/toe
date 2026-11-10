@@ -101,10 +101,23 @@ func TestSession(t *testing.T) {
 		wantStaged   int
 		wantUnstaged int
 	}{
-		{name: "clean"},
-		{name: "buffer only", buffer: "buffer\n", wantUnstaged: 1},
-		{name: "edit undone", buffer: "base\n"},
-		{name: "disk only", onDisk: true, wantUnstaged: 1},
+		{
+			name: "clean",
+		},
+		{
+			name:         "buffer only",
+			buffer:       "buffer\n",
+			wantUnstaged: 1,
+		},
+		{
+			name:   "edit undone",
+			buffer: "base\n",
+		},
+		{
+			name:         "disk only",
+			onDisk:       true,
+			wantUnstaged: 1,
+		},
 		{
 			name:         "disk and buffer",
 			onDisk:       true,
@@ -117,7 +130,11 @@ func TestSession(t *testing.T) {
 			buffer:       "disk\n",
 			wantUnstaged: 1,
 		},
-		{name: "staged only", staged: true, wantStaged: 1},
+		{
+			name:       "staged only",
+			staged:     true,
+			wantStaged: 1,
+		},
 		{
 			name:         "staged and buffer",
 			staged:       true,
@@ -125,7 +142,12 @@ func TestSession(t *testing.T) {
 			wantStaged:   1,
 			wantUnstaged: 1,
 		},
-		{name: "staged edit undone", staged: true, buffer: "staged\n", wantStaged: 1},
+		{
+			name:       "staged edit undone",
+			staged:     true,
+			buffer:     "staged\n",
+			wantStaged: 1,
+		},
 		{
 			name:         "staged and disk",
 			staged:       true,

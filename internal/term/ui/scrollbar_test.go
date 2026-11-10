@@ -112,8 +112,14 @@ func TestScrollbar(t *testing.T) {
 			severity view.DiagnosticSeverity
 			hunks    []view.DiffHunk
 		}{
-			{name: "diagnostic arrives", severity: view.DiagnosticSeverityError},
-			{name: "severity changes", severity: view.DiagnosticSeverityWarning},
+			{
+				name:     "diagnostic arrives",
+				severity: view.DiagnosticSeverityError,
+			},
+			{
+				name:     "severity changes",
+				severity: view.DiagnosticSeverityWarning,
+			},
 			{
 				name:  "diff replaces diagnostic",
 				hunks: []view.DiffHunk{{From: 80, To: 100}},
@@ -127,7 +133,9 @@ func TestScrollbar(t *testing.T) {
 					To:       150,
 				}},
 			},
-			{name: "markers cleared"},
+			{
+				name: "markers cleared",
+			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				doc.ClearDiagnostics()

@@ -28,23 +28,74 @@ type (
 
 func TestFocusedDocumentGuardActions(t *testing.T) {
 	tests := []focusedDocumentActionCase{
-		{"align selections", action.AlignSelections},
-		{"append mode", action.AppendMode},
-		{"append line", action.AppendToLine},
-		{"change selection", action.ChangeSelection},
-		{"change no yank", action.ChangeSelectionNoYank},
-		{"collapse selection", action.CollapseSelection},
-		{"delete backward", action.DeleteCharBackward},
-		{"delete forward", action.DeleteCharForward},
-		{"delete selection", action.DeleteSelection},
-		{"delete no yank", action.DeleteSelectionNoYank},
-		{"delete word backward", action.DeleteWordBackward},
-		{"delete word forward", action.DeleteWordForward},
-		{"ensure forward", action.EnsureForward},
-		{"exit select", action.ExitSelectMode},
-		{"extend line below", action.ExtendLineBelow},
-		{"extend to column", action.ExtendToColumn},
-		{"extend to non whitespace", action.ExtendToNonWhitespace},
+		{
+			"align selections",
+			action.AlignSelections,
+		},
+		{
+			"append mode",
+			action.AppendMode,
+		},
+		{
+			"append line",
+			action.AppendToLine,
+		},
+		{
+			"change selection",
+			action.ChangeSelection,
+		},
+		{
+			"change no yank",
+			action.ChangeSelectionNoYank,
+		},
+		{
+			"collapse selection",
+			action.CollapseSelection,
+		},
+		{
+			"delete backward",
+			action.DeleteCharBackward,
+		},
+		{
+			"delete forward",
+			action.DeleteCharForward,
+		},
+		{
+			"delete selection",
+			action.DeleteSelection,
+		},
+		{
+			"delete no yank",
+			action.DeleteSelectionNoYank,
+		},
+		{
+			"delete word backward",
+			action.DeleteWordBackward,
+		},
+		{
+			"delete word forward",
+			action.DeleteWordForward,
+		},
+		{
+			"ensure forward",
+			action.EnsureForward,
+		},
+		{
+			"exit select",
+			action.ExitSelectMode,
+		},
+		{
+			"extend line below",
+			action.ExtendLineBelow,
+		},
+		{
+			"extend to column",
+			action.ExtendToColumn,
+		},
+		{
+			"extend to non whitespace",
+			action.ExtendToNonWhitespace,
+		},
 		{"extend search next", func(e *view.Editor) {
 			e.Registers().Write('/', []string{"a"})
 			action.ExtendSearchNext(e)
@@ -53,64 +104,229 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 			e.Registers().Write('/', []string{"a"})
 			action.ExtendSearchPrev(e)
 		}},
-		{"flip selections", action.FlipSelections},
-		{"goto file", func(e *view.Editor) { _, _ = action.GotoFileTarget(e) }},
-		{"goto line end newline", action.GotoLineEndNewline},
-		{"goto first change", action.GotoFirstChange},
-		{"goto last change", action.GotoLastChange},
-		{"goto last modification", action.GotoLastModification},
-		{"goto next change", action.GotoNextChange},
-		{"goto next paragraph", action.GotoNextParagraph},
-		{"goto prev change", action.GotoPrevChange},
-		{"goto prev paragraph", action.GotoPrevParagraph},
-		{"indent", action.Indent},
-		{"insert char", func(e *view.Editor) { action.InsertChar(e, 'x') }},
-		{"insert mode", action.InsertMode},
-		{"insert newline", action.InsertNewline},
-		{"insert line start", action.InsertAtLineStart},
-		{"insert tab", action.InsertTab},
-		{"jump backward", action.JumpBackward},
-		{"jump forward", action.JumpForward},
-		{"join", action.JoinSelections},
-		{"join space", action.JoinSelectionsSpace},
-		{"keep primary", action.KeepPrimarySelection},
-		{"kill line end", action.KillToLineEnd},
-		{"kill line start", action.KillToLineStart},
-		{"line above", action.SelectLineAbove},
-		{"line below", action.SelectLineBelow},
-		{"copy next", action.CopyOnNextLine},
-		{"copy prev", action.CopyOnPrevLine},
-		{"merge consecutive", action.MergeConsecutive},
-		{"merge selections", action.MergeSelections},
-		{"move file end", action.MoveFileEnd},
-		{"normal mode", action.NormalMode},
-		{"open above", action.OpenAbove},
-		{"add newline below", action.AddNewlineBelow},
-		{"open below", action.OpenBelow},
-		{"paste after", action.PasteAfter},
-		{"paste before", action.PasteBefore},
+		{
+			"flip selections",
+			action.FlipSelections,
+		},
+		{
+			"goto file",
+			func(e *view.Editor) { _, _ = action.GotoFileTarget(e) },
+		},
+		{
+			"goto line end newline",
+			action.GotoLineEndNewline,
+		},
+		{
+			"goto first change",
+			action.GotoFirstChange,
+		},
+		{
+			"goto last change",
+			action.GotoLastChange,
+		},
+		{
+			"goto last modification",
+			action.GotoLastModification,
+		},
+		{
+			"goto next change",
+			action.GotoNextChange,
+		},
+		{
+			"goto next paragraph",
+			action.GotoNextParagraph,
+		},
+		{
+			"goto prev change",
+			action.GotoPrevChange,
+		},
+		{
+			"goto prev paragraph",
+			action.GotoPrevParagraph,
+		},
+		{
+			"indent",
+			action.Indent,
+		},
+		{
+			"insert char",
+			func(e *view.Editor) { action.InsertChar(e, 'x') },
+		},
+		{
+			"insert mode",
+			action.InsertMode,
+		},
+		{
+			"insert newline",
+			action.InsertNewline,
+		},
+		{
+			"insert line start",
+			action.InsertAtLineStart,
+		},
+		{
+			"insert tab",
+			action.InsertTab,
+		},
+		{
+			"jump backward",
+			action.JumpBackward,
+		},
+		{
+			"jump forward",
+			action.JumpForward,
+		},
+		{
+			"join",
+			action.JoinSelections,
+		},
+		{
+			"join space",
+			action.JoinSelectionsSpace,
+		},
+		{
+			"keep primary",
+			action.KeepPrimarySelection,
+		},
+		{
+			"kill line end",
+			action.KillToLineEnd,
+		},
+		{
+			"kill line start",
+			action.KillToLineStart,
+		},
+		{
+			"line above",
+			action.SelectLineAbove,
+		},
+		{
+			"line below",
+			action.SelectLineBelow,
+		},
+		{
+			"copy next",
+			action.CopyOnNextLine,
+		},
+		{
+			"copy prev",
+			action.CopyOnPrevLine,
+		},
+		{
+			"merge consecutive",
+			action.MergeConsecutive,
+		},
+		{
+			"merge selections",
+			action.MergeSelections,
+		},
+		{
+			"move file end",
+			action.MoveFileEnd,
+		},
+		{
+			"normal mode",
+			action.NormalMode,
+		},
+		{
+			"open above",
+			action.OpenAbove,
+		},
+		{
+			"add newline below",
+			action.AddNewlineBelow,
+		},
+		{
+			"open below",
+			action.OpenBelow,
+		},
+		{
+			"paste after",
+			action.PasteAfter,
+		},
+		{
+			"paste before",
+			action.PasteBefore,
+		},
 		{"paste register", func(e *view.Editor) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
-		{"remove primary", action.RemovePrimarySelection},
-		{"repeat last motion", action.RepeatLastMotion},
-		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},
-		{"replace yanked", action.ReplaceWithYanked},
-		{"rotate contents backward", action.RotateContentsBackward},
-		{"rotate contents forward", action.RotateContentsForward},
-		{"rotate selections backward", action.RotateSelectionsBackward},
-		{"rotate selections forward", action.RotateSelectionsForward},
-		{"save selection", action.SaveSelection},
-		{"search selection", action.SearchSelection},
-		{"search selection word", action.SearchSelectionWord},
-		{"search next", action.SearchNext},
-		{"search prev", action.SearchPrev},
-		{"select all", action.SelectAll},
-		{"select mode", action.SelectMode},
-		{"shrink line bounds", action.ShrinkToLineBounds},
-		{"insert tab", action.InsertTab},
-		{"split newline", action.SplitSelectionOnNewline},
-		{"surround add", func(e *view.Editor) { action.SurroundAdd(e, '(') }},
+		{
+			"remove primary",
+			action.RemovePrimarySelection,
+		},
+		{
+			"repeat last motion",
+			action.RepeatLastMotion,
+		},
+		{
+			"replace char",
+			func(e *view.Editor) { action.ReplaceChar(e, 'x') },
+		},
+		{
+			"replace yanked",
+			action.ReplaceWithYanked,
+		},
+		{
+			"rotate contents backward",
+			action.RotateContentsBackward,
+		},
+		{
+			"rotate contents forward",
+			action.RotateContentsForward,
+		},
+		{
+			"rotate selections backward",
+			action.RotateSelectionsBackward,
+		},
+		{
+			"rotate selections forward",
+			action.RotateSelectionsForward,
+		},
+		{
+			"save selection",
+			action.SaveSelection,
+		},
+		{
+			"search selection",
+			action.SearchSelection,
+		},
+		{
+			"search selection word",
+			action.SearchSelectionWord,
+		},
+		{
+			"search next",
+			action.SearchNext,
+		},
+		{
+			"search prev",
+			action.SearchPrev,
+		},
+		{
+			"select all",
+			action.SelectAll,
+		},
+		{
+			"select mode",
+			action.SelectMode,
+		},
+		{
+			"shrink line bounds",
+			action.ShrinkToLineBounds,
+		},
+		{
+			"insert tab",
+			action.InsertTab,
+		},
+		{
+			"split newline",
+			action.SplitSelectionOnNewline,
+		},
+		{
+			"surround add",
+			func(e *view.Editor) { action.SurroundAdd(e, '(') },
+		},
 		{"surround delete", func(e *view.Editor) {
 			action.SurroundDelete(e, '(')
 		}},
@@ -121,28 +337,76 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 				Wanted:  '[',
 			})
 		}},
-		{"switch case", action.SwitchCase},
+		{
+			"switch case",
+			action.SwitchCase,
+		},
 		{"text object around", func(e *view.Editor) {
 			action.SelectTextObjectAround(e, 'w')
 		}},
 		{"text object inside", func(e *view.Editor) {
 			action.SelectTextObjectInside(e, 'w')
 		}},
-		{"lowercase", action.SwitchToLowercase},
-		{"uppercase", action.SwitchToUppercase},
-		{"toggle block comments", action.ToggleBlockComments},
-		{"toggle comments", action.ToggleComments},
-		{"toggle line comments", action.ToggleLineComments},
-		{"trim", action.TrimSelections},
-		{"unindent", action.Unindent},
-		{"increment", action.Increment},
-		{"decrement", action.Decrement},
-		{"yank", action.Yank},
-		{"yank clipboard", action.YankToClipboard},
-		{"yank main", action.YankMain},
-		{"yank primary", action.YankToPrimaryClipboard},
-		{"yank join", func(e *view.Editor) { action.YankJoin(e, ",") }},
-		{"reflow", func(e *view.Editor) { action.ReflowSelections(e, 80) }},
+		{
+			"lowercase",
+			action.SwitchToLowercase,
+		},
+		{
+			"uppercase",
+			action.SwitchToUppercase,
+		},
+		{
+			"toggle block comments",
+			action.ToggleBlockComments,
+		},
+		{
+			"toggle comments",
+			action.ToggleComments,
+		},
+		{
+			"toggle line comments",
+			action.ToggleLineComments,
+		},
+		{
+			"trim",
+			action.TrimSelections,
+		},
+		{
+			"unindent",
+			action.Unindent,
+		},
+		{
+			"increment",
+			action.Increment,
+		},
+		{
+			"decrement",
+			action.Decrement,
+		},
+		{
+			"yank",
+			action.Yank,
+		},
+		{
+			"yank clipboard",
+			action.YankToClipboard,
+		},
+		{
+			"yank main",
+			action.YankMain,
+		},
+		{
+			"yank primary",
+			action.YankToPrimaryClipboard,
+		},
+		{
+			"yank join",
+			func(e *view.Editor) { action.YankJoin(e, ",") },
+		},
+		{
+			"reflow",
+			func(e *view.Editor) { action.ReflowSelections(e, 80) },
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

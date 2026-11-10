@@ -187,7 +187,11 @@ func TestPluralLocales(t *testing.T) {
 			locale:   "fr_FR.UTF-8",
 			expected: "0 ligne copiée",
 		},
-		{name: "no zero form falls back", locale: "en_US.UTF-8", expected: "copied 0 lines"},
+		{
+			name:     "no zero form falls back",
+			locale:   "en_US.UTF-8",
+			expected: "copied 0 lines",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

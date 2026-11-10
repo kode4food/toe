@@ -59,7 +59,10 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	right := []statusElem{{
 		text:  fmt.Sprintf("%d%s%d", pixels.Width, imageSizeTimes, pixels.Height),
 		style: baseTUI,
-	}, {text: fmt.Sprintf("%d%%", args.pane.Zoom()), style: baseTUI}}
+	}, {
+		text:  fmt.Sprintf("%d%%", args.pane.Zoom()),
+		style: baseTUI,
+	}}
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    args.pane.Path(),
 		BaseDir: cx.Editor.Cwd(),

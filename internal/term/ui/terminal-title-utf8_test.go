@@ -28,14 +28,14 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 	t.Run("ascii output renders normally", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte("hello\r\n\x1b[31m"))
-		assert.Contains(t, stripANSI(m.View().Content), "hello")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
 
 	t.Run("ground-state UTF-8 passes through", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		// 日/語 contain C1-range bytes, but ground-state text is unaffected
 		tp.IngestOutput([]byte("cafe umbrella 日本語\r\n"))
-		assert.Contains(t, stripANSI(m.View().Content), "日本語")
+		assert.Contains(t, stripANSI(viewContent(m)), "日本語")
 	})
 
 	t.Run("OSC 0 title with dangerous glyph", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 			[]byte("\x1b]0;\xe2\x9c\xb3 Pick a choice\x07hello\r\n"),
 		)
 		assert.Equal(t, "✳ Pick a choice", tp.Title())
-		assert.Contains(t, stripANSI(m.View().Content), "hello")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
 
 	t.Run("OSC 2 title behaves the same as OSC 0", func(t *testing.T) {
@@ -66,38 +66,38 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 			[]byte("\x9d0;\xe2\x9c\xb3 title\x9c\xe2\x9c\xb3 after\r\n"),
 		)
 		assert.Equal(t, "✳ title", tp.Title())
-		assert.Contains(t, stripANSI(m.View().Content), "✳ after")
+		assert.Contains(t, stripANSI(viewContent(m)), "✳ after")
 	})
 
 	t.Run("glyph outside a string payload is text", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte("\xe2\x9c\xb3 done\r\n"))
-		assert.Contains(t, stripANSI(m.View().Content), "✳ done")
+		assert.Contains(t, stripANSI(viewContent(m)), "✳ done")
 	})
 
 	t.Run("non-title OSC doesn't corrupt output", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte("\x1b]9;4;0;\xe2\x9c\xb3\x07hello\r\n"))
 		assert.Equal(t, "", tp.Title())
-		assert.Contains(t, stripANSI(m.View().Content), "hello")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
 
 	t.Run("DCS payload doesn't corrupt output", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte("\x1bP\xe2\x9c\xb3\x1b\\hello\r\n"))
-		assert.Contains(t, stripANSI(m.View().Content), "hello")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
 
 	t.Run("standalone C1 byte is consumed silently", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte{'a', 0x9c, 'b'})
-		assert.Contains(t, stripANSI(m.View().Content), "ab")
+		assert.Contains(t, stripANSI(viewContent(m)), "ab")
 	})
 
 	t.Run("invalid OSC byte doesn't corrupt output", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
 		tp.IngestOutput([]byte("\x1b]9;a\xffb\x07hello\r\n"))
-		assert.Contains(t, stripANSI(m.View().Content), "hello")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello")
 	})
 
 	t.Run("title glyph split across writes", func(t *testing.T) {

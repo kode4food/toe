@@ -83,11 +83,11 @@ func BenchmarkScrollbar(b *testing.B) {
 	}
 	doc.ReplaceDiagnostics("", diags)
 	m := resize(ui.New(e, command.NewKeymaps()), 100, 40)
-	_ = m.View().Content
+	_ = viewContent(m)
 	b.ReportAllocs()
 	for b.Loop() {
 		v.MarkDirty()
-		_ = m.View().Content
+		_ = viewContent(m)
 	}
 }
 
@@ -103,7 +103,7 @@ func TestScrollbar(t *testing.T) {
 		at, err := doc.Text().LineToChar(150)
 		assert.NoError(t, err)
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 12)
-		_ = m.View().Content
+		_ = viewContent(m)
 		for _, tc := range []struct {
 			name     string
 			severity view.DiagnosticSeverity
@@ -142,9 +142,9 @@ func TestScrollbar(t *testing.T) {
 				}
 				vc.hunks = tc.hunks
 				e.FocusedView().MarkDirty()
-				out := m.View().Content
+				out := viewContent(m)
 				fresh := resize(ui.New(e, command.NewKeymaps()), 40, 12)
-				assert.Equal(t, fresh.View().Content, out)
+				assert.Equal(t, viewContent(fresh), out)
 			})
 		}
 	})
@@ -158,13 +158,13 @@ func TestScrollbar(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps())
 		for _, height := range []int{18, 10, 30, 18} {
 			m = resize(m, scrollbarWidth, height)
-			cells := scrollbarCells(t, m.View().Content, height-1)
+			cells := scrollbarCells(t, viewContent(m), height-1)
 			assert.Len(t, cells, height-1)
 			assert.Len(t, markRows(cells), 2)
 		}
 		e.Registers().Set('/', "no match")
 		v.MarkDirty()
-		cells := scrollbarCells(t, m.View().Content, 17)
+		cells := scrollbarCells(t, viewContent(m), 17)
 		assert.Equal(t, []int{0}, markRows(cells))
 	})
 
@@ -176,7 +176,7 @@ func TestScrollbar(t *testing.T) {
 		)
 		redraw := func() {
 			v.MarkDirty()
-			_ = m.View().Content
+			_ = viewContent(m)
 		}
 		e.Options().Scrollbar = false
 		redraw()
@@ -231,7 +231,7 @@ func TestScrollbar(t *testing.T) {
 					scrollbarWidth, scrollbarHeight,
 				)
 
-				cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+				cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 				assert.Subset(t, thumbRows(cells), markRows(cells))
 			})
@@ -244,7 +244,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
@@ -254,7 +254,7 @@ func TestScrollbar(t *testing.T) {
 			WithSelection(core.PointSelection(last)),
 		))
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		assert.Equal(t,
 			[]int{scrollbarRows - 2, scrollbarRows - 1}, thumbRows(cells),
@@ -276,7 +276,7 @@ func TestScrollbar(t *testing.T) {
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		marked := markRows(cells)
 		assert.Len(t, marked, 2)
@@ -304,7 +304,7 @@ func TestScrollbar(t *testing.T) {
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		marked := markRows(cells)
 		assert.Len(t, marked, 2)
@@ -326,7 +326,7 @@ func TestScrollbar(t *testing.T) {
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		glyphs := map[string]bool{}
 		for _, row := range markRows(cells) {
@@ -349,7 +349,7 @@ func TestScrollbar(t *testing.T) {
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		marked := markRows(cells)
 		assert.Len(t, marked, 4)
@@ -404,7 +404,7 @@ func TestScrollbar(t *testing.T) {
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 		marked := markRows(cells)
 		assert.Len(t, marked, 2)
@@ -417,7 +417,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		m = mouse(m, tea.MouseClickMsg{
 			X:      scrollbarWidth - 1,
@@ -425,8 +425,8 @@ func TestScrollbar(t *testing.T) {
 			Button: tea.MouseLeft,
 		})
 
-		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
-		assert.Greater(t, topVisibleLine(t, m.View().Content), 150)
+		cells := scrollbarCells(t, viewContent(m), scrollbarRows)
+		assert.Greater(t, topVisibleLine(t, viewContent(m)), 150)
 		assert.Contains(t, thumbRows(cells), scrollbarRows-1)
 	})
 
@@ -436,7 +436,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		m = mouse(m, tea.MouseClickMsg{
 			X:      scrollbarWidth - 1,
@@ -449,7 +449,7 @@ func TestScrollbar(t *testing.T) {
 			Button: tea.MouseLeft,
 		})
 
-		assert.Contains(t, firstLine(m.View().Content), "line 0")
+		assert.Contains(t, firstLine(viewContent(m)), "line 0")
 	})
 
 	t.Run("clicking the bar leaves the cursor alone", func(t *testing.T) {
@@ -458,7 +458,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		before := cursorLineOf(t, e)
 		mouse(m, tea.MouseClickMsg{
@@ -476,7 +476,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
 			click := tea.MouseClickMsg{
@@ -485,13 +485,13 @@ func TestScrollbar(t *testing.T) {
 				Button: tea.MouseLeft,
 			}
 			m = mouse(m, click)
-			clean := scrollbarCells(t, m.View().Content, scrollbarRows)
-			top := topVisibleLine(t, m.View().Content)
+			clean := scrollbarCells(t, viewContent(m), scrollbarRows)
+			top := topVisibleLine(t, viewContent(m))
 			putCursorOnLine(t, e, top)
 			markEveryLine(t, e, core.Span{From: top, To: top + scrollbarRows})
 			m = mouse(m, click)
 
-			cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+			cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 			assert.NotEmpty(t, markRows(cells))
 			assert.Subset(t, thumbRows(clean), markRows(cells))
@@ -504,7 +504,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
 			m = mouse(m, tea.MouseClickMsg{
@@ -513,7 +513,7 @@ func TestScrollbar(t *testing.T) {
 				Button: tea.MouseLeft,
 			})
 
-			cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+			cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 
 			assert.Contains(t, thumbRows(cells), row)
 		}
@@ -525,7 +525,7 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		var lengths []int
 		for range 40 {
@@ -534,7 +534,7 @@ func TestScrollbar(t *testing.T) {
 				Y:      0,
 				Button: tea.MouseWheelDown,
 			})
-			cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+			cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 			lengths = append(lengths, len(thumbRows(cells)))
 		}
 
@@ -550,11 +550,11 @@ func TestScrollbar(t *testing.T) {
 		m := resize(
 			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 		)
-		before := strings.Count(firstLine(m.View().Content), "x")
+		before := strings.Count(firstLine(viewContent(m)), "x")
 
 		e.Options().Scrollbar = true
 		e.Options().Gen++
-		after := strings.Count(firstLine(m.View().Content), "x")
+		after := strings.Count(firstLine(viewContent(m)), "x")
 
 		assert.Equal(t, before-1, after)
 	})
@@ -624,7 +624,7 @@ func scrollbarEditor(t *testing.T, lines int, bar bool) string {
 	m := resize(
 		ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 	)
-	return m.View().Content
+	return viewContent(m)
 }
 
 func numberedLines(n int) string {
@@ -685,7 +685,7 @@ func scrollbarMarkGlyph(t *testing.T, line int) string {
 	m := resize(
 		ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
 	)
-	cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+	cells := scrollbarCells(t, viewContent(m), scrollbarRows)
 	marked := markRows(cells)
 	assert.Len(t, marked, 2)
 	return string(cells[marked[1]].glyph)
@@ -693,7 +693,7 @@ func scrollbarMarkGlyph(t *testing.T, line int) string {
 
 func unfocusedScrollbarCell(t *testing.T, m ui.Model) scrollbarCell {
 	t.Helper()
-	rows := strings.Split(m.View().Content, "\n")
+	rows := strings.Split(viewContent(m), "\n")
 	assert.NotEmpty(t, rows)
 	cells := rowCells(rows[0])
 	// the left pane's bar sits just before the split divider

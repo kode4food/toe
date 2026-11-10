@@ -46,7 +46,7 @@ func TestBufferlineRender(t *testing.T) {
 		e.Options().BufferLine = view.BufferLineAlways
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotEmpty(t, out)
 	})
@@ -56,7 +56,7 @@ func TestBufferlineRender(t *testing.T) {
 		e.Options().BufferLine = view.BufferLineAlways
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "[+]")
 	})
@@ -75,7 +75,7 @@ func TestBufferlineRender(t *testing.T) {
 		e.Options().BufferLine = view.BufferLineAlways
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "a.txt")
 		assert.Contains(t, out, "b.txt")
@@ -86,7 +86,7 @@ func TestMissingFileRender(t *testing.T) {
 	t.Run("shows placeholder", func(t *testing.T) {
 		m, _ := restoreMissingFile(t)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "The file was not found.")
 		assert.Contains(t, out, "gone.txt")
@@ -96,7 +96,7 @@ func TestMissingFileRender(t *testing.T) {
 		m, e := restoreMissingFile(t)
 		action.InsertText(e, "fresh")
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "The file was not found.")
 		assert.Contains(t, out, "fresh")
@@ -170,7 +170,7 @@ func TestPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		_ = m.View().Content
+		_ = viewContent(m)
 	})
 }
 
@@ -217,7 +217,7 @@ func TestRenderCrash(t *testing.T) {
 		}
 		m = sendSpecial(m, tea.KeyEnter)
 
-		result := m.View().Content
+		result := viewContent(m)
 		if result == "" {
 			t.Errorf("iteration %d: empty render", i)
 			return
@@ -319,7 +319,7 @@ func TestInvalidThemeFallback(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().Theme = "nonexistent-theme-xyz"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := m.View().Content
+		out := viewContent(m)
 		assert.NotEmpty(t, out)
 	})
 }
@@ -338,7 +338,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[48;2;30;30;46m")
 		firstLine, _, _ := strings.Cut(out, "\n")
@@ -358,7 +358,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[38;2;205;214;244m")
 	})
@@ -382,7 +382,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[4:3m")
 	})
@@ -406,7 +406,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, stripANSI(out), "\u25cf")
 		assert.Contains(t, out, "\x1b[38;2;243;139;168m")
@@ -432,7 +432,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[38;2;243;139;168m")
 		assert.Contains(t, stripANSI(out), "unused value")
@@ -460,7 +460,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "lint: warning msg")
 	})
@@ -485,7 +485,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "info msg")
 	})
@@ -510,7 +510,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "hint msg")
 	})
@@ -538,7 +538,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "cursor warning")
 	})
@@ -571,10 +571,10 @@ func TestThemeRender(t *testing.T) {
 		}})
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		assert.Contains(t, stripANSI(m.View().Content), "unused value")
+		assert.Contains(t, stripANSI(viewContent(m)), "unused value")
 
 		docA.ClearDiagnostics()
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "unused value")
 		assert.Contains(t, out, "second file")
@@ -594,7 +594,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Rulers = []int{10}
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		marker := "\x1b[48;2;43;43;58m"
 		assert.Contains(t, out, marker)
@@ -608,7 +608,7 @@ func TestThemeRender(t *testing.T) {
 
 		e.Options().Theme = "latte"
 		m = resize(m, 40, 10)
-		assert.Contains(t, m.View().Content, "\x1b[48;2;224;226;230m")
+		assert.Contains(t, viewContent(m), "\x1b[48;2;224;226;230m")
 	})
 
 	t.Run("rulers fall back to the gray ramp", func(t *testing.T) {
@@ -626,7 +626,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().CursorLine = true
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		// nothing stays rgb, and both derived highlights clear the background
 		// rather than landing on it
@@ -637,7 +637,7 @@ func TestThemeRender(t *testing.T) {
 
 		e.Options().Theme = "latte"
 		m = resize(m, 40, 10)
-		assert.Contains(t, m.View().Content, "\x1b[48;5;253m")
+		assert.Contains(t, viewContent(m), "\x1b[48;5;253m")
 	})
 
 	// per-channel rounding sent this one to navy, nearest-match keeps it gray
@@ -649,7 +649,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "macchiato"
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.NotContains(t, out, "\x1b[48;5;17m")
 		assert.Contains(t, out, "\x1b[48;5;236m")
@@ -667,7 +667,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Rulers = []int{2}
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assertRenderedWidth(t, out, 40)
 	})
@@ -687,7 +687,7 @@ func TestThemeRender(t *testing.T) {
 		})
 		m := resize(ui.New(e, km), 40, 10)
 
-		out := stripANSI(sendKey(m, ' ').View().Content)
+		out := stripANSI(viewContent(sendKey(m, ' ')))
 
 		assert.Contains(t, out, "界")
 		assertRenderedWidth(t, out, 40)
@@ -706,7 +706,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[38;2;180;190;254m")
 		assert.Contains(t, out, "\x1b[38;2;69;71;90m")
@@ -726,7 +726,7 @@ func TestThemeRender(t *testing.T) {
 		e.Registers().Set('/', "hello")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		_ = m.View().Content
+		_ = viewContent(m)
 	})
 
 	t.Run("search preserves injected syntax", func(t *testing.T) {
@@ -748,7 +748,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		cells := styledRuneStyles(m.View().Content)
+		cells := styledRuneStyles(viewContent(m))
 
 		assert.Equal(t, "38;2;137;180;250", cells['z'].fg)
 		assert.NotEmpty(t, cells['z'].bg)
@@ -775,7 +775,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[48;2;69;71;90m")
 		assert.Contains(t, out, "\x1b[48;2;245;224;220m")
@@ -796,7 +796,7 @@ func TestThemeRender(t *testing.T) {
 		e.SetMode(view.ModeSelect)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[48;2;69;71;90m")
 	})
@@ -816,7 +816,7 @@ func TestThemeRender(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.NotContains(t, out, "\x1b[48;2;69;71;90m")
 	})
@@ -845,7 +845,7 @@ func TestThemeRender(t *testing.T) {
 		e.Options().CursorShape.Normal = view.CursorKindUnderline
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		cells := styledRunes(m.View().Content)
+		cells := styledRunes(viewContent(m))
 
 		assert.Equal(t, "48;2;88;91;112", cells['a'])
 		assert.Equal(t, "48;2;69;71;90", cells['b'])
@@ -884,7 +884,7 @@ func TestThemeRender(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		cells := styledRunes(m.View().Content)
+		cells := styledRunes(viewContent(m))
 
 		assert.NotEqual(t, "48;2;88;91;112", cells['a'])
 		assert.Equal(t, "48;2;69;71;90", cells['b'])
@@ -899,7 +899,7 @@ func TestLineContentRender(t *testing.T) {
 		e := editorWithText(t, "alpha\r\nbeta\r\ngamma")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "alpha")
 		assert.Contains(t, out, "beta")
@@ -916,7 +916,7 @@ func TestLineContentRender(t *testing.T) {
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 6)
 
-		rows := strings.Split(m.View().Content, "\n")
+		rows := strings.Split(viewContent(m), "\n")
 
 		// with the \r correctly outside the line, the cursor sits at line
 		// end and draws a cursor-styled cell, on the \r it renders nothing
@@ -927,7 +927,7 @@ func TestLineContentRender(t *testing.T) {
 		e := editorWithText(t, "héllo wörld\n日本語テスト\nend")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "héllo wörld")
 		assert.Contains(t, out, "日本語テスト")
@@ -951,12 +951,12 @@ func TestRenderAfterClose(t *testing.T) {
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "ALPHA")
 		assert.Contains(t, out, "BRAVO")
 
 		e.CloseCurrentView()
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "ALPHA")
 		assert.NotContains(t, out, "BRAVO")
@@ -984,7 +984,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 		doc.SetSelectionFor(v.ID(), sel)
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := m.View().Content
+		out := viewContent(m)
 		assert.NotEmpty(t, out)
 	})
 
@@ -1011,7 +1011,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := m.View().Content
+		out := viewContent(m)
 		assert.NotEmpty(t, out)
 	})
 
@@ -1040,7 +1040,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := m.View().Content
+		out := viewContent(m)
 		assert.NotEmpty(t, out)
 	})
 }
@@ -1072,7 +1072,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		e, _ := newGoDoc(t)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, typeColoredBork)
 	})
@@ -1086,7 +1086,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		}})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.NotContains(t, out, typeColoredBork)
 		// no distinct color escape before "Bork" means it blends into the
@@ -1103,7 +1103,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		}})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		// warning-severity diagnostics overlay an underline but don't gate
 		// the base color, so the type-yellow fg code still precedes "Bork"
@@ -1125,7 +1125,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		}})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		// occurrence-highlight background (surface2) and diagnostic
 		// underline both land on "Bork" rather than one hiding the other
@@ -1142,7 +1142,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[48;2;88;91;112mBork")
 	})
@@ -1156,7 +1156,7 @@ func TestSplitViewRender(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		e.VSplit(v.DocID())
 		e.HSplit(v.DocID())
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -1169,7 +1169,7 @@ func TestMaximizedPaneRender(t *testing.T) {
 	e.VSplit(v.DocID())
 	e.TogglePaneMaximized()
 
-	content := m.View().Content
+	content := viewContent(m)
 	out := stripANSI(content)
 
 	assert.Contains(t, out, " MAX ")
@@ -1189,7 +1189,7 @@ func TestIndentGuideRender(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -1211,7 +1211,7 @@ func TestWhitespaceRender(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "hello")
 	})
 }
@@ -1225,7 +1225,7 @@ func TestMouseDragNoop(t *testing.T) {
 			X: 10, Y: 5, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1248,7 +1248,7 @@ func TestMouseDragNoop(t *testing.T) {
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
 		m = m2.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1258,7 +1258,7 @@ func TestMouseDragNoop(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		m2, _ := m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
 		m = m2.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -1278,14 +1278,14 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		raw := m.View().Content
+		raw := viewContent(m)
 		out := stripANSI(raw)
 		assert.Contains(t, out, "hello")
 		assert.Contains(t, raw, "\x1b[48;2;36;36;52m")
 
 		e.Options().Theme = "latte"
 		m = resize(m, 80, 24)
-		assert.Contains(t, m.View().Content, "\x1b[48;2;231;233;237m")
+		assert.Contains(t, viewContent(m), "\x1b[48;2;231;233;237m")
 	})
 
 	t.Run("multi-cursor secondary column", func(t *testing.T) {
@@ -1308,7 +1308,7 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out2 := stripANSI(m.View().Content)
+		out2 := stripANSI(viewContent(m))
 		assert.Contains(t, out2, "hello")
 	})
 }
@@ -1319,7 +1319,7 @@ func TestSplitSeparatorJunctions(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		build(e)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		return stripANSI(m.View().Content)
+		return stripANSI(viewContent(m))
 	}
 
 	t.Run("left tee where right column splits", func(t *testing.T) {
@@ -1374,7 +1374,7 @@ func TestRelativeLineNumberRender(t *testing.T) {
 		testutil.SetSelection(t, e, []core.Range{core.PointRange(6)}, 0)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 10)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "    2  aa")
 		assert.Contains(t, out, "    1  bb")
@@ -1389,7 +1389,7 @@ func TestSoftWrapRender(t *testing.T) {
 		e.Options().SoftWrap.WrapIndicator = new(">> ")
 		m := resize(ui.New(e, command.NewKeymaps()), 19, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "alpha")
 		assert.Contains(t, out, ">>")
@@ -1406,7 +1406,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 				m := resize(ui.New(e, command.NewKeymaps()), 30, 8)
 				for range 2 {
 					e.FocusedView().MarkDirty()
-					out := stripANSI(m.View().Content)
+					out := stripANSI(viewContent(m))
 					assert.True(t, utf8.ValidString(out))
 					assert.Contains(t, out, "TAIL")
 				}
@@ -1429,7 +1429,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		action.MoveLineEnd(e)
 		v.SetOffset(view.Position{HorizontalOffset: 50})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1453,7 +1453,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		v.SetOffset(view.Position{HorizontalOffset: 10})
 		m := resize(ui.New(e, command.NewKeymaps()), 20, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotEmpty(t, out)
 	})
@@ -1475,7 +1475,7 @@ func TestDocumentHighlightAndLinkRender(t *testing.T) {
 		})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotEmpty(t, out)
 	})
@@ -1490,7 +1490,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		e.Options().NerdFonts = false
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 24)
 
-		raw := m.View().Content
+		raw := viewContent(m)
 		out := stripANSI(raw)
 
 		assert.Equal(t, 4, strings.Count(out, "■"))
@@ -1512,7 +1512,7 @@ func TestTextAnnotationRender(t *testing.T) {
 			e := editorWithText(t, line+strings.Repeat("x", 200)+"\n")
 			e.Options().NerdFonts = false
 			m := resize(ui.New(e, command.NewKeymaps()), 40, 6)
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 			for row := range strings.SplitSeq(out, "\n") {
 				assert.LessOrEqual(t, utf8.RuneCountInString(row), 40)
 			}
@@ -1530,7 +1530,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		e.Options().ColorSwatches = false
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "\uf0c8")
 		assert.Contains(t, out, "#f00")
@@ -1550,7 +1550,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf0c8hello: string")
 	})
@@ -1567,7 +1567,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, ": T")
 	})
@@ -1590,7 +1590,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf0c8hello")
 		assert.NotContains(t, out, ": string")
@@ -1616,14 +1616,14 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 
 		docA := e.Document(vA.DocID())
 		assert.NotNil(t, docA)
-		before := stripANSI(m.View().Content)
+		before := stripANSI(viewContent(m))
 		assert.Contains(t, before, "hello world")
 		assert.Contains(t, before, "second file")
 
 		docA.SetDocumentHighlights(vA.ID(), []view.DocumentHighlight{
 			{From: 0, To: 5},
 		})
-		after := stripANSI(m.View().Content)
+		after := stripANSI(viewContent(m))
 
 		beforeLines := strings.Split(before, "\n")
 		afterLines := strings.Split(after, "\n")
@@ -1654,10 +1654,10 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
 
-		before := m.View().Content
+		before := viewContent(m)
 
 		e.FocusNextView()
-		after := m.View().Content
+		after := viewContent(m)
 
 		assert.NotEqual(t, before, after)
 	})
@@ -1677,14 +1677,14 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 101, 30)
-		before := stripANSI(m.View().Content)
+		before := stripANSI(viewContent(m))
 		assert.Contains(t, before, "hello world")
 		assert.Contains(t, before, "second file")
 
 		// the left pane stays 50 wide from 101 to 102 columns (the right pane
 		// absorbs the vsplit remainder), yet the frame buffer reallocates
 		m = resize(m, 102, 30)
-		after := stripANSI(m.View().Content)
+		after := stripANSI(viewContent(m))
 
 		assert.Contains(t, after, "hello world")
 		assert.Contains(t, after, "second file")
@@ -1693,7 +1693,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 	t.Run("edit shows on next render", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
@@ -1704,7 +1704,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "zzz")
 	})
@@ -1718,11 +1718,11 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		m = resize(m, 100, 30)
 
 		m = sendKey(m, ' ')
-		wide := stripANSI(m.View().Content)
+		wide := stripANSI(viewContent(m))
 		assert.Contains(t, wide, "Yank selection to clipboard")
 
 		m = sendKey(m, 'w')
-		narrow := stripANSI(m.View().Content)
+		narrow := stripANSI(viewContent(m))
 
 		assert.NotContains(t, narrow, "Yank selection to clipboard")
 		assert.Contains(t, narrow, "Vertical right split")
@@ -1736,7 +1736,7 @@ func TestSearchInvalidRegex(t *testing.T) {
 		e.Registers().Write('/', []string{"["})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.NotEmpty(t, out)
 	})

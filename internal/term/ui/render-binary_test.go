@@ -31,7 +31,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.Equal(t, view.ModeBinary, pane.Mode())
 
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 10)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "BIN")
 		assert.Contains(t, out, filepath.Join("bin", "tool"))
 		assert.Contains(t, out, "256 bytes")
@@ -39,7 +39,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.Contains(t, line, "0e 0f")
 		assert.Contains(t, line, "│................│")
 		assert.NotContains(t, line, "|")
-		raw := rawLineContaining(t, m.View().Content, "00000000")
+		raw := rawLineContaining(t, viewContent(m), "00000000")
 		assert.Contains(t, raw,
 			"\x1b[38;2;69;71;90m\x1b[48;2;30;30;46m00000000",
 		)
@@ -55,7 +55,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.NoError(t, err)
 
 		m := resize(ui.New(e, command.NewKeymaps()), 50, 10)
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		line := dumpLine(lines, "00000000")
 
 		assert.Contains(t, line, "00 01 02 03 04 05 06 07")
@@ -74,7 +74,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.True(t, e.SplitPane(pane, view.LayoutVertical))
 		e.FocusPane(docID)
 
-		raw := rawLineContaining(t, m.View().Content, "00000000")
+		raw := rawLineContaining(t, viewContent(m), "00000000")
 
 		assert.Contains(t, raw, "\x1b[38;2;125;89;67m00 01")
 	})
@@ -91,7 +91,7 @@ func TestBinaryPane(t *testing.T) {
 
 		assert.NotEmpty(t,
 			dumpLine(
-				strings.Split(stripANSI(m.View().Content), "\n"),
+				strings.Split(stripANSI(viewContent(m)), "\n"),
 				"00000010",
 			))
 	})
@@ -118,7 +118,7 @@ func TestBinaryPane(t *testing.T) {
 		assert.True(t, ok)
 		assert.NotEmpty(t,
 			dumpLine(
-				strings.Split(stripANSI(nm.View().Content), "\n"),
+				strings.Split(stripANSI(viewContent(nm)), "\n"),
 				"00000010",
 			))
 	})

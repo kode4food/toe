@@ -49,7 +49,7 @@ func TestStatuslineAllElements(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 200, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "note.txt")
 		assert.Contains(t, out, "reg=a")
@@ -77,7 +77,7 @@ func TestStatuslineAltBranches(t *testing.T) {
 		opts.StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 200, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "crlf")
 		assert.Contains(t, out, "tabs")
@@ -98,7 +98,7 @@ func TestStatuslineReadOnly(t *testing.T) {
 		opts.StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf023")
 	})
@@ -120,7 +120,7 @@ func TestStatuslineDiagnostics(t *testing.T) {
 		e.Options().StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "E:1")
 		assert.Contains(t, out, "W:1")
@@ -141,7 +141,7 @@ func TestStatuslineDiagnostics(t *testing.T) {
 		e.Options().StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "I:1")
 		assert.Contains(t, out, "H:1")
@@ -156,7 +156,7 @@ func TestThemeStyleBranches(t *testing.T) {
 		e.Options().Theme = "ao"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.NotEmpty(t, out)
 	})
@@ -170,7 +170,7 @@ func TestModeColorRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[48;2;245;224;220m NOR ")
 	})
@@ -181,7 +181,7 @@ func TestStatusDividers(t *testing.T) {
 		e := mochaEditor(t)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Regexp(t, `38;2;245;224;220m(\x1b\[[^m]*m)*\x{e0b0}`, out)
 	})
@@ -194,7 +194,7 @@ func TestStatusDividers(t *testing.T) {
 		// the arrow leads the badge and carries the badge's own background
 		assert.Regexp(t,
 			`38;2;243;139;168m\x{e0b2}(\x1b\[[^m]*m)* REC q `,
-			lastLine(m.View().Content),
+			lastLine(viewContent(m)),
 		)
 	})
 
@@ -209,14 +209,14 @@ func TestStatusDividers(t *testing.T) {
 		// maximized badge's background under the recording badge's color
 		assert.Regexp(t,
 			` MAX (\x1b\[(1|22)m)*\x1b\[38;2;243;139;168m\x{e0b2}`,
-			lastLine(m.View().Content),
+			lastLine(viewContent(m)),
 		)
 	})
 
 	t.Run("right side shares one background", func(t *testing.T) {
 		m := resize(ui.New(mochaEditor(t), command.NewKeymaps()), 80, 24)
 
-		out := lastLine(m.View().Content)
+		out := lastLine(viewContent(m))
 
 		// surface0 opens the section, and the elements inside it are divided
 		// by the thin separator, blended part way from that background
@@ -232,7 +232,7 @@ func TestStatusDividers(t *testing.T) {
 
 		m = m.ExecTypable("hsplit")
 
-		rows := strings.Split(m.View().Content, "\n")
+		rows := strings.Split(viewContent(m), "\n")
 		row := rows[lineIndexWith(rows, " NOR ")]
 		// only the row background remains, and every edge is a thin divider
 		assert.NotContains(t, row, "48;2;245;224;220m")
@@ -259,7 +259,7 @@ func TestStatusDividers(t *testing.T) {
 				e.Options().StatusLine.Edges = tc.edges
 				m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-				out := lastLine(m.View().Content)
+				out := lastLine(viewContent(m))
 
 				assert.Contains(t, out, tc.solid)
 				assert.Contains(t, out, tc.thin)
@@ -272,7 +272,7 @@ func TestStatusDividers(t *testing.T) {
 		e.Options().NerdFonts = false
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(lastLine(m.View().Content))
+		out := stripANSI(lastLine(viewContent(m)))
 
 		// the color step divides the badge, a line divides the fields sharing
 		// the section background
@@ -292,7 +292,7 @@ func TestSpinnerColorRender(t *testing.T) {
 		e.SetLanguageServerController(&completionController{busy: true})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := viewContent(m)
 
 		assert.Contains(t, out, "\x1b[38;2;137;180;250m")
 	})
@@ -327,7 +327,7 @@ func TestSpinnerColorRender(t *testing.T) {
 		next, _ := m.Update(msg)
 		m = next.(ui.Model)
 
-		assert.Contains(t, stripANSI(m.View().Content), "⠋")
+		assert.Contains(t, stripANSI(viewContent(m)), "⠋")
 	})
 }
 
@@ -341,7 +341,7 @@ func TestStatuslineSpacing(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "[scratch]  ⠋ ")
 		assert.NotContains(t, out, "[scratch]   ⠋")
@@ -356,7 +356,7 @@ func TestStatuslineTotalLines(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " 1 ")
 	})
@@ -477,7 +477,7 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			e.Options().StatusLine.Right = emptySide()
 			m := resize(ui.New(e, command.NewKeymaps()), 200, 24)
 
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 
 			assert.Contains(t, out, tc.want)
 		})
@@ -497,7 +497,7 @@ func TestStatuslineEncoding(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " utf-8 ")
 	})
@@ -515,7 +515,7 @@ func TestStatuslineEncoding(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " utf-8-bom ")
 	})
@@ -538,7 +538,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		opts.StatusLine.Right = emptySide()
 		m := resize(ui.New(e, command.NewKeymaps()), 14, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " NOR ")
 		assert.Contains(t, out, "1 sel")
@@ -555,7 +555,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 7, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " 1:1 ")
 		assert.NotContains(t, out, "text")
@@ -578,7 +578,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 12, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " 1:1 ")
 		assert.NotContains(t, out, "very-long-file-name")
@@ -592,7 +592,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		e.Options().StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf448")
 	})
@@ -610,7 +610,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		e.Options().StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " 2/2 sels ")
 		assert.Contains(t, out, " 0 ")
@@ -629,7 +629,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		e.Options().StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " spaces:2 ")
 		assert.Contains(t, out, " text ")
@@ -670,14 +670,14 @@ func TestCommandlineThemeRender(t *testing.T) {
 		}))
 		m := settled(resize(ui.New(e, km), 80, 24))
 
-		prompt := sendKey(m, ':').View().Content
-		errOut := m.ExecTypable("failure").View().Content
+		prompt := viewContent(sendKey(m, ':'))
+		errOut := viewContent(m.ExecTypable("failure"))
 		m = m.ExecTypable("message")
-		msgOut := m.View().Content
+		msgOut := viewContent(m)
 		m = m.ExecTypable("empty")
-		emptyOut := m.View().Content
+		emptyOut := viewContent(m)
 		m = sendKey(m, 'x')
-		clearedOut := m.View().Content
+		clearedOut := viewContent(m)
 
 		assert.Contains(t, prompt, "\x1b[38;2;205;214;244m")
 		assert.Contains(t, errOut, "\x1b[38;2;243;139;168m")
@@ -690,12 +690,12 @@ func TestCommandlineThemeRender(t *testing.T) {
 func TestCmdlineHighlight(t *testing.T) {
 	t.Run("an interaction uses the popup", func(t *testing.T) {
 		m := builtinModel(t)
-		idle := lastLine(m.View().Content)
+		idle := lastLine(viewContent(m))
 
 		m = sendKey(m, '"')
 
 		assert.Equal(t,
-			backgrounds(idle), backgrounds(lastLine(m.View().Content)))
+			backgrounds(idle), backgrounds(lastLine(viewContent(m))))
 		assert.Equal(t, `"`, popupHead(m))
 
 		m = sendKey(m, 'a')
@@ -703,26 +703,26 @@ func TestCmdlineHighlight(t *testing.T) {
 	})
 
 	t.Run("recording badges the statusline", func(t *testing.T) {
-		idle := lastLine(builtinModel(t).View().Content)
+		idle := lastLine(viewContent(builtinModel(t)))
 
 		m := sendKey(sendKey(builtinModel(t), 'Q'), 'q')
-		recording := lastLine(m.View().Content)
+		recording := lastLine(viewContent(m))
 
 		assert.NotEqual(t, backgrounds(idle), backgrounds(recording))
 		assert.Contains(t, stripANSI(recording), "REC q")
 	})
 
 	t.Run("pending keys leave the cmdline idle", func(t *testing.T) {
-		idle := lastLine(builtinModel(t).View().Content)
-		pending := lastLine(sendKey(builtinModel(t), ' ').View().Content)
+		idle := lastLine(viewContent(builtinModel(t)))
+		pending := lastLine(viewContent(sendKey(builtinModel(t), ' ')))
 
 		assert.Equal(t, backgrounds(idle), backgrounds(pending))
 		assert.NotContains(t, stripANSI(pending), "spc")
 	})
 
 	t.Run("a count leaves the cmdline idle", func(t *testing.T) {
-		idle := lastLine(builtinModel(t).View().Content)
-		counted := lastLine(sendKey(builtinModel(t), '3').View().Content)
+		idle := lastLine(viewContent(builtinModel(t)))
+		counted := lastLine(viewContent(sendKey(builtinModel(t), '3')))
 
 		assert.Equal(t, backgrounds(idle), backgrounds(counted))
 		assert.NotContains(t, stripANSI(counted), "3")
@@ -732,11 +732,11 @@ func TestCmdlineHighlight(t *testing.T) {
 func TestStatuslineRegisterFeedback(t *testing.T) {
 	t.Run("selecting a register shows it at once", func(t *testing.T) {
 		m := builtinModel(t)
-		assert.NotContains(t, stripANSI(m.View().Content), "reg=")
+		assert.NotContains(t, stripANSI(viewContent(m)), "reg=")
 
 		m = sendKey(sendKey(m, '"'), '5')
 
-		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "reg=5")
+		assert.Contains(t, stripANSI(lastLine(viewContent(m))), "reg=5")
 	})
 
 	t.Run("one register badge, not one per pane", func(t *testing.T) {
@@ -745,7 +745,7 @@ func TestStatuslineRegisterFeedback(t *testing.T) {
 		m = sendKey(sendKey(m, ' '), 'w')
 		m = sendKey(m, 'v') // vertical split
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Equal(t, 1, strings.Count(out, "reg=5"))
 		assert.Contains(t, stripANSI(lastLine(out)), "reg=5")
@@ -755,14 +755,14 @@ func TestStatuslineRegisterFeedback(t *testing.T) {
 func TestPendingKeyPopup(t *testing.T) {
 	t.Run("continuation leaves keep their labels", func(t *testing.T) {
 		m := sendKey(builtinModel(t), 'r')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top], "Replace with new char")
 
 		m = sendKey(builtinModel(t), 'i')
 		m = sendModified(m, 'r', tea.ModCtrl)
-		lines = strings.Split(stripANSI(m.View().Content), "\n")
+		lines = strings.Split(stripANSI(viewContent(m)), "\n")
 		top = lineIndexWith(lines, "╭")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top], "Insert register")
@@ -770,7 +770,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("the title rides the top border", func(t *testing.T) {
 		m := sendKey(builtinModel(t), ' ')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "\u256d")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top], "Leader")
@@ -780,7 +780,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("an interaction wears its command's label", func(t *testing.T) {
 		m := sendKey(builtinModel(t), '"')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top], "Select register")
@@ -789,7 +789,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("interaction keeps count and choices", func(t *testing.T) {
 		m := sendKey(sendKey(sendKey(builtinModel(t), '5'), 'm'), 'r')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top], "Surround replace")
@@ -808,7 +808,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 		m = sendKey(m, '"')
 
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top+3], "a")
@@ -817,7 +817,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("static interaction help comes from trie", func(t *testing.T) {
 		m := sendKey(sendKey(sendKey(builtinModel(t), ' '), 'w'), 'r')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Equal(t, "spc w r", popupHead(m))
 		assert.Contains(t, out, "Resize split")
@@ -840,7 +840,7 @@ func TestPendingKeyPopup(t *testing.T) {
 		m = sendKey(m, '9')
 
 		assert.Equal(t, "spc w", popupHead(m))
-		assert.Contains(t, stripANSI(m.View().Content), "Close window")
+		assert.Contains(t, stripANSI(viewContent(m)), "Close window")
 	})
 
 	t.Run("wheel belongs to the menu", func(t *testing.T) {
@@ -852,12 +852,12 @@ func TestPendingKeyPopup(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(sendKey(m, ' '), 'w')
 
-		before := stripANSI(m.View().Content)
+		before := stripANSI(viewContent(m))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		off := v.Offset()
 		m = mouse(m, tea.MouseWheelMsg{Button: tea.MouseWheelDown})
-		after := stripANSI(m.View().Content)
+		after := stripANSI(viewContent(m))
 
 		assert.Equal(t, before, after)
 		assert.Equal(t, off, v.Offset())
@@ -865,7 +865,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("click follows picker dismissal", func(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 
 		m = mouse(m, tea.MouseClickMsg{
@@ -895,7 +895,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("hints sit under a rule", func(t *testing.T) {
 		m := sendKey(builtinModel(t), ' ')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "\u256d")
 		assert.GreaterOrEqual(t, top, 0)
 		assert.Contains(t, lines[top+2], "\u251c")
@@ -911,7 +911,7 @@ func TestPendingKeyPopup(t *testing.T) {
 		m = resize(m, 100, 30)
 
 		m = sendKey(m, 'd')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "\u256d")
 		assert.Equal(t, "d", popupHead(m))
 		assert.Contains(t, lines[top+2], "\u2570")
@@ -924,7 +924,7 @@ func TestPendingKeyPopup(t *testing.T) {
 		m = sendSpecial(m, tea.KeyBackspace)
 
 		assert.Equal(t, "spc", popupHead(m))
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.Contains(t, lines[top], "Leader")
 		assert.Contains(t, lines[top+3], "Window")
@@ -967,12 +967,12 @@ func TestPendingKeyPopup(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), 'm'), 'r')
 		m = sendKey(m, '(')
 		assert.Equal(t, "m r (", popupHead(m))
-		assert.Contains(t, stripANSI(m.View().Content), "Surround replace")
-		assert.NotContains(t, stripANSI(m.View().Content), "parentheses")
+		assert.Contains(t, stripANSI(viewContent(m)), "Surround replace")
+		assert.NotContains(t, stripANSI(viewContent(m)), "parentheses")
 
 		m = sendSpecial(m, tea.KeyBackspace)
 		assert.Equal(t, "m r", popupHead(m))
-		assert.Contains(t, stripANSI(m.View().Content), "parentheses")
+		assert.Contains(t, stripANSI(viewContent(m)), "parentheses")
 
 		m = sendSpecial(m, tea.KeyBackspace)
 		assert.Equal(t, "m", popupHead(m))
@@ -1003,7 +1003,7 @@ func TestPendingKeyPopup(t *testing.T) {
 	t.Run("a bare count opens the popup", func(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), '4'), '2')
 		assert.Equal(t, "42", popupHead(m))
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "╭")
 		assert.Contains(t, lines[top], i18n.Text(i18n.StatusCounted))
 
@@ -1020,7 +1020,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 		m = sendSpecial(m, tea.KeyBackspace)
 
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		assert.Equal(t, -1, lineIndexWith(lines, "╭"))
 		assert.Equal(t, -1, lineIndexWith(lines, "Leader"))
 	})
@@ -1043,7 +1043,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 	t.Run("a long menu clears the status rows", func(t *testing.T) {
 		m := sendKey(builtinModel(t), ' ')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		top := lineIndexWith(lines, "\u256d")
 		bottom := lineIndexWith(lines, "\u2570")
 		assert.GreaterOrEqual(t, top, 0)
@@ -1083,7 +1083,7 @@ func TestEditorWideBadges(t *testing.T) {
 		m = m.ExecTypable("vsplit")
 
 		lines := strings.Split(
-			strings.TrimRight(stripANSI(m.View().Content), "\n"), "\n",
+			strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n",
 		)
 		var rows int
 		for _, line := range lines {
@@ -1108,7 +1108,7 @@ func TestEditorWideBadges(t *testing.T) {
 
 		m = sendKey(sendKey(m, 'Q'), 'q')
 
-		assert.Contains(t, stripANSI(m.View().Content), "REC q")
+		assert.Contains(t, stripANSI(viewContent(m)), "REC q")
 	})
 }
 
@@ -1133,7 +1133,7 @@ func lineIndexWith(lines []string, want string) int {
 }
 
 func popupHead(m ui.Model) string {
-	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	top := lineIndexWith(lines, "╭")
 	if top < 0 || top+1 >= len(lines) {
 		return ""
@@ -1191,7 +1191,7 @@ func TestStatuslineFileStatus(t *testing.T) {
 		opts.StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "[scratch] ro *")
 	})
@@ -1206,7 +1206,7 @@ func TestStatuslineFileStatus(t *testing.T) {
 		opts.StatusLine.Right = nil
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "ro")
 		assert.NotContains(t, out, "*")

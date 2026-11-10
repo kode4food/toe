@@ -174,7 +174,7 @@ text-width = 72
 
 		assert.NotEqual(t, "bad", e.Options().Theme)
 		// the popup is a fixed width, so a long error shows only its head
-		assert.Contains(t, m.View().Content, "could not load theme")
+		assert.Contains(t, viewContent(m), "could not load theme")
 		assert.Contains(t,
 			e.MessagesDocument().Text().String(), "theme not found",
 		)
@@ -208,7 +208,7 @@ text-width = 72
 
 		m = runTypable(m, "theme")
 
-		assert.Contains(t, m.View().Content, "mocha")
+		assert.Contains(t, viewContent(m), "mocha")
 	})
 
 	t.Run("mode filters command aliases", func(t *testing.T) {
@@ -228,7 +228,7 @@ text-width = 72
 
 		m = runTypable(m, "normal-probe")
 
-		assert.NotContains(t, m.View().Content, "ran")
+		assert.NotContains(t, viewContent(m), "ran")
 	})
 }
 

@@ -116,7 +116,7 @@ func TestPickerReopen(t *testing.T) {
 
 		testutil.WriteFile(t, filepath.Join(tmp, "beta.go"), []byte("b\n"))
 		m = sendKeyAndFeed(m, 'p')
-		assert.Contains(t, stripANSI(m.View().Content), "beta.go")
+		assert.Contains(t, stripANSI(viewContent(m)), "beta.go")
 	})
 
 	t.Run("changed-files rescans unwatched", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestPickerReopen(t *testing.T) {
 			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
 		)
 		m = sendKeyAndFeed(m, 'g')
-		assert.Contains(t, stripANSI(m.View().Content), "untracked.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "untracked.txt")
 	})
 
 	t.Run("unsaved edit", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestPickerReopen(t *testing.T) {
 		m = sendKeyAndFeed(m, 'g')
 		m = sendSpecial(m, tea.KeyDown)
 		assert.Contains(t, selectedPickerLine(m), "changed.txt")
-		assert.Contains(t, stripANSI(m.View().Content), "+ first")
+		assert.Contains(t, stripANSI(viewContent(m)), "+ first")
 		m = sendSpecial(m, tea.KeyEnter)
 
 		doc := e.FocusedDocument()
@@ -202,7 +202,7 @@ func TestPickerReopen(t *testing.T) {
 		)
 		m = sendKey(m, 'g')
 		assert.Contains(t, selectedPickerLine(m), "changed.txt")
-		assert.Contains(t, stripANSI(m.View().Content), "+ second")
+		assert.Contains(t, stripANSI(viewContent(m)), "+ second")
 	})
 }
 
@@ -288,7 +288,7 @@ func TestChangedFileRows(t *testing.T) {
 			m = sendKeyAndFeed(m, 'g')
 			assert.Equal(t, tc.wantRows, pickerRowCount(m, "a.txt"))
 			if tc.wantStaged != "" {
-				assert.Contains(t, stripANSI(m.View().Content), tc.wantStaged)
+				assert.Contains(t, stripANSI(viewContent(m)), tc.wantStaged)
 			}
 			if tc.wantUnstaged == "" {
 				return
@@ -296,7 +296,7 @@ func TestChangedFileRows(t *testing.T) {
 			if tc.wantStaged != "" {
 				m = sendSpecial(m, tea.KeyDown)
 			}
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 			assert.Contains(t, out, tc.wantUnstaged)
 			if tc.onDisk && tc.inBuffer {
 				assert.NotContains(t, out, "+ disk")
@@ -324,7 +324,7 @@ func TestPickerFileWatch(t *testing.T) {
 		)
 		m = resize(m, 100, 20)
 		m = sendKeyAndFeed(m, 'p')
-		assert.Contains(t, stripANSI(m.View().Content), "alpha.go")
+		assert.Contains(t, stripANSI(viewContent(m)), "alpha.go")
 		m = sendSpecial(m, tea.KeyEscape)
 
 		beta := filepath.Join(tmp, "beta.go")
@@ -332,7 +332,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NoError(t, os.Remove(alpha))
 		m = drainFileWatch(t, m)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "beta.go")
 		assert.NotContains(t, out, "alpha.go")
 	})
@@ -360,13 +360,13 @@ func TestPickerFileWatch(t *testing.T) {
 		for _, ch := range "alpha" {
 			m = sendKey(m, ch)
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "original")
 
 		assert.NoError(t, os.WriteFile(alpha, []byte("changed\n"), 0o644))
 		m = newWatchPump(m).until(t, "changed")
 
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.NotContains(t, out, "original")
 	})
 
@@ -421,7 +421,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m = resize(m, 100, 20)
 		m = sendKey(m, 'p')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "gamma.go")
 
 		gamma := filepath.Join(tmp, "gamma.go")
@@ -511,7 +511,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m = resize(m, 100, 20)
 		m = sendKey(m, 'p')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "deep.go")
 
 		nested := filepath.Join(tmp, "pkg", "sub")
@@ -527,7 +527,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
 
 		m := changedFilePicker(t, repo)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "untracked.txt")
 
 		testutil.WriteFile(t,
@@ -542,11 +542,11 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t, filepath.Join(tmp, "alpha.txt"), []byte("a"))
 		m := explorerModel(t, tmp)
 		t.Cleanup(m.Close)
-		assert.NotContains(t, stripANSI(m.View().Content), "DELETE.txt")
+		assert.NotContains(t, stripANSI(viewContent(m)), "DELETE.txt")
 
 		testutil.WriteFile(t, filepath.Join(tmp, "DELETE.txt"), []byte("d"))
 		m = newWatchPump(m).until(t, "DELETE.txt")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		sub := strings.Index(out, "sub/")
 		del := strings.Index(out, "DELETE.txt")
 		assert.Less(t, strings.Index(out, "../"), sub)
@@ -560,7 +560,7 @@ func TestPickerFileWatch(t *testing.T) {
 
 		m, _ := changedFilesModel(t, repo)
 		m = sendKeyAndFeed(m, 'g')
-		assert.NotContains(t, stripANSI(m.View().Content), "untracked.txt")
+		assert.NotContains(t, stripANSI(viewContent(m)), "untracked.txt")
 		m = sendSpecial(m, tea.KeyEscape)
 
 		testutil.WriteFile(t,
@@ -568,7 +568,7 @@ func TestPickerFileWatch(t *testing.T) {
 		)
 		m = drainFileWatch(t, m)
 		m = sendKey(m, 'g')
-		assert.Contains(t, stripANSI(m.View().Content), "untracked.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "untracked.txt")
 	})
 
 	t.Run("selection survives changed-files update", func(t *testing.T) {
@@ -603,14 +603,14 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "Staged Changes")
 
 		// staging rewrites .git/index and leaves the working file alone
 		testutil.RunGit(t, repo, "add", "alpha.txt")
 		newWatchPump(m).until(t, "Staged Changes")
 
-		assert.Contains(t, stripANSI(m.View().Content), "alpha.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "alpha.txt")
 	})
 
 	t.Run("git state watched when disabled", func(t *testing.T) {
@@ -627,7 +627,7 @@ func TestPickerFileWatch(t *testing.T) {
 			WithInitialPicker(ui.NewChangedFilePicker)
 		t.Cleanup(m.Close)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
-		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Staged Changes")
 
 		testutil.RunGit(t, repo, "add", "alpha.txt")
 		newWatchPump(m).until(t, "Staged Changes")
@@ -643,18 +643,18 @@ func TestPickerFileWatch(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 		assert.Equal(t,
-			2, strings.Count(stripANSI(m.View().Content), "both.txt"),
+			2, strings.Count(stripANSI(viewContent(m)), "both.txt"),
 		)
 
 		testutil.WriteFile(t, path, []byte("four\n"))
 		m = drainFileWatch(t, m)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Equal(t, 2, strings.Count(out, "both.txt"))
 		// the staged row holds the selection, so its preview is unmoved
 		assert.Contains(t, out, "+ two")
 
-		out = stripANSI(sendSpecial(m, tea.KeyDown).View().Content)
+		out = stripANSI(viewContent(sendSpecial(m, tea.KeyDown)))
 		assert.Contains(t, out, "+ four")
 	})
 
@@ -668,7 +668,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m = sendKeyAndFeed(sendCtrl(m, 'r'), 'y')
 		m = drainFileWatch(t, m)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "alpha.txt")
 	})
 
@@ -742,7 +742,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.RunGit(t, repo, "add", "gamma.txt")
 		m = drainFileWatch(t, m)
 
-		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.Contains(t, stripANSI(viewContent(m)), "Staged Changes")
 		assert.Contains(t, selectedPickerLine(m), "beta.txt")
 	})
 
@@ -755,7 +755,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t, path, []byte("two\nkeep\nend\n"))
 
 		m := changedFilePicker(t, repo)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "+ two")
 
 		pump := newWatchPump(m)
@@ -795,7 +795,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m = sendKey(m, 'p')
 
 		assert.Equal(t, 1, src.loadCalls)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "alpha.txt")
 		assert.NotContains(t, out, "beta.txt")
 
@@ -803,7 +803,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NoError(t, os.WriteFile(beta, []byte("b\n"), 0o644))
 		m = drainFileWatch(t, m)
 
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, "beta.txt")
 		// FSEvents can emit one spurious root-dir event right after a fresh
 		// recursive watch registers, forcing one harmless fallback reload
@@ -813,7 +813,7 @@ func TestPickerFileWatch(t *testing.T) {
 
 func pickerRowCount(m ui.Model, name string) int {
 	rows := 0
-	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+	for line := range strings.SplitSeq(stripANSI(viewContent(m)), "\n") {
 		if strings.Contains(line, "│") && strings.Contains(line, name) {
 			rows++
 		}
@@ -822,7 +822,7 @@ func pickerRowCount(m ui.Model, name string) int {
 }
 
 func selectedPickerLine(m ui.Model) string {
-	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+	for line := range strings.SplitSeq(stripANSI(viewContent(m)), "\n") {
 		if strings.Contains(line, " > ") {
 			return line
 		}
@@ -857,7 +857,7 @@ func newWatchPump(m ui.Model) *watchPump {
 func (p *watchPump) until(t *testing.T, want string) ui.Model {
 	t.Helper()
 	deadline := time.After(fileWatchTestTimeout)
-	for !strings.Contains(stripANSI(p.model.View().Content), want) {
+	for !strings.Contains(stripANSI(viewContent(p.model)), want) {
 		select {
 		case msg := <-p.msgs:
 			m, cmd := p.model.Update(msg)

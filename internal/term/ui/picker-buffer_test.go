@@ -67,7 +67,7 @@ func TestBufferPicker(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 
-		row := rawLineContaining(t, m.View().Content, "a.txt")
+		row := rawLineContaining(t, viewContent(m), "a.txt")
 
 		assert.NotContains(t, stripANSI(row), "   a.txt")
 	})

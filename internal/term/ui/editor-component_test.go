@@ -723,7 +723,7 @@ func TestFreeScroll(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 		m = sendKey(m, 'l')
-		_ = m.View().Content
+		_ = viewContent(m)
 
 		assert.True(t, v1.FreeScroll())
 		assert.Equal(t, scrolled, v1.Offset())
@@ -752,7 +752,7 @@ func TestFreeScroll(t *testing.T) {
 
 		// the last content row before the status/command line sits inside the
 		// default 5-line scrolloff margin, so re-coupling scrolls to honor it
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		clickY := -1
 		for y := len(lines) - 2; y >= 0; y-- {
 			if strings.Contains(lines[y], "line") {
@@ -827,7 +827,7 @@ func TestGotoWindowEdges(t *testing.T) {
 	}
 
 	edgeLines := func(m ui.Model) (string, string) {
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		var first, last string
 		for _, ln := range lines {
 			if strings.Contains(ln, "line ") {
@@ -913,7 +913,7 @@ func TestGotoLineKeySequence(t *testing.T) {
 		m, _ := newModel(t)
 		m = sendKey(m, 'g')
 		m = sendKey(m, '5')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "g → 5")
 		assert.NotContains(t, out, "5g")
 	})
@@ -925,7 +925,7 @@ func TestGotoLineKeySequence(t *testing.T) {
 		// the guard, and writing it auto-wraps the terminal
 		e.SetStatusMsg("1234567")
 		m = resize(m, 8, 6)
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		row := []rune(toastRow(m, "\u2570"))
 		// the gap keeps the popup off the final columns, which auto-wrap
 		assert.NotEmpty(t, row)
@@ -982,7 +982,7 @@ func TestFocusMessages(t *testing.T) {
 		m2, _ := m.Update(tea.FocusMsg{})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("blur focus lost triggers autosave", func(t *testing.T) {
@@ -998,7 +998,7 @@ func TestFocusMessages(t *testing.T) {
 		m2, _ := m.Update(tea.BlurMsg{})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 }
 
@@ -1011,7 +1011,7 @@ func TestMouseDisabledEvents(t *testing.T) {
 		m2, _ := m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("mouse wheel ignored when mouse disabled", func(t *testing.T) {
@@ -1022,7 +1022,7 @@ func TestMouseDisabledEvents(t *testing.T) {
 		m2, _ := m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("unknown message returns ignored", func(t *testing.T) {
@@ -1032,7 +1032,7 @@ func TestMouseDisabledEvents(t *testing.T) {
 		m2, _ := m.Update(struct{ unexpected string }{"msg"})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 }
 
@@ -1055,7 +1055,7 @@ func TestSyncEditorMessages(t *testing.T) {
 
 		m = sendKey(m, 'g')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "No configured language server")
 	})
 }
@@ -1095,7 +1095,7 @@ func TestAutoSaveCmd(t *testing.T) {
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 		m = m2.(ui.Model)
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 		assert.NotNil(t, cmd)
 	})
 
@@ -1122,7 +1122,7 @@ func TestAutoSaveCmd(t *testing.T) {
 			}
 		}
 
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 }
 
@@ -1130,7 +1130,7 @@ func renderedTextPoint(
 	t *testing.T, m ui.Model, text string, off int,
 ) geom.Point {
 	t.Helper()
-	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {
 		if x := strings.Index(line, text); x >= 0 {
 			return geom.Point{X: x + off, Y: y}

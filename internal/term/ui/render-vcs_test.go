@@ -35,7 +35,7 @@ func TestDiffGutter(t *testing.T) {
 		defer s.Close()
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "▍")
 	})
 
@@ -44,7 +44,7 @@ func TestDiffGutter(t *testing.T) {
 		defer s.Close()
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "▔")
 	})
 
@@ -56,7 +56,7 @@ func TestDiffGutter(t *testing.T) {
 		e.Options().Scrollbar = false
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "▍")
 		assert.NotContains(t, out, "▔")
 	})
@@ -69,7 +69,7 @@ func TestDiffGutter(t *testing.T) {
 		e.Options().Scrollbar = true
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		cells := scrollbarCells(t, m.View().Content, 23)
+		cells := scrollbarCells(t, viewContent(m), 23)
 
 		marked := markRows(cells)
 		assert.Len(t, marked, 2)
@@ -84,7 +84,7 @@ func TestDiffGutter(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, " main ")
 	})
 }
@@ -183,7 +183,7 @@ func TestVersionControlFocusRefresh(t *testing.T) {
 		m = drainFileWatch(t, m)
 
 		assert.Eventually(t, func() bool {
-			return strings.Count(stripANSI(m.View().Content), "▍") == 2
+			return strings.Count(stripANSI(viewContent(m)), "▍") == 2
 		}, 2*time.Second, 10*time.Millisecond)
 	})
 }
@@ -210,7 +210,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "modified.txt")
 		assert.Contains(t, out, "untracked.txt")
 		assert.Contains(t, out, "\uf420 untracked.txt") //  nf-oct-question
@@ -229,7 +229,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		staged := sectionRow(out, "Staged Changes")
 		unstaged := sectionRow(out, "Changes")
 		assert.GreaterOrEqual(t, staged, 0)
@@ -244,7 +244,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Changes")
 		assert.NotContains(t, out, "Staged Changes")
 	})
@@ -266,7 +266,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		// line 50 sits below the preview fold, showing only when the preview
 		// anchors on the first hunk, removed and added lines sign-marked
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "+ CHANGED-DEEP")
 		assert.Contains(t, out, "- line")
 	})
@@ -301,7 +301,7 @@ func TestChangedFilePicker(t *testing.T) {
 					[]byte(tc.base),
 				)
 				testutil.WriteFile(t, path, []byte(tc.working))
-				content := changedFilePicker(t, repo).View().Content
+				content := viewContent(changedFilePicker(t, repo))
 				at := previewBarAt(t, content)
 				bottom := previewBarPoint(t, content)
 				rows := strings.Split(content, "\n")
@@ -340,7 +340,7 @@ func TestChangedFilePicker(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps()).
 			WithInitialPicker(ui.NewChangedFilePicker)
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "- ┆   ┆   old")
 		assert.Contains(t, out, "+ ┆   ┆   new")
 	})
@@ -369,7 +369,7 @@ func TestChangedFilePicker(t *testing.T) {
 				m := ui.New(e, command.NewKeymaps()).
 					WithInitialPicker(ui.NewChangedFilePicker)
 				m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
-				out := stripANSI(m.View().Content)
+				out := stripANSI(viewContent(m))
 				assert.Equal(t, tc.wrap, strings.Contains(out, "word old"))
 				assert.Equal(t, tc.wrap, strings.Contains(out, "word new"))
 			})
@@ -410,12 +410,12 @@ func TestChangedFilePicker(t *testing.T) {
 					Button: tea.MouseWheelDown,
 				})
 			}
-			assert.Contains(t, stripANSI(m.View().Content), "TAIL-29!")
+			assert.Contains(t, stripANSI(viewContent(m)), "TAIL-29!")
 		})
 
 		t.Run("by scrollbar", func(t *testing.T) {
 			m := open(t)
-			at := previewBarPoint(t, m.View().Content)
+			at := previewBarPoint(t, viewContent(m))
 			m = mouse(m, tea.MouseClickMsg{
 				X:      at.X,
 				Y:      at.Y,
@@ -427,7 +427,7 @@ func TestChangedFilePicker(t *testing.T) {
 				Y:      at.Y + 10,
 				Button: tea.MouseLeft,
 			})
-			assert.Contains(t, stripANSI(m.View().Content), "TAIL-29!")
+			assert.Contains(t, stripANSI(viewContent(m)), "TAIL-29!")
 		})
 	})
 
@@ -453,7 +453,7 @@ func TestChangedFilePicker(t *testing.T) {
 				Button: tea.MouseWheelDown,
 			})
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "NEWEND")
 		assert.NotContains(t, out, "OLDEND")
 	})
@@ -467,7 +467,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "+ alpha")
 		assert.Contains(t, out, "alpha")
 		assert.Contains(t, out, "beta")
@@ -482,7 +482,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "- first")
 		assert.Contains(t, out, "first")
 		assert.Contains(t, out, "second")
@@ -500,7 +500,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "\uf458 deleted.txt")
 		assert.Contains(t, out, "\uf45a new.txt")
 		assert.NotContains(t, out, "old.txt")
@@ -516,7 +516,7 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "two")
 	})
 
@@ -537,9 +537,9 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 		// first item (a.txt) is selected on open
-		assert.Contains(t, stripANSI(m.View().Content), "+ AAA")
+		assert.Contains(t, stripANSI(viewContent(m)), "+ AAA")
 
-		lines := strings.Split(m.View().Content, "\n")
+		lines := strings.Split(viewContent(m), "\n")
 		clickX := -1
 		clickY := -1
 		for y, line := range lines {
@@ -558,7 +558,7 @@ func TestChangedFilePicker(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "+ BBB")
 		assert.NotContains(t, out, "+ AAA")
 	})
@@ -604,14 +604,14 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 
 		// the staged row leads, so it holds the selection on open
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "- one")
 		assert.Contains(t, out, "+ two")
 		assert.NotContains(t, out, "+ three")
 
 		m = sendSpecial(m, tea.KeyDown)
 
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, "- two")
 		assert.Contains(t, out, "+ three")
 		assert.NotContains(t, out, "- one")
@@ -623,11 +623,11 @@ func TestChangedFilePicker(t *testing.T) {
 		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), []byte("new\n"))
 
 		m := changedFilePicker(t, repo)
-		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Staged Changes")
 
 		m = sendCtrl(m, 'a')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.GreaterOrEqual(t, sectionRow(out, "Staged Changes"), 0)
 		assert.Contains(t, out, "solo.txt")
 		assert.Equal(t, "A  solo.txt", gitStatus(t, repo))
@@ -643,16 +643,16 @@ func TestChangedFilePicker(t *testing.T) {
 		}
 
 		m := changedFilePicker(t, repo)
-		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 a.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "> \uf459 a.txt")
 
 		m = sendCtrl(m, 'a')
-		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 b.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "> \uf459 b.txt")
 
 		m = sendCtrl(m, 'a')
-		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 c.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "> \uf459 c.txt")
 
 		m = sendCtrl(m, 'a')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Equal(t, -1, sectionRow(out, "Changes"))
 		assert.Contains(t, out, "> \uf459 c.txt")
 	})
@@ -690,12 +690,12 @@ func TestChangedFilePicker(t *testing.T) {
 		}
 
 		m := changedFilePicker(t, repo)
-		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 a.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "> \uf459 a.txt")
 
 		testutil.RunGit(t, repo, "add", "a.txt")
 		m = drainFileWatch(t, m)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.GreaterOrEqual(t, sectionRow(out, "Staged Changes"), 0)
 		assert.Contains(t, out, "> \uf459 a.txt")
 	})
@@ -728,18 +728,18 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 		for range 3 {
 			m = sendSpecialAndFeed(m, tea.KeyDown)
-			_ = m.View().Content
+			_ = viewContent(m)
 		}
 		for range 40 {
 			m = updateAndFeed(m, tea.MouseWheelMsg{
 				X: 90, Y: 10, Button: tea.MouseWheelDown,
 			})
 		}
-		assert.NotContains(t, stripANSI(m.View().Content), "+ TOP")
+		assert.NotContains(t, stripANSI(viewContent(m)), "+ TOP")
 
 		m = sendCtrl(m, 'a')
 
-		assert.Contains(t, stripANSI(m.View().Content), "+ CHANGED-DEEP")
+		assert.Contains(t, stripANSI(viewContent(m)), "+ CHANGED-DEEP")
 	})
 
 	t.Run("staging in place re-anchors the row", func(t *testing.T) {
@@ -768,17 +768,17 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 		m = sendSpecialAndFeed(m, tea.KeyDown)
-		assert.Contains(t, stripANSI(m.View().Content), "+ CHANGED-AGAIN")
+		assert.Contains(t, stripANSI(viewContent(m)), "+ CHANGED-AGAIN")
 		for range 40 {
 			m = updateAndFeed(m, tea.MouseWheelMsg{
 				X: 90, Y: 10, Button: tea.MouseWheelDown,
 			})
 		}
-		assert.NotContains(t, stripANSI(m.View().Content), "+ CHANGED-AGAIN")
+		assert.NotContains(t, stripANSI(viewContent(m)), "+ CHANGED-AGAIN")
 
 		m = sendCtrl(m, 'a')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, ">  b.txt")
 		assert.Contains(t, out, "+ CHANGED-DEEP")
 	})
@@ -790,11 +790,11 @@ func TestChangedFilePicker(t *testing.T) {
 		testutil.RunGit(t, repo, "add", "mod.txt")
 
 		m := changedFilePicker(t, repo)
-		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.Contains(t, stripANSI(viewContent(m)), "Staged Changes")
 
 		m = sendCtrl(m, 'r')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "Staged Changes")
 		assert.Contains(t, out, "mod.txt")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
@@ -810,7 +810,7 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 		m = sendCtrl(m, 'r')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Staged Changes")
 		assert.Equal(t, " D old.txt\n?? new.txt", gitStatus(t, repo))
 	})
 
@@ -821,7 +821,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendCtrl(changedFilePicker(t, repo), 'r')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Discard changes to mod.txt?")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 
@@ -845,7 +845,7 @@ func TestChangedFilePicker(t *testing.T) {
 		m = updateAndFeed(m, tea.KeyPressMsg{Code: tea.KeyEnter})
 
 		// no holds the focus of a discard, so enter alone changes nothing
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
 
@@ -872,7 +872,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'n')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "Discard changes")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
@@ -884,7 +884,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'y')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Empty(t, gitStatus(t, repo))
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -899,7 +899,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'y')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		_, err := os.Stat(path)
 		assert.True(t, os.IsNotExist(err))
 	})
@@ -913,7 +913,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		// the ignored file leaves the list, and .gitignore takes its place,
 		// naming it in the preview rather than in a row of its own
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "\uf420 new.txt") //  nf-oct-question
 		assert.Contains(t, out, "\uf420 .gitignore")
 		assert.Equal(t, "?? .gitignore", gitStatus(t, repo))
@@ -926,7 +926,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := sendCtrl(changedFilePicker(t, repo), 'g')
 
-		assert.Contains(t, stripANSI(m.View().Content), "mod.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "mod.txt")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
 
@@ -943,7 +943,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m = sendCtrl(m, 'a')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "Staged Changes")
 		assert.Equal(t, "?? solo.txt", gitStatus(t, repo))
 	})
@@ -951,7 +951,7 @@ func TestChangedFilePicker(t *testing.T) {
 }
 
 func popupRow(m ui.Model, text string) string {
-	for row := range strings.SplitSeq(m.View().Content, "\n") {
+	for row := range strings.SplitSeq(viewContent(m), "\n") {
 		if strings.Contains(stripANSI(row), text) {
 			return row
 		}
@@ -975,7 +975,7 @@ func selectedPickerFile(m ui.Model) string {
 
 func lastPickerFile(m ui.Model) string {
 	last := ""
-	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+	for line := range strings.SplitSeq(stripANSI(viewContent(m)), "\n") {
 		if name := pickerFileName(line); name != "" {
 			last = name
 		}

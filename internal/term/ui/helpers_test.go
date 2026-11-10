@@ -16,12 +16,20 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
 type feedPickerSource struct {
 	ui.PickerBase
 	paths []string
+}
+
+func viewContent(m ui.Model) string {
+	if f, ok := m.View().Frame.(*tui.Frame); ok {
+		return f.String()
+	}
+	return ""
 }
 
 func stripANSI(s string) string {

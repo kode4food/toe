@@ -30,14 +30,14 @@ func TestPromptFrame(t *testing.T) {
 	t.Run("command title and breadcrumb", func(t *testing.T) {
 		m, _ := cmdPrompt(t)
 
-		assert.Contains(t, stripANSI(m.View().Content), " Command ")
+		assert.Contains(t, stripANSI(viewContent(m)), " Command ")
 		assert.Equal(t, ":", promptText(m))
 	})
 
 	t.Run("multi-key search breadcrumb", func(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), 'z'), '/')
 
-		assert.Contains(t, stripANSI(m.View().Content), " Search forward ")
+		assert.Contains(t, stripANSI(viewContent(m)), " Search forward ")
 		assert.Equal(t, "z /", promptText(m))
 	})
 
@@ -45,7 +45,7 @@ func TestPromptFrame(t *testing.T) {
 		m, _ := cmdPrompt(t)
 		m = mouse(m, tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
 
-		assert.NotContains(t, stripANSI(m.View().Content), " Command ")
+		assert.NotContains(t, stripANSI(viewContent(m)), " Command ")
 	})
 
 	tests := []struct {
@@ -106,7 +106,7 @@ func TestPromptFrame(t *testing.T) {
 			m2, _ := m.Update(struct{}{})
 			m = m2.(ui.Model)
 
-			assert.Contains(t, stripANSI(m.View().Content), " "+tc.title+" ")
+			assert.Contains(t, stripANSI(viewContent(m)), " "+tc.title+" ")
 		})
 	}
 }
@@ -134,9 +134,9 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		withA := stripANSI(m.View().Content)
+		withA := stripANSI(viewContent(m))
 		m = sendKey(m, 'l')
-		withAl := stripANSI(m.View().Content)
+		withAl := stripANSI(viewContent(m))
 
 		assert.Contains(t, withA, "alpha")
 		assert.Contains(t, withA, "alias")
@@ -179,7 +179,7 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'o')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "image-only")
 		assert.NotContains(t, out, "document-only")
@@ -209,7 +209,7 @@ func TestPromptCompletion(t *testing.T) {
 		m = resize(m, 60, 14)
 		m = sendKey(m, ':')
 
-		content := stripANSI(m.View().Content)
+		content := stripANSI(viewContent(m))
 		rows := 0
 		for line := range strings.SplitSeq(content, "\n") {
 			if strings.Contains(line, "match-") ||
@@ -225,7 +225,7 @@ func TestPromptCompletion(t *testing.T) {
 		for _, ch := range "few" {
 			m = sendKey(m, ch)
 		}
-		filtered := stripANSI(m.View().Content)
+		filtered := stripANSI(viewContent(m))
 		assert.Contains(t, filtered, "few-command-with-long-name")
 	})
 
@@ -307,11 +307,11 @@ func TestPromptCompletion(t *testing.T) {
 		m = sendSpecial(m, tea.KeyDown)
 		m = sendSpecial(m, tea.KeyDown)
 		assert.Equal(t, ": match-b", promptText(m))
-		assert.Contains(t, stripANSI(m.View().Content), "match-c")
+		assert.Contains(t, stripANSI(viewContent(m)), "match-c")
 		m = sendSpecial(m, tea.KeyUp)
 		m = sendSpecial(m, tea.KeyTab)
 		assert.Equal(t, ": match-a", promptText(m))
-		assert.NotContains(t, stripANSI(m.View().Content), "match-b")
+		assert.NotContains(t, stripANSI(viewContent(m)), "match-b")
 
 		m = sendSpecial(m, tea.KeyEscape)
 		m = sendKey(m, ':')
@@ -322,7 +322,7 @@ func TestPromptCompletion(t *testing.T) {
 		m = mouse(m, tea.MouseWheelMsg{
 			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "match-h")
 		assert.NotContains(t, out, "match-a")
 		assert.Equal(t, ": match", promptText(m))
@@ -405,7 +405,7 @@ func TestPromptCompletion(t *testing.T) {
 		m = sendKey(m, ':')
 		m = typeString(m, "alpha beta")
 		_ = m.View()
-		assert.Contains(t, stripANSI(m.View().Content), "beta-long")
+		assert.Contains(t, stripANSI(viewContent(m)), "beta-long")
 		m = sendSpecial(m, tea.KeyEnter)
 
 		assert.Equal(t, "beta", got)
@@ -505,7 +505,7 @@ func TestPromptCompletion(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		assert.Contains(t, stripANSI(m.View().Content), ": alpha ")
+		assert.Contains(t, stripANSI(viewContent(m)), ": alpha ")
 	})
 
 	t.Run("lists the command description", func(t *testing.T) {
@@ -586,7 +586,7 @@ func TestPromptCompletion(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		assert.NotContains(t, stripANSI(m.View().Content), "unique words")
+		assert.NotContains(t, stripANSI(viewContent(m)), "unique words")
 	})
 
 	t.Run("completions share the input background", func(t *testing.T) {
@@ -615,7 +615,7 @@ func TestPromptCompletion(t *testing.T) {
 
 		// the first row is selected, so compare against an unselected one
 		var border, input, item string
-		for line := range strings.SplitSeq(m.View().Content, "\n") {
+		for line := range strings.SplitSeq(viewContent(m), "\n") {
 			plain := stripANSI(line)
 			switch {
 			case strings.Contains(plain, "╭"):
@@ -650,7 +650,7 @@ func TestPromptCompletion(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		assert.Contains(t, m.View().Content, "main.go")
+		assert.Contains(t, viewContent(m), "main.go")
 	})
 
 	t.Run("marks current option value", func(t *testing.T) {
@@ -673,7 +673,7 @@ func TestPromptCompletion(t *testing.T) {
 				m = sendKey(m, ':')
 				m = typeString(m, "set line-number ")
 
-				out := stripANSI(m.View().Content)
+				out := stripANSI(viewContent(m))
 				assert.Contains(t, out, "absolute "+tc.marker)
 			})
 		}
@@ -696,7 +696,7 @@ func TestPromptCmdAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "error")
 	})
 }
@@ -724,7 +724,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyEscape)
 
 		assert.NotRegexp(t,
-			regexp.MustCompile(`(?m)^:`), stripANSI(m.View().Content))
+			regexp.MustCompile(`(?m)^:`), stripANSI(viewContent(m)))
 	})
 
 	t.Run("backspace removes input", func(t *testing.T) {
@@ -740,7 +740,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		m = sendKey(m, 'b')
 		m = sendSpecial(m, tea.KeyBackspace)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, ": a")
 		assert.NotContains(t, out, ": ab")
 	})
@@ -761,7 +761,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, ":")
 		assert.NotContains(t, out, ": x")
 	})
@@ -966,7 +966,7 @@ func TestRegexPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -982,7 +982,7 @@ func TestRegexPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -997,7 +997,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, '/')
-		assert.Contains(t, stripANSI(m.View().Content), " Search forward ")
+		assert.Contains(t, stripANSI(viewContent(m)), " Search forward ")
 		assert.Equal(t, "/", promptText(m))
 		for _, ch := range "hello" {
 			m = sendKey(m, ch)
@@ -1005,7 +1005,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1019,7 +1019,7 @@ func TestSearchPromptAccept(t *testing.T) {
 
 		m = sendKey(m, '?')
 		m = sendKey(m, 'x')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, " Search backward ")
 		assert.Equal(t, "? x", promptText(m))
 	})
@@ -1039,7 +1039,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1055,7 +1055,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 
@@ -1111,7 +1111,7 @@ func TestSearchPromptError(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "error")
 	})
 }
@@ -1132,7 +1132,7 @@ func TestRegexFnError(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "error")
 	})
 }
@@ -1150,7 +1150,7 @@ func TestPromptHandlesMouse(t *testing.T) {
 		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 5, Button: tea.MouseLeft})
 		m = m2.(ui.Model)
 
-		out := m.View().Content
+		out := viewContent(m)
 		assert.Contains(t, out, ":")
 	})
 
@@ -1166,7 +1166,7 @@ func TestPromptHandlesMouse(t *testing.T) {
 		m2, _ := m.Update(tea.MouseMotionMsg{X: 5, Y: 5})
 		m = m2.(ui.Model)
 
-		out := m.View().Content
+		out := viewContent(m)
 		assert.Contains(t, out, ":")
 	})
 }
@@ -1211,7 +1211,7 @@ func TestRedrawSignal(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -1244,7 +1244,7 @@ func promptText(m ui.Model) string {
 
 func promptRows(m ui.Model) []promptRow {
 	var out []promptRow
-	content := strings.TrimRight(m.View().Content, "\n")
+	content := strings.TrimRight(viewContent(m), "\n")
 	for raw := range strings.SplitSeq(content, "\n") {
 		line := stripANSI(raw)
 		from := strings.Index(line, tui.BorderV)

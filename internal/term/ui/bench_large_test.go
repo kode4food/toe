@@ -40,11 +40,11 @@ func BenchmarkRenderLargeFileSteady(b *testing.B) {
 	}
 	m := resize(ui.New(e, command.NewKeymaps()), 100, 40)
 	// prime caches (first View tokenizes)
-	_ = m.View().Content
+	frameSink(m)
 
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -66,11 +66,11 @@ func BenchmarkRenderLargeFileScrollbar(b *testing.B) {
 	e.FocusedDocument().ShowSearchHighlights(v.ID())
 	e.Registers().Set('/', "fmt")
 	m := resize(ui.New(e, command.NewKeymaps()), 100, 40)
-	_ = m.View().Content
+	frameSink(m)
 
 	b.ReportAllocs()
 	for b.Loop() {
 		v.MarkDirty()
-		_ = m.View().Content
+		frameSink(m)
 	}
 }

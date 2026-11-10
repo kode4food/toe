@@ -45,7 +45,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		content := m.View().Content
+		content := viewContent(m)
 		out := stripANSI(content)
 
 		assert.Contains(t, out, "┬")
@@ -76,7 +76,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " > main.go")
 		assert.NotContains(t, out, "\U000f07d3")
@@ -87,7 +87,7 @@ func TestPickerRender(t *testing.T) {
 			"README.md", "image.png", "component.tsx",
 		})
 		m = sendKeyAndFeed(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf4ed README.md")
 		assert.Contains(t, out, "\U000f0e2d image.png")
@@ -108,7 +108,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "┬")
 		assert.Contains(t, out, "┤")
@@ -126,7 +126,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'b')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "┬")
 		assert.Contains(t, out, "\U000f0214 [scratch]")
@@ -151,7 +151,7 @@ func TestPickerRender(t *testing.T) {
 		)
 
 		m := openBufferPicker(t, e)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "\uf448 \U000f07d3 main.go")
 	})
@@ -178,7 +178,7 @@ func TestPickerRender(t *testing.T) {
 			)
 			m = resize(m, 100, 30)
 			m = sendKey(m, 'p')
-			return m.View().Content
+			return viewContent(m)
 		}
 
 		atStart := render(0)
@@ -216,7 +216,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "project")
 		assert.Contains(t, out, "main.go")
@@ -236,7 +236,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "┬")
 		assert.Contains(t, out, "┤")
@@ -257,7 +257,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 60, 12)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " > plain")
 		assert.NotContains(t, out, "┬")
@@ -280,7 +280,7 @@ func TestPickerRender(t *testing.T) {
 		for _, ch := range "abcdefghijklmnopqrstuvwxyz" {
 			m = sendKey(m, ch)
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "uvwxyz")
 		assert.Contains(t, out, " > go")
@@ -303,7 +303,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 30, 12)
 		m = sendKey(m, 'p')
-		narrow := stripANSI(m.View().Content)
+		narrow := stripANSI(viewContent(m))
 
 		assert.Contains(t, narrow, "kind path description")
 		assert.Contains(t, narrow, "inte")
@@ -311,7 +311,7 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 220, 12)
 		m = dragPickerSplit(m, 110, 180)
-		wide := stripANSI(m.View().Content)
+		wide := stripANSI(viewContent(m))
 
 		assert.Contains(t, wide, outlierPickerColumn)
 		assert.Contains(t, wide,

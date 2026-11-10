@@ -54,7 +54,7 @@ func newScrollbarBenchState(b *testing.B, lines int) *scrollbarBenchState {
 	m = m2.(ui.Model)
 	m2, _ = m.Update(scrollbarTestCell())
 	m = m2.(ui.Model)
-	_ = m.View().Content
+	frameSink(m)
 	m2, cmd := m.Update(tea.FocusMsg{})
 	m, _ = collectModelRawMsgs(m2.(ui.Model), cmd)
 	return &scrollbarBenchState{
@@ -90,7 +90,7 @@ func BenchmarkScrollbarKitty(b *testing.B) {
 						action.MoveUp(s.editor)
 					}
 					s.view.MarkDirty()
-					_ = s.model.View().Content
+					frameSink(s.model)
 					m, cmd := s.model.Update(tea.FocusMsg{})
 					s.model = m.(ui.Model)
 					pending[j] = cmd
@@ -129,7 +129,7 @@ func BenchmarkScrollbarKittyThumb(b *testing.B) {
 	}
 	s.view.BeginFreeScroll(s.doc.Revision(), s.doc.SelectionFor(s.view.ID()))
 	s.view.SetOffset(view.Position{Anchor: anchors[0]})
-	_ = s.model.View().Content
+	frameSink(s.model)
 	m, cmd := s.model.Update(tea.FocusMsg{})
 	s.model, _ = collectModelRawMsgs(m.(ui.Model), cmd)
 	b.StartTimer()
@@ -138,7 +138,7 @@ func BenchmarkScrollbarKittyThumb(b *testing.B) {
 	i := 0
 	for b.Loop() {
 		s.view.SetOffset(view.Position{Anchor: anchors[(i+1)%2]})
-		_ = s.model.View().Content
+		frameSink(s.model)
 		m, cmd := s.model.Update(tea.FocusMsg{})
 		var raws []string
 		s.model, raws = collectModelRawMsgs(m.(ui.Model), cmd)

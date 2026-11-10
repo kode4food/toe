@@ -14,13 +14,13 @@ import (
 func TestCommandPalettePicker(t *testing.T) {
 	t.Run("lists registered commands", func(t *testing.T) {
 		m, _ := paletteModel(t)
-		assert.Contains(t, stripANSI(m.View().Content), "palette_probe")
+		assert.Contains(t, stripANSI(viewContent(m)), "palette_probe")
 	})
 
 	t.Run("shows key bindings", func(t *testing.T) {
 		m, _ := paletteModel(t)
 		m = resize(m, 60, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "bindings")
 		assert.Contains(t, out, "description")
 		assert.Contains(t, out, "gp")
@@ -43,7 +43,7 @@ func TestCommandPalettePicker(t *testing.T) {
 		}
 		m = sendSpecial(m, tea.KeyEnter)
 		assert.Equal(t, view.ModeNormal, e.Mode())
-		assert.Contains(t, stripANSI(m.View().Content), " Command ")
+		assert.Contains(t, stripANSI(viewContent(m)), " Command ")
 		assert.Equal(t, "arg_probe", promptText(m))
 	})
 
@@ -84,7 +84,7 @@ func TestCommandPalettePicker(t *testing.T) {
 		m := ui.New(e, km)
 		m = m.WithInitialPicker(m.CommandPalettePicker)
 		m = resize(m, 80, 24)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "image_probe")
 		assert.NotContains(t, out, "document_probe")
 	})

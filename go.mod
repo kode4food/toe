@@ -72,4 +72,4 @@ replace github.com/charmbracelet/x/ansi => github.com/kode4food/x/ansi v0.0.0-20
 
 replace github.com/tree-sitter/tree-sitter-diff => github.com/tree-sitter-grammars/tree-sitter-diff v0.1.0
 
-replace charm.land/bubbletea/v2 => github.com/kode4food/bubbletea/v2 v2.0.0-20261028101802-67b4c7a8a2b3
+replace charm.land/bubbletea/v2 => github.com/kode4food/bubbletea/v2 v2.0.0-20261110083750-9be0dabe99d9

@@ -26,7 +26,7 @@ func benchmarkScroll(b *testing.B, source string) {
 		b.Fatal(err)
 	}
 	m := tea.Model(resize(ui.New(e, command.NewKeymaps()), 100, 40))
-	_ = m.(ui.Model).View().Content
+	frameSink(m.(ui.Model))
 
 	down := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	up := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
@@ -39,7 +39,7 @@ func benchmarkScroll(b *testing.B, source string) {
 			msg = up
 		}
 		m, _ = m.Update(msg)
-		_ = m.(ui.Model).View().Content
+		frameSink(m.(ui.Model))
 		i++
 	}
 }
@@ -85,7 +85,7 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 		b.Fatal("vsplit failed")
 	}
 	m := tea.Model(resize(ui.New(e, command.NewKeymaps()), 100, 40))
-	_ = m.(ui.Model).View().Content
+	frameSink(m.(ui.Model))
 
 	down := tea.MouseWheelMsg{Button: tea.MouseWheelDown}
 	up := tea.MouseWheelMsg{Button: tea.MouseWheelUp}
@@ -98,7 +98,7 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 			msg = up
 		}
 		m, _ = m.Update(msg)
-		_ = m.(ui.Model).View().Content
+		frameSink(m.(ui.Model))
 		i++
 	}
 }

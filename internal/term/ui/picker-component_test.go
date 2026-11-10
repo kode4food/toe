@@ -28,7 +28,7 @@ func TestPickerScroll(t *testing.T) {
 	t.Run("wheel list keeps selection", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "CONTENT-00")
 		assert.NotContains(t, out, "item29")
 
@@ -38,7 +38,7 @@ func TestPickerScroll(t *testing.T) {
 			})
 			m = m2.(ui.Model)
 		}
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		// list scrolled to reveal the far item, selection (and preview)
 		// unchanged
 		assert.Contains(t, out, "item29")
@@ -49,7 +49,7 @@ func TestPickerScroll(t *testing.T) {
 	t.Run("wheel preview keeps list", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "item29")
 
 		for range 10 {
@@ -60,7 +60,7 @@ func TestPickerScroll(t *testing.T) {
 			})
 			m = m2.(ui.Model)
 		}
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.NotContains(t, out, "item29")
 	})
 
@@ -69,7 +69,7 @@ func TestPickerScroll(t *testing.T) {
 
 		// locate the rendered row of item05 and click it, the preview should
 		// then show that item's body
-		lines := strings.Split(m.View().Content, "\n")
+		lines := strings.Split(viewContent(m), "\n")
 		clickX, clickY := -1, -1
 		for y, line := range lines {
 			if col := strings.Index(stripANSI(line), "item05"); col >= 0 {
@@ -84,7 +84,7 @@ func TestPickerScroll(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "CONTENT-05")
 		assert.NotContains(t, out, "CONTENT-00")
 	})
@@ -97,7 +97,7 @@ func TestPickerScroll(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "fixed")
 	})
 
@@ -161,7 +161,7 @@ func TestPickerScroll(t *testing.T) {
 				X: x, Y: 8, Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 			assert.Contains(t, out, "item00")
 			assert.Contains(t, out, "CONTENT-00")
 		}
@@ -186,7 +186,7 @@ func TestPickerScroll(t *testing.T) {
 
 	t.Run("tiny picker skips overlay", func(t *testing.T) {
 		m := fixedPicker(t, 1, 3, 3)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "fixed")
 	})
 
@@ -215,7 +215,7 @@ func TestPickerScroll(t *testing.T) {
 			return
 		}
 		assert.Equal(t, tea.CursorBar, cur.Shape)
-		row := strings.Split(stripANSI(m.View().Content), "\n")[cur.Y]
+		row := strings.Split(stripANSI(viewContent(m)), "\n")[cur.Y]
 		assert.Contains(t, row, "1/1") // the query row, which carries the count
 	})
 }
@@ -257,7 +257,7 @@ func TestPickerBorderResize(t *testing.T) {
 		opts := m.PickerLayoutOptions()
 		assert.InDelta(t, 1.0, opts.Scales["alpha.width"], 0.001)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "item00")
 		assert.Contains(t, out, "CONTENT-00")
 	})

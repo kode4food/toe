@@ -215,7 +215,7 @@ func TestTerminalPane(t *testing.T) {
 		tp.IngestOutput([]byte("\x1b]0;MYTITLE\x07"))
 		assert.Equal(t, "MYTITLE", tp.Title())
 
-		assert.Contains(t, m.View().Content, "MYTITLE")
+		assert.Contains(t, viewContent(m), "MYTITLE")
 	})
 
 	t.Run("path starts at editor cwd", func(t *testing.T) {
@@ -344,7 +344,7 @@ func TestTerminalPane(t *testing.T) {
 		next, _ := m.Update(msg)
 		m = next.(ui.Model)
 
-		assert.Contains(t, stripANSI(m.View().Content), "build finished")
+		assert.Contains(t, stripANSI(viewContent(m)), "build finished")
 		assert.Equal(t,
 			highlight.LogTerminal+highlight.LogSeparator+"build finished\n",
 			e.MessagesDocument().Text().String(),
@@ -782,11 +782,11 @@ func TestTerminalPane(t *testing.T) {
 
 		tp.IngestOutput([]byte("\x07"))
 		assert.Eventually(t, func() bool {
-			return strings.Contains(m.View().Content, "TRM*")
+			return strings.Contains(viewContent(m), "TRM*")
 		}, time.Second, 5*time.Millisecond)
 
 		e.Tree().SetFocus(termID)
-		content := m.View().Content
+		content := viewContent(m)
 		assert.NotContains(t, content, "TRM*")
 	})
 
@@ -913,7 +913,7 @@ func TestTerminalPane(t *testing.T) {
 		waitForResize(t, tp)
 
 		tp.IngestOutput([]byte("RESIZESURVIVOR\r\n$ "))
-		assert.Contains(t, m.View().Content, "RESIZESURVIVOR")
+		assert.Contains(t, viewContent(m), "RESIZESURVIVOR")
 
 		var sepX int
 		e.Tree().WalkSeparators(func(s view.Separator) {
@@ -943,7 +943,7 @@ func TestTerminalPane(t *testing.T) {
 		waitForResize(t, tp)
 
 		// content must remain visible without any further shell output
-		assert.Contains(t, m.View().Content, "RESIZESURVIVOR")
+		assert.Contains(t, viewContent(m), "RESIZESURVIVOR")
 	})
 
 	t.Run("Ctrl-w / jumps to a scrollback match", func(t *testing.T) {
@@ -964,7 +964,7 @@ func TestTerminalPane(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
 		m = m2.(ui.Model)
 		m = sendKey(m, '/')
-		assert.Contains(t, stripANSI(m.View().Content), " Search scrollback ")
+		assert.Contains(t, stripANSI(viewContent(m)), " Search scrollback ")
 		for _, ch := range "line 3" {
 			m = sendKey(m, ch)
 		}

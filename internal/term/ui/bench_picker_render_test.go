@@ -39,12 +39,12 @@ func BenchmarkBufferPickerRender(b *testing.B) {
 	)
 	m = resize(m, 120, 40)
 	m = sendKey(m, 'p')
-	_ = m.View().Content
+	frameSink(m)
 
 	b.ReportAllocs()
 	for b.Loop() {
 		m = sendSpecial(m, tea.KeyDown)
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -74,7 +74,7 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 	m := ui.New(e, command.NewKeymaps()).
 		WithInitialPicker(ui.NewChangedFilePicker)
 	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
-	if !strings.Contains(stripANSI(m.View().Content), "- abcd") {
+	if !strings.Contains(stripANSI(viewContent(m)), "- abcd") {
 		b.Fatal("diff preview not rendered")
 	}
 	i := 0
@@ -85,7 +85,7 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 			button = tea.MouseWheelUp
 		}
 		m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
-		_ = m.View().Content
+		frameSink(m)
 		i++
 	}
 }
@@ -114,7 +114,7 @@ func benchChangedFileRows(b *testing.B, staged bool) {
 	m := ui.New(e, command.NewKeymaps()).
 		WithInitialPicker(ui.NewChangedFilePicker)
 	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
-	if !strings.Contains(stripANSI(m.View().Content), "f00000.txt") {
+	if !strings.Contains(stripANSI(viewContent(m)), "f00000.txt") {
 		b.Fatal("changed-file picker not rendered")
 	}
 
@@ -122,7 +122,7 @@ func benchChangedFileRows(b *testing.B, staged bool) {
 	b.ResetTimer()
 	for range b.N {
 		m = sendSpecial(m, tea.KeyDown)
-		_ = m.View().Content
+		frameSink(m)
 	}
 	b.StopTimer()
 	// closing the picker stops its background hunk warming

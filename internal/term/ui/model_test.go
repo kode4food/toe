@@ -37,7 +37,7 @@ func TestModelLifecycle(t *testing.T) {
 	t.Run("init produces a renderable model", func(t *testing.T) {
 		m := newModel()
 		_ = m.Init()
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("view before resize is empty", func(t *testing.T) {
@@ -51,12 +51,12 @@ func TestModelLifecycle(t *testing.T) {
 
 	t.Run("with startup cmd renders", func(t *testing.T) {
 		m := newModel().WithStartupCmd(nil)
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("startup message appears in view", func(t *testing.T) {
 		m := settled(newModel().WithStartupMessage("hello startup"))
-		assert.Contains(t, stripANSI(m.View().Content), "hello startup")
+		assert.Contains(t, stripANSI(viewContent(m)), "hello startup")
 	})
 
 	t.Run("initial picker mounts on resize", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestModelLifecycle(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps()).
 			WithInitialPicker(files.NewFilePicker)
 		m = resize(m, 80, 24)
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("initial nil picker is ignored", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestModelLifecycle(t *testing.T) {
 			func(*view.Editor) *ui.Picker { return nil },
 		)
 		m = resize(m, 80, 24)
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 }
 
@@ -123,7 +123,7 @@ func TestCommandPaletteAction(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'f')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotEmpty(t, out)
 	})
 }
@@ -138,7 +138,7 @@ func TestLastPickerAction(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'l')
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 
 	t.Run("reopens last picker", func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestLastPickerAction(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 		m = m2.(ui.Model)
 		m = sendKey(m, 'l')
-		assert.NotEmpty(t, m.View().Content)
+		assert.NotEmpty(t, viewContent(m))
 	})
 }
 
@@ -189,14 +189,14 @@ func TestPickerState(t *testing.T) {
 		m = typeQuery(sendKey(m, 'o'), "beta")
 		m = sendSpecial(m, tea.KeyEscape)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "alpha")
 		assert.Contains(t, out, "CONTENT-02")
 		m = sendSpecial(m, tea.KeyEscape)
 
 		start = "second"
 		m = sendKey(m, 'p')
-		assert.NotContains(t, stripANSI(m.View().Content), "alpha")
+		assert.NotContains(t, stripANSI(viewContent(m)), "alpha")
 	})
 
 	t.Run("reveals restored selection", func(t *testing.T) {
@@ -212,15 +212,15 @@ func TestPickerState(t *testing.T) {
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
 		m = m2.(ui.Model)
 		assert.NotPanics(t, func() { m.View() })
-		assert.Contains(t, stripANSI(m.View().Content), "file-1199")
-		assert.Contains(t, stripANSI(m.View().Content), "1200/1200")
+		assert.Contains(t, stripANSI(viewContent(m)), "file-1199")
+		assert.Contains(t, stripANSI(viewContent(m)), "1200/1200")
 		for cmd != nil {
 			m2, cmd = m.Update(firstMsg(cmd))
 			m = m2.(ui.Model)
 			assert.NotPanics(t, func() { m.View() })
 		}
 
-		assert.Contains(t, stripANSI(m.View().Content), "file-1199")
+		assert.Contains(t, stripANSI(viewContent(m)), "file-1199")
 	})
 
 	t.Run("finishes while another picker is open", func(t *testing.T) {
@@ -255,12 +255,12 @@ func TestPickerState(t *testing.T) {
 		assert.NotPanics(t, func() { m.View() })
 		m = sendKey(sendSpecial(m, tea.KeyEscape), 'o')
 		m = feedCmds(m, cmd)
-		assert.NotContains(t, stripANSI(m.View().Content), "file-")
+		assert.NotContains(t, stripANSI(viewContent(m)), "file-")
 		m = sendKey(sendSpecial(m, tea.KeyEscape), 'p')
 		assert.Equal(t, 1, src.loads)
-		assert.Contains(t, stripANSI(m.View().Content), "1200/1200")
+		assert.Contains(t, stripANSI(viewContent(m)), "1200/1200")
 		m = sendSpecial(m, tea.KeyEnd)
-		assert.Contains(t, stripANSI(m.View().Content), "file-1199")
+		assert.Contains(t, stripANSI(viewContent(m)), "file-1199")
 	})
 
 	for _, count := range []int{0, 37} {
@@ -284,8 +284,8 @@ func TestPickerState(t *testing.T) {
 			items = items[:count]
 			m = sendKey(m, 'p')
 			assert.NotPanics(t, func() { m.View() })
-			assert.Contains(t, stripANSI(m.View().Content), "CONTENT-111")
-			assert.Contains(t, stripANSI(m.View().Content), "112/112")
+			assert.Contains(t, stripANSI(viewContent(m)), "CONTENT-111")
+			assert.Contains(t, stripANSI(viewContent(m)), "112/112")
 		})
 	}
 }
@@ -308,7 +308,7 @@ func TestShellAction(t *testing.T) {
 		})
 		m = resize(m, 80, 24)
 		m = sendKey(m, '!')
-		out := m.View().Content
+		out := viewContent(m)
 		assert.Contains(t, out, "$")
 	})
 }

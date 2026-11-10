@@ -19,20 +19,20 @@ func TestMacroRecordingStatus(t *testing.T) {
 		m = sendKey(m, 'z')
 		m = sendKey(m, 'a')
 
-		status := stripANSI(lastLine(m.View().Content))
+		status := stripANSI(lastLine(viewContent(m)))
 
 		assert.Contains(t, status, "REC a")
 		assert.True(t, strings.HasSuffix(status, " REC a "))
-		assert.NotContains(t, lastLine(m.View().Content), "\x1b[5m")
+		assert.NotContains(t, lastLine(viewContent(m)), "\x1b[5m")
 	})
 
 	t.Run("badge survives the command prompt", func(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), 'Q'), 'a')
 
 		m = sendKey(m, ':')
-		prompt := stripANSI(lastLine(m.View().Content))
+		prompt := stripANSI(lastLine(viewContent(m)))
 		m = sendKey(m, 'w')
-		typing := stripANSI(lastLine(m.View().Content))
+		typing := stripANSI(lastLine(viewContent(m)))
 
 		assert.True(t, strings.HasSuffix(prompt, " REC a "))
 		assert.True(t, strings.HasSuffix(typing, " REC a "))
@@ -47,14 +47,14 @@ func TestMacroRecordingStatus(t *testing.T) {
 		m = sendKey(m, 'z')
 		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 		m = next.(ui.Model)
-		lit := stripANSI(lastLine(m.View().Content))
+		lit := stripANSI(lastLine(viewContent(m)))
 
 		next, cmd = m.Update(firstMsg(cmd))
 		m = next.(ui.Model)
-		dark := stripANSI(lastLine(m.View().Content))
+		dark := stripANSI(lastLine(viewContent(m)))
 		next, _ = m.Update(firstMsg(cmd))
 		m = next.(ui.Model)
-		relit := stripANSI(lastLine(m.View().Content))
+		relit := stripANSI(lastLine(viewContent(m)))
 
 		assert.Contains(t, lit, "REC a")
 		assert.NotContains(t, dark, "REC a")

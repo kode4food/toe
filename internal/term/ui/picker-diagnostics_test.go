@@ -82,7 +82,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		})
 
 		m := openDiagnosticPicker(t, e, files.NewWorkspaceDiagnosticPicker, 'D')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "bad a")
 		assert.Contains(t, out, "bad b")
@@ -116,7 +116,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		}
 
 		m := openDiagnosticPicker(t, e, files.NewWorkspaceDiagnosticPicker, 'D')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Less(t, rowContaining(out, "a-y"), rowContaining(out, "a-x"))
 		assert.Less(t, rowContaining(out, "a-x"), rowContaining(out, "z-y"))
@@ -143,7 +143,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		})
 
 		m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		rows := map[int]bool{}
 		for _, want := range []string{
@@ -210,7 +210,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		})
 
 		m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		errors := sectionRow(out, "Errors")
 		warnings := sectionRow(out, "Warnings")
@@ -252,7 +252,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			})
 
 			m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 			assert.Contains(t, out, tc.want)
 			assert.NotContains(t, out, "message")
 		})

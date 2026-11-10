@@ -28,7 +28,7 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "hover docs")
 	})
@@ -45,10 +45,10 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		assert.Contains(t, stripANSI(m.View().Content), "hover docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "hover docs")
 
 		m = sendSpecial(m, tea.KeyRight)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "hover docs")
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
@@ -66,14 +66,14 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		assert.Contains(t, stripANSI(m.View().Content), "hover docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "hover docs")
 
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "hover docs")
 	})
@@ -93,7 +93,7 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.Contains(t, out, "Prints to standard output.")
@@ -121,7 +121,7 @@ func TestHoverComponent(t *testing.T) {
 			m = resize(m, 80, 24)
 			m = sendKey(m, ' ')
 			m = sendKey(m, 'k')
-			out := stripANSI(m.View().Content)
+			out := stripANSI(viewContent(m))
 			assert.Contains(t, out, "content")
 			assert.NotContains(t, out, "├─")
 		})
@@ -142,7 +142,7 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "above")
 		assert.Contains(t, out, "below")
@@ -167,7 +167,7 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "word word")
 		assert.Contains(t, out, strings.Repeat("x", 30))
@@ -190,7 +190,7 @@ func TestHoverComponent(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'k')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.Contains(t, out, "func Println")

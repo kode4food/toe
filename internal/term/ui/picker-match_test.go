@@ -71,11 +71,11 @@ func TestPickerMatch(t *testing.T) {
 		_ = m.View()
 
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, " > \U000f07d3 file-13.go")
 
 		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, " > \U000f07d3 file-00.go")
 	})
 
@@ -100,16 +100,16 @@ func TestPickerMatch(t *testing.T) {
 		for _, ch := range "%path alpha" {
 			m = sendKey(m, ch)
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "alpha.go")
 		assert.NotContains(t, out, "[scratch]")
 	})
 
 	t.Run("narrowed equals rebuilt", func(t *testing.T) {
-		narrowed := stripANSI(typeQuery(narrowPicker(t), "ale").View().Content)
+		narrowed := stripANSI(viewContent(typeQuery(narrowPicker(t), "ale")))
 		m := typeQuery(narrowPicker(t), "alex")
-		rebuilt := stripANSI(sendSpecial(m, tea.KeyBackspace).View().Content)
+		rebuilt := stripANSI(viewContent(sendSpecial(m, tea.KeyBackspace)))
 		assert.Equal(t, rebuilt, narrowed)
 		assert.Contains(t, narrowed, "ale.go")
 		assert.NotContains(t, narrowed, "main.go")
@@ -117,57 +117,57 @@ func TestPickerMatch(t *testing.T) {
 
 	t.Run("column query is not narrowed", func(t *testing.T) {
 		m := typeQuery(narrowPicker(t), "%path ale")
-		direct := stripANSI(m.View().Content)
+		direct := stripANSI(viewContent(m))
 		m = typeQuery(narrowPicker(t), "%path alex")
-		back := stripANSI(sendSpecial(m, tea.KeyBackspace).View().Content)
+		back := stripANSI(viewContent(sendSpecial(m, tea.KeyBackspace)))
 		assert.Equal(t, back, direct)
 		assert.Contains(t, direct, "ale.go")
 	})
 
 	t.Run("clearing restores every row", func(t *testing.T) {
-		full := stripANSI(narrowPicker(t).View().Content)
+		full := stripANSI(viewContent(narrowPicker(t)))
 		m := typeQuery(narrowPicker(t), "ale")
 		for range 3 {
 			m = sendSpecial(m, tea.KeyBackspace)
 		}
-		assert.Equal(t, full, stripANSI(m.View().Content))
+		assert.Equal(t, full, stripANSI(viewContent(m)))
 	})
 
 	t.Run("ctrl+w rubs out the last word", func(t *testing.T) {
 		kept := typeQuery(narrowPicker(t), "%path ")
-		oneWord := stripANSI(kept.View().Content)
+		oneWord := stripANSI(viewContent(kept))
 		m := typeQuery(narrowPicker(t), "%path ale")
 
 		m = sendModified(m, 'w', tea.ModCtrl)
 
-		assert.Equal(t, oneWord, stripANSI(m.View().Content))
+		assert.Equal(t, oneWord, stripANSI(viewContent(m)))
 	})
 
 	t.Run("ctrl+w on one word restores every row", func(t *testing.T) {
-		full := stripANSI(narrowPicker(t).View().Content)
+		full := stripANSI(viewContent(narrowPicker(t)))
 		m := typeQuery(narrowPicker(t), "ale")
 
 		m = sendModified(m, 'w', tea.ModCtrl)
 
-		assert.Equal(t, full, stripANSI(m.View().Content))
+		assert.Equal(t, full, stripANSI(viewContent(m)))
 	})
 
 	t.Run("ctrl+w on empty query is a no-op", func(t *testing.T) {
-		full := stripANSI(narrowPicker(t).View().Content)
+		full := stripANSI(viewContent(narrowPicker(t)))
 
 		m := sendModified(narrowPicker(t), 'w', tea.ModCtrl)
 
-		assert.Equal(t, full, stripANSI(m.View().Content))
+		assert.Equal(t, full, stripANSI(viewContent(m)))
 	})
 
 	t.Run("ctrl+w skips trailing spaces", func(t *testing.T) {
 		kept := typeQuery(narrowPicker(t), "%path ")
-		oneWord := stripANSI(kept.View().Content)
+		oneWord := stripANSI(viewContent(kept))
 		m := typeQuery(narrowPicker(t), "%path ale  ")
 
 		m = sendModified(m, 'w', tea.ModCtrl)
 
-		assert.Equal(t, oneWord, stripANSI(m.View().Content))
+		assert.Equal(t, oneWord, stripANSI(viewContent(m)))
 	})
 }
 
@@ -175,7 +175,7 @@ func TestPickerMatchPath(t *testing.T) {
 	t.Run("matches the path as written", func(t *testing.T) {
 		m := typeQuery(treePicker(t), "cmd/main")
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "main.go")
 		assert.NotContains(t, out, "readme.md")
 	})
@@ -183,13 +183,13 @@ func TestPickerMatchPath(t *testing.T) {
 	t.Run("a space never matches the label", func(t *testing.T) {
 		m := typeQuery(treePicker(t), " ")
 
-		assert.NotContains(t, stripANSI(m.View().Content), "main.go")
+		assert.NotContains(t, stripANSI(viewContent(m)), "main.go")
 	})
 
 	t.Run("highlights the name in the label", func(t *testing.T) {
 		m := typeQuery(treePicker(t), "main")
 
-		row := rawLineContaining(t, m.View().Content, ".go")
+		row := rawLineContaining(t, viewContent(m), ".go")
 		assert.Contains(t, stripANSI(row), "main.go")
 		assert.NotContains(t, row, "main.go")
 	})
@@ -198,40 +198,40 @@ func TestPickerMatchPath(t *testing.T) {
 func TestPickerSectionScroll(t *testing.T) {
 	t.Run("paging back up reveals the first header", func(t *testing.T) {
 		m := sectionPickerModel(t, 40)
-		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+		assert.Contains(t, stripANSI(viewContent(m)), "First Group")
 
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
-		assert.NotContains(t, stripANSI(m.View().Content), "First Group")
+		assert.NotContains(t, stripANSI(viewContent(m)), "First Group")
 
 		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
 		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "First Group")
 		assert.Contains(t, out, "> row-00")
 	})
 
 	t.Run("arrowing up reveals the first header", func(t *testing.T) {
 		m := sectionPickerModel(t, 40)
-		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+		assert.Contains(t, stripANSI(viewContent(m)), "First Group")
 		for range 25 {
 			m = sendSpecialText(m, tea.KeyDown, "down")
 		}
-		assert.NotContains(t, stripANSI(m.View().Content), "First Group")
+		assert.NotContains(t, stripANSI(viewContent(m)), "First Group")
 
 		for range 25 {
 			m = sendSpecialText(m, tea.KeyUp, "up")
 		}
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "First Group")
 		assert.Contains(t, out, "> row-00")
 	})
 
 	t.Run("group header scrolls in with its row", func(t *testing.T) {
 		m := sectionPickerModel(t, 40)
-		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+		assert.Contains(t, stripANSI(viewContent(m)), "First Group")
 		for range 25 {
 			m = sendSpecialText(m, tea.KeyDown, "down")
 		}
@@ -239,7 +239,7 @@ func TestPickerSectionScroll(t *testing.T) {
 			m = sendSpecialText(m, tea.KeyUp, "up")
 		}
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Second Group")
 	})
 }
@@ -250,7 +250,7 @@ func TestPickerSectionFilter(t *testing.T) {
 
 		m = typeQuery(m, "  ")
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "First Group")
 		assert.NotContains(t, out, "Second Group")
 	})
@@ -260,7 +260,7 @@ func TestPickerSectionFilter(t *testing.T) {
 
 		m = typeQuery(m, "ro")
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Equal(t, 1, strings.Count(out, "First Group"))
 		assert.Equal(t, 1, strings.Count(out, "Second Group"))
 	})

@@ -41,7 +41,7 @@ func TestScrollbarImage(t *testing.T) {
 		}
 		m := scrollbarImageModel(t)
 
-		content := m.View().Content
+		content := viewContent(m)
 
 		assert.False(t, strings.ContainsRune(content, tui.PlaceholderRune))
 		assert.True(t, strings.ContainsAny(content, scrollbarThinGlyphs))
@@ -51,7 +51,7 @@ func TestScrollbarImage(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
 		m := scrollbarImageModel(t)
 
-		content := m.View().Content
+		content := viewContent(m)
 
 		assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
 	})
@@ -65,13 +65,13 @@ func TestScrollbarImage(t *testing.T) {
 
 		m2, cmd := m.Update(tea.ResumeMsg{})
 		m, raws = collectModelRawMsgs(m2.(ui.Model), cmd)
-		_ = m.View().Content
+		_ = viewContent(m)
 		m2, cmd = m.Update(scrollbarTestCell())
 		m, more := collectModelRawMsgs(m2.(ui.Model), cmd)
 
 		assert.Contains(t, strings.Join(append(raws, more...), ""), "a=T")
 		assert.True(t,
-			strings.ContainsRune(m.View().Content, tui.PlaceholderRune),
+			strings.ContainsRune(viewContent(m), tui.PlaceholderRune),
 		)
 	})
 
@@ -82,12 +82,12 @@ func TestScrollbarImage(t *testing.T) {
 			scrollbarWidth, scrollbarHeight,
 		)
 
-		assertNoScrollbar(t, m.View().Content)
+		assertNoScrollbar(t, viewContent(m))
 
 		m2, _ := m.Update(scrollbarTestCell())
 		m = m2.(ui.Model)
 
-		assertNoScrollbar(t, m.View().Content)
+		assertNoScrollbar(t, viewContent(m))
 	})
 
 	t.Run("gives up on a terminal that stays quiet", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestScrollbarImage(t *testing.T) {
 		)
 		time.Sleep(scrollbarQuietWait)
 
-		content := m.View().Content
+		content := viewContent(m)
 
 		assert.True(t, strings.ContainsAny(content, scrollbarThinGlyphs))
 	})
@@ -156,7 +156,7 @@ func TestScrollbarImage(t *testing.T) {
 			scrollbarWidth, scrollbarHeight,
 		)
 		rows := 0
-		cells := scrollbarCells(t, glyphs.View().Content, scrollbarRows)
+		cells := scrollbarCells(t, viewContent(glyphs), scrollbarRows)
 		for _, c := range cells {
 			if c.style.bg == scrollbarThumbBg {
 				rows++
@@ -186,7 +186,7 @@ func TestScrollbarImage(t *testing.T) {
 			Width: scrollbarWidth, Height: height,
 		})
 		m = m2.(ui.Model)
-		_ = m.View().Content
+		_ = viewContent(m)
 		m2, cmd := m.Update(tea.FocusMsg{})
 		_, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
 		img := decodeScrollbarImage(t, raws)
@@ -201,9 +201,9 @@ func TestScrollbarImage(t *testing.T) {
 		e := scrollbarImageEditor(t)
 		m, _ := scrollbarImageModelFor(t, e, scrollbarTestCell())
 
-		before := scrollbarRowOf(t, m.View().Content)
+		before := scrollbarRowOf(t, viewContent(m))
 		m, raw := scrollbarScroll(m, e)
-		after := scrollbarRowOf(t, m.View().Content)
+		after := scrollbarRowOf(t, viewContent(m))
 
 		assert.Equal(t, before, after)
 		assert.NotEmpty(t, raw)
@@ -217,13 +217,13 @@ func TestScrollbarImage(t *testing.T) {
 
 		action.MoveDown(e)
 		v.MarkDirty()
-		_ = m.View().Content
+		_ = viewContent(m)
 		m2, pending := m.Update(tea.FocusMsg{})
 		m = m2.(ui.Model)
 
 		action.MoveDown(e)
 		v.MarkDirty()
-		_ = m.View().Content
+		_ = viewContent(m)
 		m2, held := m.Update(tea.FocusMsg{})
 		m = m2.(ui.Model)
 		m, raws := collectModelRawMsgs(m, held)
@@ -244,7 +244,7 @@ func TestScrollbarImage(t *testing.T) {
 
 		action.MoveDown(e)
 		hidden.MarkDirty()
-		_ = m.View().Content
+		_ = viewContent(m)
 		e.Tree().SetFocus(shown.ID())
 		e.Tree().ToggleMaximized()
 		_, cmd := m.Update(tea.FocusMsg{})
@@ -292,7 +292,7 @@ func scrollbarImageModelFor(
 	m2, _ = m.Update(cell)
 	m = m2.(ui.Model)
 	// View caches the bar used by the next transmit
-	_ = m.View().Content
+	_ = viewContent(m)
 	m2, cmd := m.Update(tea.FocusMsg{})
 	m = m2.(ui.Model)
 	m, raws := collectModelRawMsgs(m, cmd)
@@ -305,7 +305,7 @@ func scrollbarScroll(m ui.Model, e *view.Editor) (ui.Model, []string) {
 	m2, cmd := m.Update(tea.FocusMsg{})
 	m = m2.(ui.Model)
 	m, _ = collectModelRawMsgs(m, cmd)
-	_ = m.View().Content
+	_ = viewContent(m)
 	m2, cmd = m.Update(tea.FocusMsg{})
 	m = m2.(ui.Model)
 	return collectModelRawMsgs(m, cmd)

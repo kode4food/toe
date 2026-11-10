@@ -25,7 +25,7 @@ func TestGlobalSearch(t *testing.T) {
 	}
 	t.Run("finds matching lines across files", func(t *testing.T) {
 		m, _ := globalSearchModel(t, "findme")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "a.txt")
 		assert.NotContains(t, out, "b.txt")
 	})
@@ -38,7 +38,7 @@ func TestGlobalSearch(t *testing.T) {
 		})
 		e.Options().Theme = "mocha"
 		m = resize(m, 120, 30)
-		out := m.View().Content
+		out := viewContent(m)
 
 		matchLine, otherLine := "", ""
 		for line := range strings.SplitSeq(out, "\n") {
@@ -82,14 +82,14 @@ func TestGlobalSearch(t *testing.T) {
 
 	t.Run("empty query has no matches", func(t *testing.T) {
 		m, _ := globalSearchModel(t, "")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "a.txt")
 		assert.NotContains(t, out, "b.txt")
 	})
 
 	t.Run("invalid regex has no matches", func(t *testing.T) {
 		m, _ := globalSearchModel(t, "[")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "a.txt")
 		assert.NotContains(t, out, "b.txt")
 	})
@@ -99,7 +99,7 @@ func TestGlobalSearch(t *testing.T) {
 			"a.txt": "alpha\nFindMe here\n",
 			"b.txt": "beta\n",
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "a.txt")
 	})
 
@@ -108,7 +108,7 @@ func TestGlobalSearch(t *testing.T) {
 			"a.txt": "alpha\nfindme here\n",
 			"b.txt": "beta\n",
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "a.txt")
 	})
 
@@ -117,7 +117,7 @@ func TestGlobalSearch(t *testing.T) {
 			"a.bin": "findme\x00here\n",
 			"b.txt": "beta\n",
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.NotContains(t, out, "a.bin")
 	})
 
@@ -152,7 +152,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NoError(t, err)
 
 		m := openGlobalSearch(t, view.NewEditor(dir), "findme")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "visible.txt")
 		assert.NotContains(t, out, "ignored.txt")
@@ -173,7 +173,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NoError(t, os.Symlink(external, filepath.Join(root, "linked")))
 
 		m := openGlobalSearch(t, view.NewEditor(root), "findme")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "needle.txt:1")
 		assert.Contains(t, out, "linked")
@@ -203,7 +203,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NoError(t, e.Apply(tx))
 
 		m := openGlobalSearch(t, e, "needle")
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "a.txt")
 	})
 }

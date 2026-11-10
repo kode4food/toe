@@ -23,7 +23,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, "alpha.txt"), []byte("x"), 0o644,
 		))
-		out := stripANSI(explorerModel(t, dir).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir)))
 		assert.Contains(t, out, "alpha.txt")
 		assert.Contains(t, out, "\U000f024b sub/")
 		assert.Contains(t, out, "\U000f024b ../")
@@ -39,7 +39,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.Remove(alpha))
 		testutil.WriteFile(t, filepath.Join(dir, "beta.txt"), []byte("b"))
 		m = sendKey(m, 'e')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "beta.txt")
 		assert.NotContains(t, out, "alpha.txt")
 	})
@@ -54,7 +54,7 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 		m = sendSpecial(m, tea.KeyEnter)
-		assert.Contains(t, stripANSI(m.View().Content), "ALPHACONTENT")
+		assert.Contains(t, stripANSI(viewContent(m)), "ALPHACONTENT")
 	})
 
 	t.Run("accepting a binary file opens dump", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 		m = sendSpecial(m, tea.KeyEnter)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "BIN")
 		assert.Contains(t, out, "62 69 6e 00 61 72 79")
 	})
@@ -86,8 +86,8 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 		// "sub/" is now selected, its preview pane lists the directory contents
-		assert.Contains(t, stripANSI(m.View().Content), "\U000f07d3 inner.go")
-		assert.Contains(t, stripANSI(m.View().Content), "\U000f024b nested/")
+		assert.Contains(t, stripANSI(viewContent(m)), "\U000f07d3 inner.go")
+		assert.Contains(t, stripANSI(viewContent(m)), "\U000f024b nested/")
 	})
 
 	t.Run("latte dir preview colors files", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		row := rawLineContaining(t, m.View().Content, "inner.go")
+		row := rawLineContaining(t, viewContent(m), "inner.go")
 		assert.Contains(t, stripANSI(row), "\U000f07d3 inner.go")
 		assert.Equal(t, "38;2;32;159;181", styledRuneStyles(row)['󰟓'].fg)
 		assert.Equal(t, "38;2;76;79;105", styledRuneStyles(row)['i'].fg)
@@ -135,7 +135,7 @@ func TestFileExplorer(t *testing.T) {
 		}
 		m = sendSpecial(m, tea.KeyEnter)
 		// the explorer is now rooted in sub, listing its file
-		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "inner.txt")
 	})
 
 	t.Run("refresh keeps dirs on top", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
 		testutil.WriteFile(t, filepath.Join(dir, "alpha.txt"), []byte("a"))
 		m := explorerModel(t, dir)
-		before := stripANSI(m.View().Content)
+		before := stripANSI(viewContent(m))
 		assert.Less(t,
 			strings.Index(before, "sub/"), strings.Index(before, "alpha.txt"),
 		)
@@ -151,7 +151,7 @@ func TestFileExplorer(t *testing.T) {
 
 		testutil.WriteFile(t, filepath.Join(dir, "DELETE.txt"), []byte("d"))
 		m = sendKey(m, 'e')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		up := strings.Index(out, "../")
 		sub := strings.Index(out, "sub/")
 		del := strings.Index(out, "DELETE.txt")
@@ -172,10 +172,10 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 		m = sendSpecial(m, tea.KeyEnter)
-		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "inner.txt")
 
 		m = sendSpecial(m, tea.KeyEnter)
-		assert.Contains(t, stripANSI(m.View().Content), "other.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "other.txt")
 	})
 
 	t.Run("flattens single-child dirs", func(t *testing.T) {
@@ -187,14 +187,14 @@ func TestFileExplorer(t *testing.T) {
 		))
 
 		m := explorerModel(t, dir)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "one/two/")
 
 		for _, ch := range "one" {
 			m = sendKey(m, ch)
 		}
 		m = sendSpecial(m, tea.KeyEnter)
-		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "inner.txt")
 	})
 
 	t.Run("shows hidden files by default", func(t *testing.T) {
@@ -203,7 +203,7 @@ func TestFileExplorer(t *testing.T) {
 			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
 		))
 
-		out := stripANSI(explorerModel(t, dir).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir)))
 
 		assert.Contains(t, out, ".hidden.txt")
 	})
@@ -216,7 +216,7 @@ func TestFileExplorer(t *testing.T) {
 		opts := files.DefaultFileExplorerOptions()
 		opts.Hidden = true
 
-		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir, opts)))
 
 		assert.NotContains(t, out, ".hidden.txt")
 	})
@@ -230,7 +230,7 @@ func TestFileExplorer(t *testing.T) {
 			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
 		))
 
-		out := stripANSI(explorerModel(t, dir).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir)))
 
 		assert.Contains(t, out, "ignored.txt")
 	})
@@ -246,7 +246,7 @@ func TestFileExplorer(t *testing.T) {
 		opts := files.DefaultFileExplorerOptions()
 		opts.IgnoreFiles = true
 
-		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir, opts)))
 
 		assert.NotContains(t, out, "ignored.txt")
 	})
@@ -261,7 +261,7 @@ func TestFileExplorer(t *testing.T) {
 		opts := files.DefaultFileExplorerOptions()
 		opts.FlattenDirs = false
 
-		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir, opts)))
 
 		assert.Contains(t, out, "one/")
 		assert.NotContains(t, out, "one/two/")
@@ -281,7 +281,7 @@ func TestFileExplorer(t *testing.T) {
 		opts := files.DefaultFileExplorerOptions()
 		opts.FollowSymlinks = true
 
-		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+		out := stripANSI(viewContent(explorerModel(t, dir, opts)))
 
 		assert.Contains(t, out, "linked/child/")
 	})
@@ -307,7 +307,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		)
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
-		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "sibling.txt")
 	})
 
 	t.Run("image path", func(t *testing.T) {
@@ -336,7 +336,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
 
-		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "sibling.txt")
 	})
 
 	t.Run("scratch falls back to cwd", func(t *testing.T) {
@@ -356,7 +356,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
 
-		assert.Contains(t, stripANSI(m.View().Content), "cwd.txt")
+		assert.Contains(t, stripANSI(viewContent(m)), "cwd.txt")
 	})
 }
 

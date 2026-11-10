@@ -28,7 +28,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 40)
 
 		m = sendKeyAndFeed(m, '(')
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		lines := strings.Split(stripANSI(viewContent(m)), "\n")
 		docY := signatureLineIndex(lines, "()")
 		sigY := signatureLineIndex(lines, "Println(a ...any)")
 
@@ -47,7 +47,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println(a ...any)")
 		assert.Contains(t, out, "signature docs")
@@ -78,7 +78,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = updateAndFeed(m, tea.KeyPressMsg{
 			Code: 'n', Text: "n", Mod: tea.ModAlt,
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Printf(format string, a ...any)")
 		assert.Contains(t, out, "(2/2)")
@@ -120,10 +120,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "format parameter")
+		assert.Contains(t, stripANSI(viewContent(m)), "format parameter")
 
 		m = sendKeyAndFeed(m, ',')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
@@ -144,10 +144,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		m = sendSpecialAndFeed(m, tea.KeyLeft)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "signature docs")
 	})
@@ -164,14 +164,14 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "signature docs")
 	})
@@ -188,11 +188,11 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		m = sendSpecialAndFeed(m, tea.KeyEscape)
 		m = sendKeyAndFeed(m, ',')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
@@ -227,7 +227,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = updateAndFeed(m, tea.KeyPressMsg{
 			Code: 'p', Text: "p", Mod: tea.ModAlt,
 		})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println(a ...any)")
 	})
@@ -244,11 +244,11 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		ctl.signatureEmpty = true
 		m = sendKeyAndFeed(m, 'x')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "signature docs")
 	})
@@ -265,11 +265,11 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		ctl.signatureErr = errors.New("sig error")
 		m = sendKeyAndFeed(m, 'x')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "signature docs")
 	})
@@ -286,10 +286,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '(')
-		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+		assert.Contains(t, stripANSI(viewContent(m)), "signature docs")
 
 		m = updateAndFeed(m, tea.BlurMsg{})
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "signature docs")
 	})

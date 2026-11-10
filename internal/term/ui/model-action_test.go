@@ -355,7 +355,7 @@ func TestLocationAction(t *testing.T) {
 
 		before := len(e.AllDocuments())
 		m = sendKeyAndFeed(m, 'd')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "first.go:1")
 		assert.Contains(t, out, "second.go:1")
@@ -412,7 +412,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKey(m, 's')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "main")
 		assert.Contains(t, out, "package")
@@ -495,7 +495,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		msg := runTestCmd(t, cmd)
 		next, _ = m.Update(msg)
 		m = next.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "WorkspaceMain")
 		assert.Contains(t, out, "target.go")
@@ -574,7 +574,7 @@ func TestSymbolPickerAction(t *testing.T) {
 			)
 			m = resize(m, 80, 24)
 			m = sendKey(m, 's')
-			assert.Contains(t, stripANSI(m.View().Content), "MySymbol")
+			assert.Contains(t, stripANSI(viewContent(m)), "MySymbol")
 		})
 	}
 }
@@ -683,7 +683,7 @@ func TestRenameSymbolAction(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKey(m, 'r')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, " Rename symbol ")
 		assert.Equal(t, "r old", promptText(m))
 
@@ -741,7 +741,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKey(m, 'a')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Fix old")
 
@@ -800,7 +800,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		))
 
 		m = sendKey(m, 'a')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Action 9")
 		assert.Contains(t, out, "▌")
@@ -831,7 +831,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		m = sendKey(m, 'x')
 
 		assert.Empty(t, ctl.applied)
-		assert.NotContains(t, stripANSI(m.View().Content), "Action 0")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Action 0")
 	})
 
 	t.Run("click applies action", func(t *testing.T) {
@@ -979,7 +979,7 @@ func TestGotoActions(t *testing.T) {
 
 		m = sendKeyAndFeed(m, 'r')
 
-		assert.Contains(t, stripANSI(m.View().Content), "target.go:1")
+		assert.Contains(t, stripANSI(viewContent(m)), "target.go:1")
 	})
 }
 
@@ -1091,7 +1091,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 		m = sendKey(m, 's')
-		assert.NotEmpty(t, stripANSI(m.View().Content))
+		assert.NotEmpty(t, stripANSI(viewContent(m)))
 	})
 }
 
@@ -1150,7 +1150,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, 'w')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "fmt.run")
 		assert.Contains(t, out, "lint.run")

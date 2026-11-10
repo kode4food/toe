@@ -47,7 +47,7 @@ func TestImageRender(t *testing.T) {
 	m, rawMsgs = collectModelRawMsgs(m, cmd)
 	raw := strings.Join(rawMsgs, "")
 
-	content := m.View().Content
+	content := viewContent(m)
 
 	assert.True(t,
 		strings.ContainsRune(content, tui.PlaceholderRune),
@@ -105,7 +105,7 @@ func TestImageDim(t *testing.T) {
 		var rawMsgs []string
 		m, rawMsgs = collectModelRawMsgs(m, cmd)
 		raw := strings.Join(rawMsgs, "")
-		content := m.View().Content
+		content := viewContent(m)
 
 		matches := regexp.MustCompile(`(?:\x1b_G|,)i=(\d+)`).
 			FindAllStringSubmatch(raw, -1)
@@ -133,7 +133,7 @@ func TestImageLoading(t *testing.T) {
 	m2, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = m2.(ui.Model)
 
-	out := stripANSI(m.View().Content)
+	out := stripANSI(viewContent(m))
 
 	assert.Contains(t, out, i18n.Text(i18n.StatusImageLoading))
 }
@@ -153,7 +153,7 @@ func TestImageUnsupported(t *testing.T) {
 	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = m2.(ui.Model)
 
-	out := stripANSI(m.View().Content)
+	out := stripANSI(viewContent(m))
 	assert.Contains(t, out, i18n.Text(i18n.StatusImageUnsupported))
 	assert.False(t, strings.ContainsRune(out, tui.PlaceholderRune))
 
@@ -589,7 +589,7 @@ func TestImagePickerPreviewLoading(t *testing.T) {
 	m2, _ := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
 	m = m2.(ui.Model)
 
-	out := stripANSI(m.View().Content)
+	out := stripANSI(viewContent(m))
 
 	assert.Contains(t, out, i18n.Text(i18n.StatusImageLoading))
 }
@@ -611,7 +611,7 @@ func TestImagePickerPreview(t *testing.T) {
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
 	assert.True(t,
-		strings.ContainsRune(m.View().Content, tui.PlaceholderRune),
+		strings.ContainsRune(viewContent(m), tui.PlaceholderRune),
 	)
 }
 
@@ -692,7 +692,7 @@ func TestImageRestore(t *testing.T) {
 
 	assert.Equal(t, 2, strings.Count(raw, ",p="))
 	assert.Equal(t, 2, strings.Count(raw, "\x1b_Gf=100"))
-	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
+	assert.True(t, strings.ContainsRune(viewContent(m), tui.PlaceholderRune))
 }
 
 func TestImageResizeOrder(t *testing.T) {
@@ -712,7 +712,7 @@ func TestImageResizeOrder(t *testing.T) {
 	// a resize before the first transmit lands still re-places at the live size
 	assert.Equal(t, 1, strings.Count(all, "a=T"))
 	assert.Contains(t, all, "c=100,r=25")
-	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
+	assert.True(t, strings.ContainsRune(viewContent(m), tui.PlaceholderRune))
 }
 
 func TestImageZoomKeepsReadyPlacement(t *testing.T) {
@@ -732,7 +732,7 @@ func TestImageZoomKeepsReadyPlacement(t *testing.T) {
 	m2, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m = m2.(ui.Model)
 
-	content := m.View().Content
+	content := viewContent(m)
 
 	assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
 	assert.NotContains(t,
@@ -755,7 +755,7 @@ func TestImageZoomPending(t *testing.T) {
 	pane.ZoomOut()
 	m2, firstCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m = m2.(ui.Model)
-	pending := m.View().Content
+	pending := viewContent(m)
 	m2, duplicateCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m, duplicateRaw := collectModelRawMsgs(m2.(ui.Model), duplicateCmd)
 	m, firstRaw := collectModelRawMsgs(m, firstCmd)
@@ -775,7 +775,7 @@ func TestImageZoomPending(t *testing.T) {
 	nextColor := placementColor(t, next[1])
 	assert.Contains(t, pending, initialColor)
 	assert.NotContains(t, pending, nextColor)
-	assert.Contains(t, m.View().Content, nextColor)
+	assert.Contains(t, viewContent(m), nextColor)
 
 	pane.ZoomOut()
 	m2, lastCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})

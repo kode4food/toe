@@ -26,7 +26,7 @@ const (
 func TestJumplistPicker(t *testing.T) {
 	t.Run("lists jumps with line contents", func(t *testing.T) {
 		m, _, _ := jumplistModel(t)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "file.txt")
 		assert.Contains(t, out, "TARGET")
 	})
@@ -72,7 +72,7 @@ func TestJumplistPicker(t *testing.T) {
 
 	t.Run("previews restored selection line", func(t *testing.T) {
 		m := jumplistPreviewModel(t)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "TARGET_ONLY")
 		assert.NotContains(t, out, "ANCHOR_ONLY")

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/colorprofile"
 	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -21,6 +22,7 @@ type (
 		split     bool
 		relative  bool
 		scrollOpt bool
+		direct    bool
 	}
 
 	terminalOutputRenderer struct {
@@ -36,6 +38,8 @@ func BenchmarkTerminalScrollOutput(b *testing.B) {
 		{name: "single-pane", scrollOpt: true},
 		{name: "single-pane-relative", relative: true, scrollOpt: true},
 		{name: "single-pane-no-scroll-opt"},
+		{name: "single-pane-direct", direct: true},
+		{name: "vertical-split-direct", split: true, direct: true},
 		{name: "vertical-split", split: true, scrollOpt: true},
 		{
 			name:      "vertical-split-relative",
@@ -54,8 +58,12 @@ func BenchmarkTerminalScrollOutput(b *testing.B) {
 func benchmarkTerminalScrollOutput(b *testing.B, tc terminalOutputBench) {
 	m := terminalScrollModel(b, tc)
 	tr := newTerminalOutputRenderer(100, 40, tc.scrollOpt)
+	render := tr.Render
+	if tc.direct {
+		render = tr.WriteFrame
+	}
 
-	if err := tr.Render(m.View().Content); err != nil {
+	if err := render(m); err != nil {
 		b.Fatal(err)
 	}
 	tr.ResetOutput()
@@ -75,7 +83,7 @@ func benchmarkTerminalScrollOutput(b *testing.B, tc terminalOutputBench) {
 		next, _ := tea.Model(m).Update(msg)
 		m = next.(ui.Model)
 
-		if err := tr.Render(m.View().Content); err != nil {
+		if err := render(m); err != nil {
 			b.Fatal(err)
 		}
 		out := tr.ResetOutput()
@@ -129,16 +137,21 @@ func newTerminalOutputRenderer(
 	tr := &terminalOutputRenderer{w: w, h: h}
 	tr.r = uv.NewTerminalRenderer(&tr.out, []string{"TERM=xterm-256color"})
 	tr.r.SetFullscreen(true)
+	tr.r.SetColorProfile(colorprofile.TrueColor)
 	tr.r.SetScrollOptim(scrollOpt)
 	tr.r.Resize(w, h)
 	return tr
 }
 
-func (t *terminalOutputRenderer) Render(content string) error {
+func (t *terminalOutputRenderer) Render(m ui.Model) error {
 	buf := uv.NewScreenBuffer(t.w, t.h)
-	uv.NewStyledString(content).Draw(buf, buf.Bounds())
+	uv.NewStyledString(viewContent(m)).Draw(buf, buf.Bounds())
 	t.r.Render(buf.RenderBuffer)
 	return t.r.Flush()
+}
+
+func (t *terminalOutputRenderer) WriteFrame(m ui.Model) error {
+	return m.View().Frame.WriteFrame(&t.out)
 }
 
 func (t *terminalOutputRenderer) ResetOutput() string {

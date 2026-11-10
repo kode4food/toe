@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/tui"
 )
 
 type (
@@ -15,6 +16,7 @@ type (
 		size         geom.Size
 		startup      layerFunc
 		lastOverlays []Component
+		screen       tui.Screen
 	}
 
 	bufferOverlayPlacement struct {
@@ -98,9 +100,9 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 }
 
 // Render paints every layer bottom up into one frame
-func (c *Compositor) Render(cx *Context) string {
+func (c *Compositor) Render(cx *Context) *tui.Frame {
 	if len(c.layers) == 0 {
-		return ""
+		return nil
 	}
 	cx.composition.singleLayer = len(c.layers) == 1
 	cx.composition.changed = !slices.Equal(c.lastOverlays, c.layers[1:])
@@ -179,7 +181,7 @@ func (c *Compositor) activePreviewImager() (previewImager, bool) {
 	return nil, false
 }
 
-func (c *Compositor) renderViaBuffer(cx *Context) string {
+func (c *Compositor) renderViaBuffer(cx *Context) *tui.Frame {
 	br := c.layers[0].(BufferRenderer)
 	placements := make([]bufferOverlayPlacement, 0, len(c.layers)-1)
 	for i := 1; i < len(c.layers); i++ {
@@ -203,5 +205,5 @@ func (c *Compositor) renderViaBuffer(cx *Context) string {
 	}
 	cx.composition.regions = regions
 	cx.composition.precise = true
-	return frame.RenderToANSI()
+	return c.screen.Snapshot(frame)
 }

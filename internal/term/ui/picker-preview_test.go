@@ -94,41 +94,41 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 				Width:  testPickerPreviewWidth,
 				Height: height,
 			})
-			cell := previewBarCell(t, m.View().Content)
+			cell := previewBarCell(t, viewContent(m))
 			assert.Equal(t, previewThumbBg, cell.style.bg)
 		}
 	})
 
 	t.Run("hidden unless enabled", func(t *testing.T) {
-		cell := previewBarCell(t, previewModel(t, false).View().Content)
+		cell := previewBarCell(t, viewContent(previewModel(t, false)))
 
 		assert.NotEqual(t, previewThumbBg, cell.style.bg)
 	})
 
 	t.Run("draws a thumb", func(t *testing.T) {
-		cell := previewBarCell(t, previewModel(t, true).View().Content)
+		cell := previewBarCell(t, viewContent(previewModel(t, true)))
 
 		assert.Equal(t, previewThumbBg, cell.style.bg)
 	})
 
 	t.Run("clicking the bar scrolls the preview", func(t *testing.T) {
 		m := previewModel(t, true)
-		assert.Contains(t, stripANSI(m.View().Content), "line 0")
+		assert.Contains(t, stripANSI(viewContent(m)), "line 0")
 
-		at := previewBarPoint(t, m.View().Content)
+		at := previewBarPoint(t, viewContent(m))
 		m = mouse(m, tea.MouseClickMsg{
 			X:      at.X,
 			Y:      at.Y,
 			Button: tea.MouseLeft,
 		})
 
-		assert.NotContains(t, stripANSI(m.View().Content), "line 0 ")
+		assert.NotContains(t, stripANSI(viewContent(m)), "line 0 ")
 	})
 
 	t.Run("dragging the bar scrolls back", func(t *testing.T) {
 		m := previewModel(t, true)
 
-		at := previewBarPoint(t, m.View().Content)
+		at := previewBarPoint(t, viewContent(m))
 		m = mouse(m, tea.MouseClickMsg{
 			X:      at.X,
 			Y:      at.Y,
@@ -141,11 +141,11 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 			Button: tea.MouseLeft,
 		})
 
-		assert.Contains(t, stripANSI(m.View().Content), "line 0 ")
+		assert.Contains(t, stripANSI(viewContent(m)), "line 0 ")
 	})
 
 	t.Run("a wholly added file drops its markings", func(t *testing.T) {
-		content := diffPreviewModel(t).View().Content
+		content := viewContent(diffPreviewModel(t))
 
 		// the picker row already says the file is added
 		assert.NotContains(t, stripANSI(content), "+ line 0")
@@ -186,7 +186,7 @@ func TestPickerPreview(t *testing.T) {
 		})
 		assert.Regexp(t,
 			fmt.Sprintf("(?m)^.{%d,}┆ ┆ needle", testPickerPreviewWidth/2),
-			stripANSI(m.View().Content),
+			stripANSI(viewContent(m)),
 		)
 	})
 
@@ -227,7 +227,7 @@ func TestPickerPreview(t *testing.T) {
 				)
 				m = resize(m, 100, 18)
 				m = sendKey(m, 'p')
-				out := stripANSI(m.View().Content)
+				out := stripANSI(viewContent(m))
 				assert.Regexp(t,
 					fmt.Sprintf("(?m)^.{%d,}┆   ┆   needle",
 						testPickerPreviewWidth/2,
@@ -257,7 +257,7 @@ func TestPickerPreview(t *testing.T) {
 
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
-		out := m.View().Content
+		out := viewContent(m)
 
 		// mocha base is rgb(30,30,46) and popup surface0 is rgb(49,50,68).
 		// Cells carry the popup bg, not the editor bg or terminal default
@@ -291,7 +291,7 @@ func TestPickerPreview(t *testing.T) {
 
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
-		out := m.View().Content
+		out := viewContent(m)
 
 		// "package" is syntax-colored (mauve fg), its cells must still carry
 		// the popup bg (49;50;68), not terminal default from a bg reset
@@ -328,7 +328,7 @@ func TestPickerPreview(t *testing.T) {
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
 
-		for raw := range strings.SplitSeq(m.View().Content, "\n") {
+		for raw := range strings.SplitSeq(viewContent(m), "\n") {
 			if !strings.Contains(raw, "package") {
 				continue
 			}
@@ -343,7 +343,7 @@ func TestPickerPreview(t *testing.T) {
 			)
 			return
 		}
-		assert.Contains(t, m.View().Content, "package")
+		assert.Contains(t, viewContent(m), "package")
 	})
 
 	t.Run("clips long lines", func(t *testing.T) {
@@ -365,7 +365,7 @@ func TestPickerPreview(t *testing.T) {
 		width := testPickerPreviewWidth
 		m = resize(m, width, 24)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, long)
 		assert.NotContains(t, out, "\t")
@@ -395,7 +395,7 @@ func TestPickerPreview(t *testing.T) {
 		width := testPickerPreviewWidth
 		m = resize(m, width, 24)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "↪ ")
 		for line := range strings.SplitSeq(out, "\n") {
@@ -420,7 +420,7 @@ func TestPickerPreview(t *testing.T) {
 		)
 		m = resize(m, testPickerPreviewWidth, 24)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Equal(t, 200, strings.Count(out, "x"))
 	})
 
@@ -440,7 +440,7 @@ func TestPickerPreview(t *testing.T) {
 		)
 		m = resize(m, testPickerPreviewWidth, 24)
 		m = sendKey(m, 'p')
-		assert.NotContains(t, stripANSI(m.View().Content), "TAILEND")
+		assert.NotContains(t, stripANSI(viewContent(m)), "TAILEND")
 		for range 100 {
 			m = mouse(m, tea.MouseWheelMsg{
 				X:      80,
@@ -448,7 +448,7 @@ func TestPickerPreview(t *testing.T) {
 				Button: tea.MouseWheelDown,
 			})
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "TAILEND")
 		assert.NotContains(t, out, "first")
 	})
@@ -474,7 +474,7 @@ func TestPickerPreview(t *testing.T) {
 
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "    » ")
 	})
@@ -506,7 +506,7 @@ max-indent-retain = 40
 
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Makefile")
 		assert.Contains(t, out, "go install")
@@ -539,7 +539,7 @@ wrap-indicator = "↪ "
 		height := 18
 		m = resize(m, 100, height)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.GreaterOrEqual(t, strings.Count(out, "↪ "), 1)
 		assert.LessOrEqual(t, strings.Count(out, "↪ "), height)
@@ -568,7 +568,7 @@ wrap-indicator = "↪ "
 		for _, ch := range "main" {
 			m = sendKey(m, ch)
 		}
-		out := m.View().Content
+		out := viewContent(m)
 
 		// "package" keeps its mauve syntax fg (203;166;247) over the surface1
 		// highlight bg (69;71;90), in separate or combined SGR form
@@ -609,10 +609,10 @@ wrap-indicator = "↪ "
 		for _, ch := range "long" {
 			m = sendKey(m, ch)
 		}
-		_ = m.View().Content // render wide, populating the preview cache
+		_ = viewContent(m) // render wide, populating the preview cache
 
 		m = resize(m, narrowPickerPreviewWidth, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		for line := range strings.SplitSeq(out, "\n") {
 			assert.LessOrEqual(t, len([]rune(line)), narrowPickerPreviewWidth)
 		}
@@ -648,20 +648,20 @@ wrap-indicator = "↪ "
 			}
 		}
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "LINE-00")
 		assert.NotContains(t, out, "LINE-79")
 
 		// scroll down hard: the last line is pinned to the bottom of the pane,
 		// the top has scrolled away, and content has not run off the top
 		wheel(tea.MouseWheelDown, 40)
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.NotContains(t, out, "LINE-00")
 		assert.Contains(t, out, "LINE-79")
 
 		// scrolling back the same amount restores the top (no runaway offset)
 		wheel(tea.MouseWheelUp, 40)
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, "LINE-00")
 		assert.NotContains(t, out, "LINE-79")
 	})
@@ -686,7 +686,7 @@ wrap-indicator = "↪ "
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 
-		assert.Contains(t, stripANSI(m.View().Content), "leftleft")
+		assert.Contains(t, stripANSI(viewContent(m)), "leftleft")
 
 		wheel := func(button tea.MouseButton, times int) {
 			for range times {
@@ -696,12 +696,12 @@ wrap-indicator = "↪ "
 		}
 
 		wheel(tea.MouseWheelRight, 40)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "rightright")
 		assert.NotContains(t, out, "leftleft")
 
 		wheel(tea.MouseWheelLeft, 40)
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.Contains(t, out, "leftleft")
 	})
 }
@@ -725,7 +725,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "00000000  00 01 02 03 04 05 06 07")
 		assert.Contains(t, out, "00000008  08 09 0a 0b 0c 0d 0e 0f")
 		assert.Contains(t, out, "│........│")
@@ -737,7 +737,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		assert.NotContains(t, out, "00000000  ")
 		assert.Contains(t, out, "00000018  18 19 1a 1b 1c 1d 1e 1f")
 	})
@@ -756,7 +756,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "<File not found>")
 	})
 
@@ -781,7 +781,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'q')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "subdir/")
 		assert.Contains(t, out, "file.txt")
 	})
@@ -806,7 +806,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "<File too large to preview>")
 	})
 
@@ -827,7 +827,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "00000000  00 00 00 00 00 00 00 00")
 		assert.NotContains(t, out, "<File too large to preview>")
 	})
@@ -848,11 +848,11 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
-		assert.Contains(t, stripANSI(m.View().Content), "<File not found>")
+		assert.Contains(t, stripANSI(viewContent(m)), "<File not found>")
 
 		assert.NoError(t, os.WriteFile(path, []byte("now here\n"), 0o644))
 		m = sendKey(m, 'x')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "now here")
 	})
 
@@ -876,7 +876,7 @@ func TestPickerPreviewColorSwatches(t *testing.T) {
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
 
-		raw := m.View().Content
+		raw := viewContent(m)
 
 		assert.Contains(t, stripANSI(raw), "■#f00")
 		assert.Contains(t, raw, "\x1b[38;2;255;0;0m")
@@ -899,7 +899,7 @@ func TestPickerPreviewColorSwatches(t *testing.T) {
 		m = resize(m, 100, 18)
 		m = sendKey(m, 'p')
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "■")
 		assert.Contains(t, out, "#f00")

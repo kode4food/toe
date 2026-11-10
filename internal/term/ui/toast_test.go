@@ -43,7 +43,7 @@ func TestToasts(t *testing.T) {
 
 		m = sendKey(m, 'x')
 
-		content := stripANSI(m.View().Content)
+		content := stripANSI(viewContent(m))
 		assert.Contains(t, content, "first")
 		assert.Contains(t, content, "second")
 	})
@@ -64,7 +64,7 @@ func TestToasts(t *testing.T) {
 		m = m.ExecTypable("say")
 
 		lines := strings.Split(
-			strings.TrimRight(stripANSI(m.View().Content), "\n"), "\n",
+			strings.TrimRight(stripANSI(viewContent(m)), "\n"), "\n",
 		)
 		// two rows below the popup, the statusline among them
 		bottom := len(lines) - 1
@@ -93,7 +93,7 @@ func TestToasts(t *testing.T) {
 			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 
-		content := stripANSI(m.View().Content)
+		content := stripANSI(viewContent(m))
 		assert.NotContains(t, content, "first")
 		assert.Contains(t, content, "second")
 	})
@@ -169,7 +169,7 @@ func TestToasts(t *testing.T) {
 
 		m = m.ExecTypable("boom")
 
-		content := m.View().Content
+		content := viewContent(m)
 		assert.NotEqual(t,
 			foregrounds(rawToastRow(m, "plain news")),
 			foregrounds(rawToastRow(m, "assert.AnError")),
@@ -248,7 +248,7 @@ func TestToastLogTailing(t *testing.T) {
 
 		assert.NotEmpty(t, toastRow(m, "Messages"))
 		assert.Equal(t,
-			2, strings.Count(stripANSI(m.View().Content), "hello there"),
+			2, strings.Count(stripANSI(viewContent(m)), "hello there"),
 		)
 	})
 
@@ -270,7 +270,7 @@ func TestToastLogTailing(t *testing.T) {
 }
 
 func toastRowIndex(m ui.Model, text string) int {
-	for y, line := range strings.Split(stripANSI(m.View().Content), "\n") {
+	for y, line := range strings.Split(stripANSI(viewContent(m)), "\n") {
 		if strings.Contains(line, text) {
 			return y
 		}
@@ -280,7 +280,7 @@ func toastRowIndex(m ui.Model, text string) int {
 
 func toastPoint(t *testing.T, m ui.Model, text string) geom.Point {
 	t.Helper()
-	for y, line := range strings.Split(stripANSI(m.View().Content), "\n") {
+	for y, line := range strings.Split(stripANSI(viewContent(m)), "\n") {
 		if x := strings.Index(line, text); x >= 0 {
 			return geom.Point{X: x, Y: y}
 		}
@@ -290,7 +290,7 @@ func toastPoint(t *testing.T, m ui.Model, text string) geom.Point {
 }
 
 func rawToastRow(m ui.Model, text string) string {
-	for line := range strings.SplitSeq(m.View().Content, "\n") {
+	for line := range strings.SplitSeq(viewContent(m), "\n") {
 		if strings.Contains(stripANSI(line), text) {
 			return line
 		}
@@ -329,7 +329,7 @@ func settled(m ui.Model) ui.Model {
 }
 
 func toastRow(m ui.Model, text string) string {
-	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+	for line := range strings.SplitSeq(stripANSI(viewContent(m)), "\n") {
 		if strings.Contains(line, text) {
 			return line
 		}

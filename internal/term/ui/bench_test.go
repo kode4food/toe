@@ -2,6 +2,7 @@ package ui_test
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,7 +35,7 @@ func BenchmarkRenderImage(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		pane.MarkDirty()
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -60,7 +61,7 @@ func BenchmarkRenderLongLine(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		v.MarkDirty()
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -91,7 +92,7 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 	for _, ch := range "big" {
 		m = sendKey(m, ch)
 	}
-	_ = m.View().Content // prime
+	frameSink(m) // prime
 
 	b.ReportAllocs()
 	i := 0
@@ -101,7 +102,7 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 			button = tea.MouseWheelUp
 		}
 		m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
-		_ = m.View().Content
+		frameSink(m)
 		i++
 	}
 }
@@ -121,11 +122,11 @@ func BenchmarkRenderEmptyPicker(b *testing.B) {
 	for _, ch := range "no-match" {
 		m = sendKey(m, ch)
 	}
-	_ = m.View().Content
+	frameSink(m)
 
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -152,7 +153,7 @@ func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		v.MarkDirty()
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -164,12 +165,12 @@ func benchTerminal(b *testing.B, fill string) {
 	tp := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 	b.Cleanup(func() { _ = tp.Stop() })
 	tp.IngestOutput([]byte(fill))
-	_ = m.View().Content // prime
+	frameSink(m) // prime
 
 	b.ReportAllocs()
 	for b.Loop() {
 		tp.MarkDirty()
-		_ = m.View().Content
+		frameSink(m)
 	}
 }
 
@@ -221,5 +222,13 @@ func BenchmarkKeystroke(b *testing.B) {
 	for b.Loop() {
 		next, _ := m.Update(tea.KeyPressMsg{Code: 'j', Text: "j"})
 		m = next.(ui.Model)
+	}
+}
+
+// frameSink writes the frame to a discarded terminal as the program does, so
+// render benchmarks time the full per-frame path
+func frameSink(m ui.Model) {
+	if f := m.View().Frame; f != nil {
+		_ = f.WriteFrame(io.Discard)
 	}
 }

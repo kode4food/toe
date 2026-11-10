@@ -28,7 +28,7 @@ func TestPickerColumnSpacing(t *testing.T) {
 				Display: cols[hidden],
 				Columns: cols,
 			}})
-			row := stripANSI(rawLineContaining(t, m.View().Content, " > "))
+			row := stripANSI(rawLineContaining(t, viewContent(m), " > "))
 			// The name fills the row up to its single trailing margin.
 			assert.Contains(t, row, strings.Repeat("x", 39)+" │")
 		})
@@ -49,9 +49,9 @@ func BenchmarkPickerColumns(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		m = sendSpecial(m, tea.KeyDown)
-		_ = m.View().Content
+		_ = viewContent(m)
 		m = sendSpecial(m, tea.KeyUp)
-		_ = m.View().Content
+		_ = viewContent(m)
 	}
 }
 

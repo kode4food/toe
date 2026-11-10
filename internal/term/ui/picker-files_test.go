@@ -60,7 +60,7 @@ func TestPickerFiles(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
 		m = sendSpecial(m, tea.KeyEnter)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		doc := e.FocusedDocument()
 		if !assert.NotNil(t, doc) {
 			return
@@ -123,7 +123,7 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "visible.go")
 		assert.NotContains(t, out, "ignored.go")
@@ -164,7 +164,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "parent_ignored.go")
 		assert.Contains(t, out, "visible.go")
@@ -201,7 +201,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "global_ignored.go")
 		assert.Contains(t, out, "visible.go")
@@ -234,7 +234,7 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "root.go")
 		assert.Contains(t, out, "child.go src")
@@ -267,7 +267,7 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "child.go")
 		assert.NotContains(t, out, "root.go")
@@ -300,7 +300,7 @@ func TestPickerFiles(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'F')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "child.go")
 		assert.NotContains(t, out, "root.go")
@@ -332,7 +332,7 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "config.toml")
 		assert.Contains(t, out, "languages.toml")
@@ -364,7 +364,7 @@ func TestPickerFiles(t *testing.T) {
 		m = resize(m, 100, 30)
 		m = sendKey(m, ' ')
 		m = sendKey(m, 'f')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "config.toml")
 		assert.Contains(t, out, "languages.toml")
@@ -400,7 +400,7 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "config.toml")
 		assert.Contains(t, out, "languages.toml")
@@ -432,7 +432,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "config.toml")
 		assert.Contains(t, out, "languages.toml")
@@ -460,7 +460,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "outside.go linked")
 	})
@@ -483,7 +483,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "inside.go target")
 		assert.NotContains(t, out, "inside.go linked")
@@ -501,7 +501,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "0/0")
 	})
@@ -521,7 +521,7 @@ func TestPickerFiles(t *testing.T) {
 		)
 
 		m = resize(m, 100, 30)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "0/0")
 	})
@@ -539,7 +539,7 @@ func TestPickerFiles(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 6)
 		p := files.NewFilePickerInDir(tmp)(e)
 
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotNil(t, p)
 		assert.NotEmpty(t, out)
@@ -573,7 +573,7 @@ func TestPickerFiles(t *testing.T) {
 		msg = runTestCmd(t, cmd)
 		next, _ = m.Update(msg)
 		m = next.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "alpha.go:1")
 	})
@@ -616,7 +616,7 @@ func TestPickerFiles(t *testing.T) {
 		for _, ch := range "alpha" {
 			m = sendKey(m, ch)
 		}
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "line-18 target")
 		assert.NotContains(t, out, "line-00 start")

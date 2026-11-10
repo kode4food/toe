@@ -296,7 +296,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 
@@ -326,7 +326,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		assert.Contains(t, stripANSI(m.View().Content), "Println")
+		assert.Contains(t, stripANSI(viewContent(m)), "Println")
 
 		m = sendSpecial(m, tea.KeyEnter)
 		doc := e.FocusedDocument()
@@ -334,7 +334,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		assert.Equal(t, "\n", doc.Text().String())
 		assert.Empty(t, ctl.item.Label)
-		assert.NotContains(t, stripANSI(m.View().Content), "Println")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Println")
 	})
 
 	t.Run("accepts completion on tab", func(t *testing.T) {
@@ -380,9 +380,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		before := m.View().Content
+		before := viewContent(m)
 		m = sendSpecialAndFeed(m, tea.KeyDown)
-		after := m.View().Content
+		after := viewContent(m)
 
 		assert.NotEqual(t,
 			rawLineContaining(t, before, "Printf"),
@@ -398,7 +398,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
 
-		line := rawLineContaining(t, m.View().Content, "Println")
+		line := rawLineContaining(t, viewContent(m), "Println")
 		fg := fgCols(line)
 		plain := stripANSI(line)
 		start := utf8.RuneCountInString(
@@ -430,7 +430,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendKeyAndFeed(m, '.')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " Name")
 		assert.NotContains(t, out, "detail")
@@ -458,7 +458,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " Printf")
 		assert.Contains(t, out, "func(format string, args ...any)")
@@ -492,7 +492,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "func(format string, args ...any)")
 		assert.NotContains(t, out, "func(a ...any)")
@@ -521,7 +521,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "func(format string, args ...any) with...")
 		assert.NotContains(t, out, "very long explanatory suffix")
@@ -586,9 +586,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		before := completionPopupWidth(t, stripANSI(m.View().Content))
+		before := completionPopupWidth(t, stripANSI(viewContent(m)))
 		m = sendSpecial(m, tea.KeyDown)
-		after := completionPopupWidth(t, stripANSI(m.View().Content))
+		after := completionPopupWidth(t, stripANSI(viewContent(m)))
 
 		assert.Equal(t, before, after)
 	})
@@ -610,7 +610,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "╭")
 		assert.Contains(t, out, "╰")
@@ -724,7 +724,7 @@ func TestCompletionComponent(t *testing.T) {
 				m = resize(m, 80, 24)
 
 				m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-				out := stripANSI(m.View().Content)
+				out := stripANSI(viewContent(m))
 
 				assert.Contains(t, out, tc.icon+" Item")
 			})
@@ -754,7 +754,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, " Printf(format string)")
 		assert.Contains(t, out, "fmt")
@@ -785,7 +785,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "completion docs should stay hidden")
@@ -814,7 +814,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "hello")
@@ -843,7 +843,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "func main() {}")
@@ -874,7 +874,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 40, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "docs for narrow screen")
@@ -901,7 +901,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "▌")
 		assert.NotContains(t, out, "▲")
@@ -980,7 +980,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecial(m, tea.KeyEscape)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "Println")
 		assert.Empty(t, ctl.item.Label)
@@ -1079,11 +1079,11 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Println")
 
 		m = sendSpecialText(m, tea.KeyLeft, "left")
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "Println")
 	})
@@ -1106,14 +1106,14 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Println")
 
 		m2, _ := m.Update(tea.MouseClickMsg{
 			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
@@ -1183,7 +1183,7 @@ func TestCompletionComponent(t *testing.T) {
 			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "itemM")
 
@@ -1217,7 +1217,7 @@ func TestCompletionComponent(t *testing.T) {
 			X: 30, Y: 0, Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "Println")
 		assert.Greater(t, v.Offset().Anchor, before)
@@ -1241,12 +1241,12 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Println")
 		assert.Contains(t, out, "Scanln")
 
 		m = sendKey(m, 'P')
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
@@ -1278,7 +1278,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendKey(m, 'C')
 		m = sendKey(m, 'l')
 		m = sendKey(m, 'o')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Close")
 		assert.NotContains(t, out, "Clear")
@@ -1308,7 +1308,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendKey(m, 'P')
 		m = sendKey(m, 'l')
 		m = sendKey(m, 'n')
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "Panic")
@@ -1336,11 +1336,11 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Alpha")
 
 		m = sendKeyAndFeed(m, 'P')
-		out = stripANSI(m.View().Content)
+		out = stripANSI(viewContent(m))
 
 		assert.Contains(t, out, "Println")
 		assert.NotContains(t, out, "Alpha")
@@ -1444,10 +1444,10 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		assert.Contains(t, stripANSI(m.View().Content), "Println")
+		assert.Contains(t, stripANSI(viewContent(m)), "Println")
 
 		doc.SetSelectionFor(v.ID(), core.PointSelection(0))
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "Println")
 	})
@@ -1472,7 +1472,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = m2.(ui.Model)
 		m = sendKey(m, 'p')
 		m = feedCmds(m, cmd)
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 
 		assert.NotContains(t, out, "Println")
 	})
@@ -1529,7 +1529,7 @@ func TestAutoCompletion(t *testing.T) {
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
 
-		assert.Contains(t, stripANSI(m.View().Content), "Println")
+		assert.Contains(t, stripANSI(viewContent(m)), "Println")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Equal(t, "Pr", doc.Text().String())
@@ -1542,7 +1542,7 @@ func TestAutoCompletion(t *testing.T) {
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Println")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Println")
 	})
 
 	t.Run("stays closed when disabled", func(t *testing.T) {
@@ -1552,7 +1552,7 @@ func TestAutoCompletion(t *testing.T) {
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Println")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Println")
 	})
 }
 
@@ -1627,7 +1627,7 @@ func hasRightEdgeThumb(out string) bool {
 
 func rawCompletionLine(t *testing.T, m ui.Model, text string) string {
 	t.Helper()
-	for line := range strings.SplitSeq(m.View().Content, "\n") {
+	for line := range strings.SplitSeq(viewContent(m), "\n") {
 		if strings.Contains(stripANSI(line), text) {
 			return line
 		}
@@ -1640,7 +1640,7 @@ func completionTextPoint(
 	t *testing.T, m ui.Model, text string,
 ) geom.Point {
 	t.Helper()
-	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {
 		if x := strings.Index(line, text); x >= 0 {
 			return geom.Point{X: x, Y: y}

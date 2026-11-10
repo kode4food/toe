@@ -20,10 +20,10 @@ func TestTerminalLoading(t *testing.T) {
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 	starting := i18n.Text(i18n.StatusTerminalStarting)
-	assert.Contains(t, stripANSI(m.View().Content), starting)
+	assert.Contains(t, stripANSI(viewContent(m)), starting)
 
 	tp.IngestOutput([]byte("ready"))
-	assert.NotContains(t, stripANSI(m.View().Content), starting)
+	assert.NotContains(t, stripANSI(viewContent(m)), starting)
 }
 
 func TestScrollbackThemeBackground(t *testing.T) {
@@ -44,6 +44,6 @@ func TestScrollbackThemeBackground(t *testing.T) {
 		assert.Positive(t, tp.ScrollOffset())
 
 		// mocha's ui.background is #1e1e2e (30,30,46)
-		assert.Contains(t, m.View().Content, "\x1b[48;2;30;30;46m")
+		assert.Contains(t, viewContent(m), "\x1b[48;2;30;30;46m")
 	})
 }

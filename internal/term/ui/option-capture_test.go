@@ -57,7 +57,7 @@ func TestOptionCapture(t *testing.T) {
 
 		m = sendKeyAndFeed(sendKeyAndFeed(m, 'l'), ' ')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Empty(t, gitStatus(t, repo))
 	})
 
@@ -66,7 +66,7 @@ func TestOptionCapture(t *testing.T) {
 
 		m = updateAndFeed(m, tea.KeyPressMsg{Code: tea.KeyEscape})
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
 
@@ -75,7 +75,7 @@ func TestOptionCapture(t *testing.T) {
 
 		m = sendKeyAndFeed(m, 'q')
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
 
@@ -89,13 +89,13 @@ func TestOptionCapture(t *testing.T) {
 			Button: tea.MouseLeft,
 		})
 
-		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.NotContains(t, stripANSI(viewContent(m)), "Discard changes")
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
 	})
 
 	t.Run("the wheel leaves the popup up", func(t *testing.T) {
 		_, m := discardCapture(t)
-		before := m.View().Content
+		before := viewContent(m)
 
 		m = updateAndFeed(m, tea.MouseWheelMsg{
 			X:      60,
@@ -105,7 +105,7 @@ func TestOptionCapture(t *testing.T) {
 
 		// the wheel is swallowed, so neither the popup nor the picker under
 		// it moves
-		assert.Equal(t, before, m.View().Content)
+		assert.Equal(t, before, viewContent(m))
 	})
 
 	t.Run("a resize leaves the popup up", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestOptionCapture(t *testing.T) {
 
 		// a message the popup has no answer for falls through to the layers
 		// below, which re-lay it out rather than closing it
-		assert.Contains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.Contains(t, stripANSI(viewContent(m)), "Discard changes")
 	})
 
 	t.Run("a long question wraps inside the popup", func(t *testing.T) {
@@ -130,7 +130,7 @@ func TestOptionCapture(t *testing.T) {
 
 		// the question outgrows the popup's width cap, so it takes two rows
 		// and the buttons still sit under it
-		out := stripANSI(m.View().Content)
+		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Discard changes to")
 		assert.Contains(t, out, name[:20])
 		assert.Contains(t, stripANSI(popupRow(m, "y Yes")), "n No")
@@ -154,12 +154,12 @@ func discardCapture(t *testing.T) (string, ui.Model) {
 	path := testutil.GitCommitFile(t, repo, "mod.txt", []byte("one\n"))
 	testutil.WriteFile(t, path, []byte("two\n"))
 	m := sendCtrl(changedFilePicker(t, repo), 'r')
-	assert.Contains(t, stripANSI(m.View().Content), "Discard changes")
+	assert.Contains(t, stripANSI(viewContent(m)), "Discard changes")
 	return repo, m
 }
 
 func popupCell(m ui.Model, text string) geom.Point {
-	for y, row := range strings.Split(m.View().Content, "\n") {
+	for y, row := range strings.Split(viewContent(m), "\n") {
 		if x := strings.Index(stripANSI(row), text); x >= 0 {
 			return geom.Point{X: x, Y: y}
 		}

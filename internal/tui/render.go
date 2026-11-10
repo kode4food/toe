@@ -90,7 +90,7 @@ var (
 )
 
 // RenderToANSI serializes the buffer as rows joined by '\n', emitting style
-// escapes only on changes, used to bridge into the string-based render path
+// escapes only on changes
 func (b *Buffer) RenderToANSI() string {
 	if b.IsEmpty() {
 		return ""

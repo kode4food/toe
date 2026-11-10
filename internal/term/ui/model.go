@@ -167,7 +167,10 @@ func (m Model) View() tea.View {
 		v.AltScreen = true
 		return v
 	}
-	v := tea.NewView(m.compositor.Render(cx))
+	v := tea.NewView("")
+	if f := m.compositor.Render(cx); f != nil {
+		v.Frame = f
+	}
 	v.AltScreen = true
 	v.WindowTitle = cx.windowTitle
 	if cx.Editor.Options().Mouse {

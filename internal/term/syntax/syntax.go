@@ -4,6 +4,7 @@
 package syntax
 
 import (
+	"math"
 	"slices"
 	"strings"
 	"sync"
@@ -34,7 +35,7 @@ type (
 	tsCapture struct {
 		start, end int
 		scope      string
-		idx        uint32
+		pattern    uint32
 	}
 )
 
@@ -104,25 +105,27 @@ func (sc *Cache) treeTokenize(source core.Source) []highlight.Span {
 				continue
 			}
 			captures = append(captures, tsCapture{
-				start: b2c[sb],
-				end:   b2c[eb],
-				scope: scope,
-				idx:   c.Index,
+				start:   b2c[sb],
+				end:     b2c[eb],
+				scope:   scope,
+				pattern: uint32(m.PatternIndex),
 			})
 		}
 	}
 
+	captures = append(captures, sc.injectionCaptures(lc, root, src, b2c)...)
 	if len(captures) == 0 {
 		return nil
 	}
-	captures = append(captures, sc.injectionCaptures(lc, root, src, b2c)...)
 
 	slices.SortFunc(captures, func(a, b tsCapture) int {
 		if a.start != b.start {
 			return a.start - b.start
 		}
-		// lower capture index = higher priority
-		return int(a.idx) - int(b.idx)
+		if a.end != b.end {
+			return b.end - a.end
+		}
+		return int(a.pattern) - int(b.pattern)
 	})
 	return buildSpans(captures)
 }
@@ -163,9 +166,10 @@ func (sc *Cache) injectionCaptures(
 				Lang: lang,
 			}) {
 				out = append(out, tsCapture{
-					start: start + sp.Start,
-					end:   start + sp.End,
-					scope: sp.Scope,
+					start:   start + sp.Start,
+					end:     start + sp.End,
+					scope:   sp.Scope,
+					pattern: math.MaxUint32,
 				})
 			}
 		}

@@ -3,6 +3,7 @@
 package highlight
 
 import (
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -92,9 +93,10 @@ var (
 
 		chroma.LiteralStringSymbol: "constant",
 
-		chroma.GenericInserted: "diff.plus",
-		chroma.GenericDeleted:  "diff.minus",
-		chroma.GenericHeading:  "markup.heading",
+		chroma.GenericInserted:   "diff.plus",
+		chroma.GenericDeleted:    "diff.minus",
+		chroma.GenericHeading:    "markup.heading",
+		chroma.GenericSubheading: "markup.heading",
 	}
 )
 
@@ -118,8 +120,14 @@ func Tokenize(src core.Source) []Span {
 	var spans []Span
 	pos := 0
 	for tok := iter(); tok != chroma.EOF; tok = iter() {
+		scope, ok := scopeFor(tok.Type)
+		if ok && scope == "markup.heading" {
+			spans = appendHeadings(spans, pos, tok.Value)
+			pos += utf8.RuneCountInString(tok.Value)
+			continue
+		}
 		n := utf8.RuneCountInString(tok.Value)
-		if scope, ok := scopeFor(tok.Type); ok {
+		if ok {
 			spans = append(spans, Span{
 				Start: pos,
 				End:   pos + n,
@@ -160,6 +168,31 @@ func scopeFor(t chroma.TokenType) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// appendHeadings: Coalesce merges consecutive headings into one token, so split it per line
+func appendHeadings(spans []Span, pos int, text string) []Span {
+	for line := range strings.SplitAfterSeq(text, "\n") {
+		n := utf8.RuneCountInString(line)
+		if n == 0 {
+			continue
+		}
+		spans = append(spans, Span{
+			Start: pos,
+			End:   pos + n,
+			Scope: headingScope(line),
+		})
+		pos += n
+	}
+	return spans
+}
+
+func headingScope(s string) string {
+	n := len(s) - len(strings.TrimLeft(s, "#"))
+	if n < 1 || n > 6 {
+		return "markup.heading"
+	}
+	return "markup.heading." + strconv.Itoa(n)
 }
 
 func ansiStyle(c uint8) tui.Style {

@@ -255,6 +255,125 @@ var _ = DefaultPort
 	}
 }
 
+func TestTokenizePrecedence(t *testing.T) {
+	goSrc := "package main\n\nfunc main() {\n\ts := \"a\\nb\"\n\t_ = s\n}\n"
+	cSrc := "#define MAX_LEN 10\n" +
+		"int add(int left, int right) { return add(left, MAX_LEN); }\n"
+	diffSrc := "diff --git a/x.go b/x.go\n--- a/x.go\n+++ b/x.go\n" +
+		"@@ -1 +1 @@\n-old\n+new\n"
+
+	cases := []struct {
+		name   string
+		lang   string
+		src    string
+		needle string
+		scope  string
+	}{
+		{
+			name:   "escape",
+			lang:   "go",
+			src:    goSrc,
+			needle: "\\n",
+			scope:  "constant.character.escape",
+		},
+		{
+			name:   "string around escape",
+			lang:   "go",
+			src:    goSrc,
+			needle: "b\"",
+			scope:  "string",
+		},
+		{
+			name:   "func name",
+			lang:   "go",
+			src:    goSrc,
+			needle: "main()",
+			scope:  "function",
+		},
+		{
+			name:   "c call",
+			lang:   "c",
+			src:    cSrc,
+			needle: "add(left",
+			scope:  "function",
+		},
+		{
+			name:   "c parameter",
+			lang:   "c",
+			src:    cSrc,
+			needle: "left,",
+			scope:  "variable.parameter",
+		},
+		{
+			name:   "c constant",
+			lang:   "c",
+			src:    cSrc,
+			needle: "MAX_LEN)",
+			scope:  "constant",
+		},
+		{
+			name:   "c local",
+			lang:   "c",
+			src:    cSrc,
+			needle: "left, MAX",
+			scope:  "variable",
+		},
+		{
+			name:   "diff path",
+			lang:   "diff",
+			src:    diffSrc,
+			needle: "a/x.go b",
+			scope:  "string.special.path",
+		},
+		{
+			name:   "diff old header",
+			lang:   "diff",
+			src:    diffSrc,
+			needle: "--- a",
+			scope:  "diff.minus",
+		},
+		{
+			name:   "diff new header",
+			lang:   "diff",
+			src:    diffSrc,
+			needle: "b/x.go\n@@",
+			scope:  "diff.plus",
+		},
+		{
+			name:   "diff deletion",
+			lang:   "diff",
+			src:    diffSrc,
+			needle: "-old",
+			scope:  "diff.minus",
+		},
+		{
+			name:   "diff addition",
+			lang:   "diff",
+			src:    diffSrc,
+			needle: "+new",
+			scope:  "diff.plus",
+		},
+		{
+			name:   "yaml key",
+			lang:   "yaml",
+			src:    "title: x\n",
+			needle: "title",
+			scope:  "variable.other.member",
+		},
+	}
+
+	sc := syntax.NewSyntaxCache()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			spans := sc.Tokenize(core.Source{
+				Text: tc.src,
+				Lang: tc.lang,
+			})
+			assert.Equal(t, tc.scope, scopeAt(spans, tc.src, tc.needle))
+		})
+	}
+}
+
 func scopeAt(spans []highlight.Span, src, needle string) string {
 	pos := strings.Index(src, needle)
 	if pos < 0 {
@@ -301,7 +420,7 @@ func TestTokenizeCached(t *testing.T) {
 }
 
 func TestTokenizeEscapeOverlap(t *testing.T) {
-	t.Run("escape in string skips nested capture", func(t *testing.T) {
+	t.Run("escape in string", func(t *testing.T) {
 		src := "package main\nconst s = \"hello\\nworld\"\n"
 		sc := syntax.NewSyntaxCache()
 		spans := sc.Tokenize(core.Source{

@@ -95,40 +95,30 @@ func buildByteToChar(text string) []int {
 	return table
 }
 
+// buildSpans: innermost capture wins; cs must list outer captures before inner ones
 func buildSpans(cs []tsCapture) []highlight.Span {
 	spans := make([]highlight.Span, 0, len(cs))
+	var stack []tsCapture
 	pos := 0
-	for i := 0; i < len(cs); {
-		c := cs[i]
-		if c.end <= pos {
-			i++
-			continue
+	for _, c := range cs {
+		for len(stack) > 0 && stack[len(stack)-1].end <= c.start {
+			top := stack[len(stack)-1]
+			spans = appendSpan(spans, pos, top)
+			pos = max(pos, top.end)
+			stack = stack[:len(stack)-1]
 		}
-		start := max(c.start, pos)
-		best := tsCapture{
-			start: start,
-			end:   c.end,
-			scope: c.scope,
-			idx:   c.idx,
-		}
-		j := i + 1
-		for j < len(cs) && cs[j].start == c.start {
-			if cs[j].idx < best.idx {
-				best.end = cs[j].end
-				best.scope = cs[j].scope
-				best.idx = cs[j].idx
-			}
-			j++
-		}
-		if best.end > best.start {
-			spans = append(spans, highlight.Span{
-				Start: best.start,
-				End:   best.end,
-				Scope: best.scope,
+		if len(stack) > 0 {
+			spans = appendSpan(spans, pos, tsCapture{
+				end:   c.start,
+				scope: stack[len(stack)-1].scope,
 			})
-			pos = best.end
 		}
-		i = j
+		pos = max(pos, c.start)
+		stack = append(stack, c)
+	}
+	for i := len(stack) - 1; i >= 0; i-- {
+		spans = appendSpan(spans, pos, stack[i])
+		pos = max(pos, stack[i].end)
 	}
 	return spans
 }
@@ -147,4 +137,15 @@ func injectionLanguage(q *sitter.Query, names []string, m *sitter.QueryMatch, sr
 		}
 	}
 	return ""
+}
+
+func appendSpan(spans []highlight.Span, from int, c tsCapture) []highlight.Span {
+	if c.end <= from {
+		return spans
+	}
+	return append(spans, highlight.Span{
+		Start: from,
+		End:   c.end,
+		Scope: c.scope,
+	})
 }

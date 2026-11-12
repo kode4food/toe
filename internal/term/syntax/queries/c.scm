@@ -1,3 +1,14 @@
+; Generic identifiers first: on the same node, the later pattern wins
+
+(identifier) @variable
+
+((identifier) @constant
+  (#match? @constant "^[A-Z][A-Z\\d_]*$"))
+
+(field_identifier) @variable.other.member
+
+(statement_identifier) @label
+
 ; Identifiers
 
 (parameter_declaration
@@ -210,14 +221,3 @@
 ; Comments
 
 (comment) @comment
-
-; Generic identifiers last: on overlap, the capture named first wins
-
-(statement_identifier) @label
-
-(field_identifier) @variable.other.member
-
-((identifier) @constant
-  (#match? @constant "^[A-Z][A-Z\\d_]*$"))
-
-(identifier) @variable

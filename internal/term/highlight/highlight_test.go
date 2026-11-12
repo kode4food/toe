@@ -144,6 +144,20 @@ function greet(name) {
 	}
 }
 
+func TestTokenizeMarkdownHeadings(t *testing.T) {
+	spans := highlight.Tokenize(core.Source{
+		Text: "# one\n## two\n###### six\n",
+		Lang: "markdown",
+	})
+	var scopes []string
+	for _, sp := range spans {
+		scopes = append(scopes, sp.Scope)
+	}
+	assert.Equal(t,
+		[]string{"markup.heading.1", "markup.heading.2", "markup.heading.6"}, scopes,
+	)
+}
+
 func TestDefaultStyle(t *testing.T) {
 	t.Run("known scope returns non-empty style", func(t *testing.T) {
 		s := highlight.DefaultStyle("keyword")

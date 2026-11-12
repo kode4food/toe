@@ -22,7 +22,7 @@
 
 (mode) @constant.numeric
 
-([
+[
   ".."
   "+"
   "++"
@@ -33,7 +33,12 @@
   "---"
   "----"
 ] @punctuation.special
-  (#set! priority 95))
+
+; Changed lines and file headers keep one color: the later pattern wins the same node
+(addition _ @diff.plus)
+(new_file _ @diff.plus)
+(deletion _ @diff.minus)
+(old_file _ @diff.minus)
 
 [
   (binary_change)

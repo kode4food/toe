@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"slices"
+
 	sitter "github.com/tree-sitter/go-tree-sitter"
 
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -116,9 +118,9 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 		pos = max(pos, c.start)
 		stack = append(stack, c)
 	}
-	for i := len(stack) - 1; i >= 0; i-- {
-		spans = appendSpan(spans, pos, stack[i])
-		pos = max(pos, stack[i].end)
+	for _, s := range slices.Backward(stack) {
+		spans = appendSpan(spans, pos, s)
+		pos = max(pos, s.end)
 	}
 	return spans
 }

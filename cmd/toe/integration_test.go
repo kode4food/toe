@@ -17,6 +17,8 @@ import (
 	"github.com/charmbracelet/x/vt"
 	"github.com/creack/pty"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 // tui drives a toe process in a pseudo-terminal, feeding its output through an emulator so tests
@@ -43,6 +45,9 @@ const (
 	// must comfortably exceed the terminal reader's 50ms escape timeout, or a key sent after a bare
 	// escape is read as an alt-modified sequence
 	escPause = 200 * time.Millisecond
+
+	diffGutterBar = "\u258d"
+	saveSettle    = time.Second
 )
 
 func TestMain(m *testing.M) {
@@ -441,6 +446,31 @@ func TestIntegration(t *testing.T) {
 		tt.waitFor("second")
 		tt.quit()
 	})
+
+	t.Run("commit clears gutter after late init", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: spawns a real pty and git")
+		}
+		// macOS temp dirs sit behind a /var symlink that hides the watch-order bug
+		dir, err := filepath.EvalSymlinks(t.TempDir())
+		assert.NoError(t, err)
+		path := writeFile(t, dir, "note.txt", "alpha\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("alpha")
+		gitInit(t, dir)
+
+		tt.send("A - edited")
+		tt.escape()
+		tt.send(":write\r")
+		tt.waitFor(diffGutterBar)
+		// the save's own watch event refreshes VCS too, so let it land before the commit
+		time.Sleep(saveSettle)
+
+		gitCommit(t, dir)
+		tt.waitForCount(diffGutterBar, 0)
+		tt.quit()
+	})
 }
 
 // send types keystrokes one byte at a time so the process sees distinct key events with
@@ -625,15 +655,12 @@ func writeFile(t *testing.T, dir, name, content string) string {
 
 func gitInit(t *testing.T, dir string) {
 	t.Helper()
-	for _, args := range [][]string{
-		{"init", "-b", "main"},
-		{"add", "."},
-		{"-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "-m", "x"},
-	} {
-		cmd := exec.Command("git", args...)
-		cmd.Dir = dir
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, out)
-		}
-	}
+	testutil.RunGit(t, dir, "init", "-b", "main")
+	gitCommit(t, dir)
+}
+
+func gitCommit(t *testing.T, dir string) {
+	t.Helper()
+	testutil.RunGit(t, dir, "add", ".")
+	testutil.RunGit(t, dir, "-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "-m", "x")
 }

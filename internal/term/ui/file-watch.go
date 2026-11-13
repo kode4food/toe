@@ -105,11 +105,14 @@ func (w *fileWatcher) gitWatchDirs(cwd string) map[string]int {
 	if err != nil || !info.IsDir() {
 		return nil
 	}
+	// notify drops events for a watch registered under an already-watched parent
+	for dir := range w.dirs {
+		w.unwatchDir(dir)
+	}
+	w.stopTreeWatch()
 	refs := filepath.Join(gitDir, "refs", "...")
 	for _, dir := range []string{refs, gitDir} {
-		if _, ok := w.dirs[dir]; !ok {
-			w.watchDir(dir)
-		}
+		w.watchDir(dir)
 	}
 	w.gitCwd = cwd
 	w.gitDirs = map[string]int{refs: 1, gitDir: 1}

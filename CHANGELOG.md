@@ -2,6 +2,22 @@
 
 Notable changes to toe.
 
+## 0.4.17
+
+### Language tooling
+
+- C syntax highlighting, text objects, and `clangd` language server support
+- Markdown headings take their theme's per-level colors
+- Added and removed lines in diff files keep one color throughout
+
+### Interface
+
+- Auto-sized panes grow at a pace scaled to the screen width, so they settle as quickly on wide screens
+
+### Version control
+
+- The diff gutter clears after a commit even when toe was started before `git init`
+
 ## 0.4.16
 
 ### Interface

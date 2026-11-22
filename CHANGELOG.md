@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.4.18
+
+### Interface
+
+- The file explorer shows the directory it's listing, and long paths abbreviate their leading directory names instead of being cut off
+
 ## 0.4.17
 
 ### Language tooling

@@ -3,6 +3,7 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -25,6 +26,25 @@ func TestFileExplorer(t *testing.T) {
 		assert.Contains(t, out, "alpha.txt")
 		assert.Contains(t, out, "\U000f024b sub/")
 		assert.Contains(t, out, "\U000f024b ../")
+	})
+
+	t.Run("heads list with directory", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, "alpha.txt"), []byte("x"), 0o644))
+		m := explorerModel(t, dir)
+		assert.True(t, explorerHeads(t, m, dir))
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.True(t, explorerHeads(t, m, filepath.Dir(dir)))
+	})
+
+	t.Run("collapses a long directory", func(t *testing.T) {
+		dir := filepath.Join(t.TempDir(), ".deep", "deeper", "deepest")
+		assert.NoError(t, os.MkdirAll(dir, 0o755))
+		m := resize(explorerModel(t, dir), 40, 30)
+		head := explorerHeader(t, m)
+		assert.Contains(t, head, "/.d/")
+		assert.True(t, strings.HasSuffix(head, "/deepest"))
+		assert.True(t, explorerHeads(t, m, dir))
 	})
 
 	t.Run("reopens with current files", func(t *testing.T) {
@@ -344,4 +364,39 @@ func explorerModel(t *testing.T, dir string, opts ...files.FileExplorerOptions) 
 	)
 	m = resize(m, 100, 30)
 	return sendKey(m, 'e')
+}
+
+func explorerHeads(t *testing.T, m ui.Model, dir string) bool {
+	t.Helper()
+	head := explorerHeader(t, m)
+	if tail, ok := strings.CutPrefix(head, "\u2026"); ok {
+		return tail != "" && strings.HasSuffix(dir, tail)
+	}
+	got := strings.Split(head, "/")
+	want := strings.Split(dir, "/")
+	if head == "" || len(got) != len(want) || got[len(got)-1] != want[len(want)-1] {
+		return false
+	}
+	for i, seg := range got {
+		if !strings.HasPrefix(want[i], seg) {
+			return false
+		}
+	}
+	return true
+}
+
+func explorerHeader(t *testing.T, m ui.Model) string {
+	t.Helper()
+	lines := strings.Split(stripANSI(viewContent(m)), "\n")
+	parent := slices.IndexFunc(lines, func(l string) bool {
+		return strings.Contains(l, "> \U000f024b ../")
+	})
+	if parent < 1 {
+		return ""
+	}
+	cells := strings.Split(lines[parent-1], "│")
+	if len(cells) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(cells[1])
 }

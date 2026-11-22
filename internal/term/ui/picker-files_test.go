@@ -75,6 +75,35 @@ func TestPickerFiles(t *testing.T) {
 		assert.NotContains(t, out, "\x1b")
 	})
 
+	t.Run("collapses long directory", func(t *testing.T) {
+		tmp := t.TempDir()
+		dir := filepath.Join(tmp, "alpha", "beta", "gamma", "delta", "epsilon")
+		assert.NoError(t, os.MkdirAll(dir, 0o755))
+		err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 40, 30)
+		m = sendKey(m, 'p')
+		for _, ch := range "epsilon" {
+			m = sendKey(m, ch)
+		}
+		var row string
+		for l := range strings.SplitSeq(viewContent(m), "\n") {
+			if strings.Contains(stripANSI(l), "main.go") {
+				row = l
+			}
+		}
+		assert.Contains(t, stripANSI(row), "main.go a/b/g/delta/epsilon")
+		assert.Contains(t, row, "mepsilon\x1b[")
+	})
+
 	t.Run("respects ignore files", func(t *testing.T) {
 		tmp := t.TempDir()
 		cfgRoot := t.TempDir()

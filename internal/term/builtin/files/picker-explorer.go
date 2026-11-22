@@ -153,7 +153,11 @@ func (f *fileExplorerSource) readDir() ([]*ui.PickerItem, bool) {
 		}))
 	}
 	slices.SortStableFunc(items, compareExplorerItems)
-	return items, true
+	header := slab.Add(ui.PickerItem{
+		Display: f.root,
+		Section: true,
+	})
+	return append(items, header), true
 }
 
 type makeDirItemArgs struct {

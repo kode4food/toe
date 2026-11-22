@@ -71,9 +71,10 @@ func statusElemMode(s *statusElemCtx) statusElem {
 
 func statusElemFileName(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  s.doc.RelativeName(s.editor.Cwd()),
-		style: s.baseTUI,
-		prose: true,
+		text:   s.doc.RelativeName(s.editor.Cwd()),
+		style:  s.baseTUI,
+		prose:  true,
+		isPath: true,
 	}
 }
 
@@ -87,9 +88,10 @@ func statusElemFileBaseName(s *statusElemCtx) statusElem {
 
 func statusElemFileAbsPath(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  s.doc.Path(),
-		style: s.baseTUI,
-		prose: true,
+		text:   s.doc.Path(),
+		style:  s.baseTUI,
+		prose:  true,
+		isPath: true,
 	}
 }
 

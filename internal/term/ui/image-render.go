@@ -74,7 +74,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		focused:   args.focused,
 		left: []statusElem{
 			statusBadge(args.pane.Mode().String(), modeSt),
-			{text: name, style: baseTUI, prose: true},
+			{text: name, style: baseTUI, prose: true, isPath: true},
 		},
 		right: right,
 	})

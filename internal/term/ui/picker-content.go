@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/mattn/go-runewidth"
@@ -12,7 +14,8 @@ import (
 )
 
 const (
-	pickerMarkerW = 3
+	pickerMarkerW  = 3
+	pickerEllipsis = "\u2026" // '…' - horizontal ellipsis
 
 	pickerSplitFrameOverhead = 3
 	pickerMinSplitPaneWidth  = 20
@@ -96,7 +99,7 @@ func (p *pickerRender) writeSection(at geom.Point, m pickerMatch) {
 	buf := p.buffer
 	base := p.section
 	buf.FillRange(at, p.width, base)
-	label := runewidth.Truncate(m.item.Display, max(p.width-overlayPadX-1, 0), "")
+	label := collapsePath(m.item.Display, max(p.width-overlayPadX-1, 0))
 	buf.SetString(geom.Point{
 		X: at.X + overlayPadX,
 		Y: at.Y,
@@ -148,6 +151,12 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 			cx2 += iconWidth
 			cellW = max(cellW-iconWidth, 0)
 		}
+		text, indices := collapseRowPath(collapseRowPathArgs{
+			text:          m.item.Display,
+			secondaryFrom: m.item.SecFrom,
+			indices:       m.result.Indices,
+			width:         cellW,
+		})
 		writeMatchedItem(writeMatchedItemArgs{
 			buf: buf,
 			at: geom.Point{
@@ -155,8 +164,8 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 				Y: at.Y,
 			},
 			maxWidth:      cellW,
-			text:          m.item.Display,
-			indices:       m.result.Indices,
+			text:          text,
+			indices:       indices,
 			base:          itemBase,
 			match:         match,
 			secondary:     sec,
@@ -182,6 +191,12 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 				colBase = pickerFileIconStyle(p.theme, base, fileIcon.color)
 			}
 			if i == matchColumn {
+				text, indices := collapseRowPath(collapseRowPathArgs{
+					text:          val,
+					secondaryFrom: m.item.SecFrom,
+					indices:       m.result.Indices,
+					width:         widths[i],
+				})
 				writeMatchedItem(writeMatchedItemArgs{
 					buf: buf,
 					at: geom.Point{
@@ -189,8 +204,8 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 						Y: at.Y,
 					},
 					maxWidth:      widths[i],
-					text:          val,
-					indices:       m.result.Indices,
+					text:          text,
+					indices:       indices,
 					base:          colBase,
 					match:         match,
 					secondary:     sec,
@@ -276,4 +291,133 @@ func pickerSplitLeftWidth(w int, ratio float64) int {
 		return usable - minW
 	}
 	return left
+}
+
+// collapsePath abbreviates leading directory names to their first letter, one at a time, until the
+// label fits width, then clips its head; labels without a separator clip their tail
+func collapsePath(label string, width int) string {
+	if runewidth.StringWidth(label) <= width {
+		return label
+	}
+	runes := []rune(label)
+	if !slices.Contains(runes, filepath.Separator) {
+		return runewidth.Truncate(label, width, "")
+	}
+	return keptString(runes, collapsePathRunes(runes, width))
+}
+
+type collapseRowPathArgs struct {
+	text          string
+	secondaryFrom int
+	indices       []int
+	width         int
+}
+
+// collapseRowPath collapses the path trailing a row's secondary offset to fit width, carrying the
+// match indices onto the runes that survive
+func collapseRowPath(args collapseRowPathArgs) (string, []int) {
+	text := args.text
+	indices := args.indices
+	secFrom := args.secondaryFrom
+	if secFrom <= 0 || len(text) <= args.width || runewidth.StringWidth(text) <= args.width {
+		return text, indices
+	}
+	runes := []rune(text)
+	if secFrom >= len(runes) {
+		return text, indices
+	}
+	path := runes[secFrom:]
+	avail := args.width - runewidth.StringWidth(string(runes[:secFrom]))
+	if avail < 1 || !slices.Contains(path, filepath.Separator) {
+		return text, indices
+	}
+	keep := collapsePathRunes(path, avail)
+	moved := make([]int, len(runes))
+	for i := range moved {
+		moved[i] = -1
+	}
+	for i := range secFrom {
+		moved[i] = i
+	}
+	for i, k := range keep {
+		if k >= 0 {
+			moved[secFrom+k] = secFrom + i
+		}
+	}
+	var kept []int
+	for _, idx := range indices {
+		if idx < len(moved) && moved[idx] >= 0 {
+			kept = append(kept, moved[idx])
+		}
+	}
+	return string(runes[:secFrom]) + keptString(path, keep), kept
+}
+
+// collapsePathRunes picks the runes of path that survive collapsing it to width: leading directory
+// names shrink to their first letter one at a time, then the head clips behind an ellipsis (-1)
+func collapsePathRunes(path []rune, width int) []int {
+	if width < 1 {
+		return nil
+	}
+	segs := 1
+	for _, r := range path {
+		if r == filepath.Separator {
+			segs++
+		}
+	}
+	keep := make([]int, 0, len(path))
+	w := 0
+	for short := range segs {
+		keep = abbreviatedRunes(keep[:0], path, short)
+		if w = keptWidth(path, keep); w <= width {
+			return keep
+		}
+	}
+	drop := 0
+	for drop < len(keep) && w > width-1 {
+		w -= runewidth.RuneWidth(path[keep[drop]])
+		drop++
+	}
+	return append([]int{-1}, keep[drop:]...)
+}
+
+func abbreviatedRunes(keep []int, path []rune, short int) []int {
+	seg := 0
+	pos := 0
+	for i, r := range path {
+		switch {
+		case r == filepath.Separator:
+			keep = append(keep, i)
+			seg++
+			pos = -1
+		case seg >= short, pos == 0, pos == 1 && path[i-1] == '.':
+			keep = append(keep, i)
+		}
+		pos++
+	}
+	return keep
+}
+
+func keptWidth(path []rune, keep []int) int {
+	w := 0
+	for _, k := range keep {
+		if k < 0 {
+			w += runewidth.StringWidth(pickerEllipsis)
+			continue
+		}
+		w += runewidth.RuneWidth(path[k])
+	}
+	return w
+}
+
+func keptString(path []rune, keep []int) string {
+	var b strings.Builder
+	for _, k := range keep {
+		if k < 0 {
+			b.WriteString(pickerEllipsis)
+			continue
+		}
+		b.WriteRune(path[k])
+	}
+	return b.String()
 }

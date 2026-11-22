@@ -93,7 +93,7 @@ func (r *renderPass) renderBinaryStatus(buf *tui.Buffer, pane *BinaryPane, y0 in
 		focused:   focused,
 		left: []statusElem{
 			statusBadge(pane.Mode().String(), modeSt),
-			{text: name, style: baseTUI, prose: true},
+			{text: name, style: baseTUI, prose: true, isPath: true},
 		},
 		right: right,
 	})

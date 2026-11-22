@@ -28,6 +28,7 @@ type (
 		pinned  bool
 		compact bool
 		prose   bool
+		isPath  bool
 	}
 
 	// statusEdge is one shape's dividers: the solid pair cuts between two backgrounds, the thin
@@ -73,8 +74,20 @@ var statusEdges = map[view.StatusLineEdges]statusEdge{
 }
 
 func (r statusRow) paint(buf *tui.Buffer) {
-	left, right := r.left, r.right
-	for r.elemsWidth(left, false)+r.elemsWidth(right, true) > r.width {
+	left := r.left
+	right := r.right
+	for {
+		over := r.elemsWidth(left, false) + r.elemsWidth(right, true) - r.width
+		if over <= 0 {
+			break
+		}
+		shortLeft, rest := collapsePathElems(left, over)
+		shortRight, rest := collapsePathElems(right, rest)
+		if rest <= 0 {
+			left = shortLeft
+			right = shortRight
+			break
+		}
 		var ok bool
 		if right, ok = dropUnpinned(right, false); ok {
 			continue
@@ -188,4 +201,27 @@ func dropUnpinned(elems []statusElem, fromEnd bool) ([]statusElem, bool) {
 		}
 	}
 	return elems, false
+}
+
+// collapsePathElems abbreviates path elements until over cells are saved, returning the cells
+// still over; an element that cannot shrink enough without clipping is left whole
+func collapsePathElems(elems []statusElem, over int) ([]statusElem, int) {
+	out := slices.Clone(elems)
+	for i, e := range elems {
+		if over <= 0 {
+			break
+		}
+		if !e.isPath {
+			continue
+		}
+		runes := []rune(e.text)
+		n := runewidth.StringWidth(e.text)
+		keep := collapsePathRunes(runes, n-over)
+		if len(keep) == 0 || keep[0] < 0 {
+			continue
+		}
+		out[i].text = keptString(runes, keep)
+		over -= n - runewidth.StringWidth(out[i].text)
+	}
+	return out, over
 }

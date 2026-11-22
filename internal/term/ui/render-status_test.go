@@ -569,6 +569,28 @@ func TestStatuslineEdgeElements(t *testing.T) {
 		assert.NotContains(t, out, "very-long-file-name")
 	})
 
+	t.Run("collapses path before dropping", func(t *testing.T) {
+		root := t.TempDir()
+		path := filepath.Join(root, "alpha", "beta", "gamma", "file.txt")
+		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		opts := e.Options()
+		opts.StatusLine.Left = []view.StatusLineItem{
+			{Element: view.StatusLineMode, Pinned: true},
+			{Element: view.StatusLineFileName},
+		}
+		opts.StatusLine.Right = emptySide()
+		m := resize(ui.New(e, command.NewKeymaps()), 24, 8)
+
+		out := stripANSI(viewContent(m))
+
+		assert.Contains(t, out, " NOR ")
+		assert.Contains(t, out, " a/b/g/file.txt ")
+	})
+
 	t.Run("right section drops from its left", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		opts := e.Options()

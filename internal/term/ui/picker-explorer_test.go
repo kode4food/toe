@@ -38,12 +38,14 @@ func TestFileExplorer(t *testing.T) {
 	})
 
 	t.Run("collapses a long directory", func(t *testing.T) {
-		dir := filepath.Join(t.TempDir(), ".deep", "deeper", "deepest")
+		dir := filepath.Join(
+			t.TempDir(), ".deep", "alphabet-soup", "bravo-charlie", "delta-echo", "leaf",
+		)
 		assert.NoError(t, os.MkdirAll(dir, 0o755))
 		m := resize(explorerModel(t, dir), 40, 30)
 		head := explorerHeader(t, m)
 		assert.Contains(t, head, "/.d/")
-		assert.True(t, strings.HasSuffix(head, "/deepest"))
+		assert.True(t, strings.HasSuffix(head, "/leaf"))
 		assert.True(t, explorerHeads(t, m, dir))
 	})
 

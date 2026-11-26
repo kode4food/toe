@@ -8,6 +8,10 @@ Notable changes to toe.
 
 - The file explorer shows the directory it's listing, and long paths abbreviate their leading directory names instead of being cut off
 
+### Version control
+
+- Staging a file, or any change on disk, no longer briefly freezes the editor when many files are open
+
 ## 0.4.17
 
 ### Language tooling

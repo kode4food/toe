@@ -439,6 +439,71 @@ trim_trailing_whitespace = true
 		assert.Error(t, err)
 	})
 
+	for name, atomic := range map[string]bool{
+		"atomic keeps permissions":   true,
+		"in place keeps permissions": false,
+	} {
+		t.Run(name, func(t *testing.T) {
+			tmp := t.TempDir()
+			path := filepath.Join(tmp, "run.sh")
+			assert.NoError(t, os.WriteFile(path, []byte("echo old\n"), 0o644))
+			assert.NoError(t, os.Chmod(path, 0o755))
+			e := view.NewEditor(tmp)
+			e.Options().AtomicSave = atomic
+			_, err := e.OpenFile(path)
+			assert.NoError(t, err)
+			replaceFocusedText(t, e, "echo new\n")
+
+			assert.NoError(t, e.Save(false))
+
+			info, err := os.Stat(path)
+			assert.NoError(t, err)
+			assert.Equal(t, os.FileMode(0o755), info.Mode().Perm())
+		})
+	}
+
+	t.Run("atomic follows symlinks", func(t *testing.T) {
+		tmp := t.TempDir()
+		target := filepath.Join(tmp, "target.txt")
+		link := filepath.Join(tmp, "link.txt")
+		assert.NoError(t, os.WriteFile(target, []byte("old\n"), 0o644))
+		assert.NoError(t, os.Symlink(target, link))
+		e := view.NewEditor(tmp)
+		e.Options().AtomicSave = true
+		_, err := e.OpenFile(link)
+		assert.NoError(t, err)
+		replaceFocusedText(t, e, "new\n")
+
+		assert.NoError(t, e.Save(false))
+
+		info, err := os.Lstat(link)
+		assert.NoError(t, err)
+		assert.NotZero(t, info.Mode()&os.ModeSymlink)
+		data, err := os.ReadFile(target)
+		assert.NoError(t, err)
+		assert.Equal(t, "new\n", string(data))
+	})
+
+	t.Run("atomic new file gets default mode", func(t *testing.T) {
+		tmp := t.TempDir()
+		ref := filepath.Join(tmp, "ref.txt")
+		assert.NoError(t, os.WriteFile(ref, nil, 0o644))
+		want, err := os.Stat(ref)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "new.txt")
+		e := view.NewEditor(tmp)
+		e.Options().AtomicSave = true
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		replaceFocusedText(t, e, "new\n")
+
+		assert.NoError(t, e.Save(false))
+
+		info, err := os.Stat(path)
+		assert.NoError(t, err)
+		assert.Equal(t, want.Mode().Perm(), info.Mode().Perm())
+	})
+
 	t.Run("atomic mode writes content", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "atomic.txt")

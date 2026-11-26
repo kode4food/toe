@@ -2,6 +2,13 @@
 
 Notable changes to toe.
 
+## 0.4.20
+
+### Editing
+
+- Saving keeps a file's permissions, so scripts stay executable, and new files get the usual permissions instead of owner-only access
+- Saving a file opened through a symlink updates the file it points to instead of replacing the link
+
 ## 0.4.19
 
 ### Language tooling

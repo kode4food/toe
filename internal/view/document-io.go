@@ -47,30 +47,11 @@ func (d *Document) Save(opts *Options, force bool) error {
 	} else {
 		data = []byte(text)
 	}
-	target := saveTarget{
-		path: path,
-		dir:  dir,
-	}
-	var backup string
-	if opts.AtomicSave {
-		if _, statErr := os.Stat(path); statErr == nil {
-			if b, err := renameToBackup(target); err == nil {
-				backup = b
-			}
-		}
-	}
 	var err error
-	if opts.AtomicSave {
-		err = atomicWrite(target, data)
+	if info, statErr := os.Stat(path); opts.AtomicSave && statErr == nil {
+		err = atomicReplace(path, data, info.Mode().Perm())
 	} else {
 		err = writeFileSynced(path, data, 0o644)
-	}
-	if backup != "" {
-		if err != nil {
-			_ = os.Rename(backup, path)
-		} else {
-			_ = os.Remove(backup)
-		}
 	}
 	if err != nil {
 		return err
@@ -203,6 +184,29 @@ func DocumentRelativeName(args DocumentRelativeNameArgs) string {
 	return path
 }
 
+// a new file has no content for a partial write to destroy, so only an existing one comes here; the
+// write goes through its symlinks so a link stays a link and the file it names takes the change
+func atomicReplace(path string, data []byte, perm os.FileMode) error {
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
+	}
+	target := saveTarget{
+		path: path,
+		dir:  filepath.Dir(path),
+	}
+	backup, backupErr := renameToBackup(target)
+	err := atomicWrite(target, data, perm)
+	switch {
+	case backupErr != nil:
+		return err
+	case err != nil:
+		_ = os.Rename(backup, path)
+		return err
+	}
+	_ = os.Remove(backup)
+	return nil
+}
+
 func renameToBackup(target saveTarget) (string, error) {
 	path := target.path
 	f, err := os.CreateTemp(target.dir, filepath.Base(path)+".bck-*")
@@ -222,12 +226,18 @@ func renameToBackup(target saveTarget) (string, error) {
 	return tmp, nil
 }
 
-func atomicWrite(target saveTarget, data []byte) error {
+func atomicWrite(target saveTarget, data []byte, perm os.FileMode) error {
 	f, err := os.CreateTemp(target.dir, ".toe-save-*")
 	if err != nil {
 		return err
 	}
 	tmp := f.Name()
+	// the temp file replaces the original, so it must carry the original's permissions
+	if err = f.Chmod(perm); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
 	if _, err = f.Write(data); err != nil {
 		_ = f.Close()
 		_ = os.Remove(tmp)

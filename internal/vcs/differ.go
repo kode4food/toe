@@ -19,7 +19,7 @@ type Differ struct {
 	hunks      []view.DiffHunk
 	gen        uint64
 	closed     bool
-	recomputes *debounce.Keyed[struct{}]
+	recomputes *debounce.Debouncer
 	notify     func()
 }
 
@@ -33,7 +33,7 @@ func NewDiffer(sides view.DiffSides, notify func()) *Differ {
 	d := &Differ{
 		base:       sides.Base,
 		doc:        sides.Doc,
-		recomputes: debounce.NewKeyed[struct{}](diffDebounce),
+		recomputes: debounce.New(diffDebounce),
 		notify:     notify,
 	}
 	go d.recompute()
@@ -60,7 +60,7 @@ func (d *Differ) SetDoc(doc core.Rope) {
 	d.doc = doc
 	d.gen++
 	d.mu.Unlock()
-	d.recomputes.Do(struct{}{}, d.recompute)
+	d.recomputes.Do(d.recompute)
 }
 
 // SetBase schedules a recompute against a new diff base text
@@ -69,7 +69,7 @@ func (d *Differ) SetBase(base core.Rope) {
 	d.base = base
 	d.gen++
 	d.mu.Unlock()
-	d.recomputes.Do(struct{}{}, d.recompute)
+	d.recomputes.Do(d.recompute)
 }
 
 // Close drops pending recomputes and stops publishing hunks

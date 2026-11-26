@@ -16,6 +16,43 @@ const (
 	debounceBurst = 100
 )
 
+func TestDebouncer(t *testing.T) {
+	t.Run("runs only the last call", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			d := debounce.New(debounceDelay)
+			var last atomic.Int32
+			var calls atomic.Int32
+			for i := range debounceBurst {
+				d.Do(func() {
+					last.Store(int32(i))
+					calls.Add(1)
+				})
+				time.Sleep(debounceDelay / 2)
+			}
+			time.Sleep(debounceDelay)
+			synctest.Wait()
+			assert.EqualValues(t, 1, calls.Load())
+			assert.EqualValues(t, debounceBurst-1, last.Load())
+		})
+	})
+	t.Run("stop drops and refuses calls", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			d := debounce.New(debounceDelay)
+			var calls atomic.Int32
+			d.Do(func() {
+				calls.Add(1)
+			})
+			d.Stop()
+			d.Do(func() {
+				calls.Add(1)
+			})
+			time.Sleep(debounceDelay)
+			synctest.Wait()
+			assert.Zero(t, calls.Load())
+		})
+	})
+}
+
 func TestKeyed(t *testing.T) {
 	t.Run("runs only the last call", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {

@@ -1,4 +1,4 @@
-// Package debounce coalesces repeated calls per key into the last one
+// Package debounce coalesces repeated calls, alone or per key, into the last one
 package debounce
 
 import (
@@ -6,12 +6,26 @@ import (
 	"time"
 )
 
-// Keyed runs the last function given for a key once that key has gone quiet for the delay
-type Keyed[K comparable] struct {
-	mu      sync.Mutex
-	delay   time.Duration
-	timers  map[K]*time.Timer
-	stopped bool
+type (
+	// Debouncer runs the last function given once calls have gone quiet for the delay
+	Debouncer struct {
+		keyed *Keyed[struct{}]
+	}
+
+	// Keyed runs the last function given for a key once that key has gone quiet for the delay
+	Keyed[K comparable] struct {
+		mu      sync.Mutex
+		delay   time.Duration
+		timers  map[K]*time.Timer
+		stopped bool
+	}
+)
+
+// New creates a Debouncer that waits delay after the last call
+func New(delay time.Duration) *Debouncer {
+	return &Debouncer{
+		keyed: NewKeyed[struct{}](delay),
+	}
 }
 
 // NewKeyed creates a Keyed that waits delay after the last call per key
@@ -20,6 +34,16 @@ func NewKeyed[K comparable](delay time.Duration) *Keyed[K] {
 		delay:  delay,
 		timers: map[K]*time.Timer{},
 	}
+}
+
+// Do schedules fn, replacing any call still waiting
+func (d *Debouncer) Do(fn func()) {
+	d.keyed.Do(struct{}{}, fn)
+}
+
+// Stop drops the waiting call and ignores later ones
+func (d *Debouncer) Stop() {
+	d.keyed.Stop()
 }
 
 // Do schedules fn for key, replacing any call for key still waiting

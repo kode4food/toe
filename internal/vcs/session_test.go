@@ -1,7 +1,9 @@
 package vcs_test
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -13,6 +15,8 @@ import (
 	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
+
+const slowHeadDelay = time.Second
 
 func TestSession(t *testing.T) {
 	testutil.RequireGit(t)
@@ -287,6 +291,33 @@ func TestSession(t *testing.T) {
 		}, waitHunks(t, s, doc))
 	})
 
+	t.Run("refresh leaves git off the caller", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: shims git with a stalling head lookup")
+		}
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		defer s.Close()
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		waitBase(t, s, doc, "one\n")
+
+		testutil.WriteFile(t, path, []byte("two\n"))
+		testutil.RunGit(t, repo, "add", "a.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+		installSlowHeadGit(t)
+
+		start := time.Now()
+		s.Refresh()
+		assert.Less(t, time.Since(start), slowHeadDelay)
+		assert.Equal(t, "two\n", waitBase(t, s, doc, "two\n"))
+	})
+
 	t.Run("lifecycle flows through differ", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\nthree\n"))
@@ -419,4 +450,19 @@ func waitHunks(t *testing.T, s *vcs.Session, doc *view.Document) []view.DiffHunk
 	}
 	t.Fatal("timed out waiting for hunks")
 	return nil
+}
+
+func installSlowHeadGit(t *testing.T) {
+	t.Helper()
+	realGit, err := exec.LookPath("git")
+	assert.NoError(t, err)
+	shimDir := t.TempDir()
+	script := "#!/bin/sh\n" +
+		"if [ \"$4\" = rev-parse ] && [ \"$5\" = HEAD ]; then\n" +
+		fmt.Sprintf("  sleep %d\n", int(slowHeadDelay/time.Second)) +
+		"fi\n" +
+		"exec \"$TOE_TEST_REAL_GIT\" \"$@\"\n"
+	assert.NoError(t, os.WriteFile(filepath.Join(shimDir, "git"), []byte(script), 0o755))
+	t.Setenv("TOE_TEST_REAL_GIT", realGit)
+	t.Setenv("PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }

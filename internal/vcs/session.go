@@ -20,15 +20,16 @@ type (
 	// Session owns a differ per open document and implements the editor's VersionControl seam over
 	// the version-control provider
 	Session struct {
-		mu       sync.Mutex
-		editor   *view.Editor
-		provider Provider
-		differs  map[view.DocumentId]*Differ
-		heads    map[view.DocumentId]string
-		headIDs  map[view.DocumentId]string
-		loading  map[view.DocumentId]bool
-		updates  chan struct{}
-		reloads  *debounce.Keyed[view.DocumentId]
+		mu        sync.Mutex
+		editor    *view.Editor
+		provider  Provider
+		differs   map[view.DocumentId]*Differ
+		heads     map[view.DocumentId]string
+		headIDs   map[view.DocumentId]string
+		loading   map[view.DocumentId]bool
+		updates   chan struct{}
+		reloads   *debounce.Keyed[view.DocumentId]
+		refreshes *debounce.Debouncer
 	}
 
 	// Provider supplies diff bases and change information from one version-control system
@@ -82,14 +83,15 @@ var (
 // serving diff state
 func Attach(e *view.Editor) *Session {
 	s := &Session{
-		editor:   e,
-		provider: &Git{},
-		differs:  map[view.DocumentId]*Differ{},
-		heads:    map[view.DocumentId]string{},
-		headIDs:  map[view.DocumentId]string{},
-		loading:  map[view.DocumentId]bool{},
-		updates:  make(chan struct{}, 1),
-		reloads:  debounce.NewKeyed[view.DocumentId](reloadDelay),
+		editor:    e,
+		provider:  &Git{},
+		differs:   map[view.DocumentId]*Differ{},
+		heads:     map[view.DocumentId]string{},
+		headIDs:   map[view.DocumentId]string{},
+		loading:   map[view.DocumentId]bool{},
+		updates:   make(chan struct{}, 1),
+		reloads:   debounce.NewKeyed[view.DocumentId](reloadDelay),
+		refreshes: debounce.New(reloadDelay),
 	}
 	e.AddDocumentObserver(s)
 	e.SetVersionControl(s)
@@ -235,18 +237,22 @@ func (s *Session) Ignore(path string) error {
 	return s.provider.Ignore(s.editor.Cwd(), path)
 }
 
-// Refresh reloads open document diff bases when their repository head moves
+// Refresh reloads open document diff bases when their repository head moves. Reading a head forks
+// git per document, so the check runs off the caller's goroutine
 func (s *Session) Refresh() {
+	paths := map[*view.Document]string{}
 	for _, doc := range s.editor.AllDocuments() {
-		path := doc.Path()
-		if path == "" || !s.headMoved(doc, path) {
-			continue
+		if path := doc.Path(); path != "" && s.differ(doc) != nil {
+			paths[doc] = path
 		}
-		if s.differ(doc) == nil {
-			continue
-		}
-		s.reloadDiffBase(doc, path)
 	}
+	s.refreshes.Do(func() {
+		for doc, path := range paths {
+			if s.headMoved(doc, path) {
+				s.reloadDiffBase(doc, path)
+			}
+		}
+	})
 }
 
 // Updates delivers a token whenever diff state changes
@@ -290,6 +296,7 @@ func (s *Session) DocumentClosed(doc *view.Document) {
 
 // Close stops all differs and the provider's processes
 func (s *Session) Close() {
+	s.refreshes.Stop()
 	s.reloads.Stop()
 	s.mu.Lock()
 	defer s.mu.Unlock()

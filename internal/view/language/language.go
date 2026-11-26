@@ -158,11 +158,7 @@ func definedLanguage(langs Languages, args DetectArgs) (string, bool) {
 	if lang := ForFilename(langs, args.Path); lang != nil {
 		return lang.Name, true
 	}
-	content := args.Content
-	if lang, ok := languageForShebang(langs, content); ok {
-		return lang, true
-	}
-	return languageForMatch(langs, content)
+	return languageForShebang(langs, args.Content)
 }
 
 func chromaLanguage(index *lexerIndex, args DetectArgs) (string, bool) {

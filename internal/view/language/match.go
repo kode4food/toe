@@ -2,7 +2,6 @@ package language
 
 import (
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -46,34 +45,6 @@ func ForFilename(langs Languages, path string) *Language {
 		}
 	}
 	return nil
-}
-
-func languageForMatch(langs Languages, text string) (string, bool) {
-	for _, lang := range langs.Languages {
-		if lang.Name == text {
-			return lang.Name, true
-		}
-	}
-	bestLen := 0
-	var found string
-	for _, lang := range langs.Languages {
-		if lang.InjectionRegex == "" {
-			continue
-		}
-		re, err := regexp.Compile(lang.InjectionRegex)
-		if err != nil {
-			continue
-		}
-		loc := re.FindStringIndex(text)
-		if loc == nil {
-			continue
-		}
-		if n := loc[1] - loc[0]; n > bestLen {
-			bestLen = n
-			found = lang.Name
-		}
-	}
-	return found, found != ""
 }
 
 func languageForShebang(langs Languages, content string) (string, bool) {

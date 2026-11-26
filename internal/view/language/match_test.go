@@ -296,8 +296,8 @@ file-types = [{ glob = "*.{c,h}" }]
 	})
 }
 
-func TestLanguageForMatch(t *testing.T) {
-	t.Run("injection regex matches content", func(t *testing.T) {
+func TestDetectContent(t *testing.T) {
+	t.Run("ignores injection regex", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
 name = "injlang"
@@ -305,18 +305,16 @@ injection-regex = "injlang|il"
 `)
 		name := new(language.Registry).Detect(language.DetectArgs{
 			Content: "il",
+			Default: "fallback",
 		})
-		assert.Equal(t, "injlang", name)
+		assert.Equal(t, "fallback", name)
 	})
 
-	t.Run("unmatched injection uses default", func(t *testing.T) {
-		setUserLangs(t, `
-[[language]]
-name = "injlang2"
-injection-regex = "uniqueinjlang2_abc"
-`)
+	t.Run("language names in text are ignored", func(t *testing.T) {
+		setUserLangs(t, "")
 		name := new(language.Registry).Detect(language.DetectArgs{
-			Content: "ZZZNOMATCH_ABCDEF_123",
+			Path:    "noext",
+			Content: "#!/usr/bin/env python3\nputs 1\n",
 			Default: "fallback",
 		})
 		assert.Equal(t, "fallback", name)
@@ -329,20 +327,6 @@ injection-regex = "uniqueinjlang2_abc"
 			Content: "notes about a cat",
 		})
 		assert.NotEqual(t, "c", name)
-	})
-
-	t.Run("invalid injection regex skipped", func(t *testing.T) {
-		setUserLangs(t, `
-[[language]]
-name = "badregexlang"
-injection-regex = "["
-`)
-		// content doesn't match name → 2nd loop tries invalid regex, skips it
-		name := new(language.Registry).Detect(language.DetectArgs{
-			Content: "ZZZNOMATCH_ABCDEF_123",
-			Default: "fallback",
-		})
-		assert.Equal(t, "fallback", name)
 	})
 }
 

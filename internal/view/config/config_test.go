@@ -529,26 +529,6 @@ shebangs = ["customsh"]
 
 		assert.Equal(t, "script", lang)
 	})
-
-	t.Run("uses injection regex after misses", func(t *testing.T) {
-		root := t.TempDir()
-		setUserLanguages(t, root, `
-[[language]]
-name = "short"
-injection-regex = "foo"
-
-[[language]]
-name = "long"
-injection-regex = "foo-bar"
-`)
-
-		lang := new(language.Registry).Detect(language.DetectArgs{
-			Path:    "no-language-match",
-			Content: "embedded foo-bar marker",
-		})
-
-		assert.Equal(t, "long", lang)
-	})
 }
 
 func TestConfigPaths(t *testing.T) {

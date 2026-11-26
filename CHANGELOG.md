@@ -2,6 +2,16 @@
 
 Notable changes to toe.
 
+## 0.4.19
+
+### Language tooling
+
+- Files without a known extension or shebang open as plain text instead of an unrelated language picked from words in the file
+
+### Interface
+
+- Many files changing on disk at once, such as a branch switch or a build, no longer stalls the editor when many files are open
+
 ## 0.4.18
 
 ### Interface

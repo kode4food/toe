@@ -39,8 +39,8 @@ type DetectArgs struct {
 	Default string
 }
 
-// Detect identifies a language from the file name, then its shebang, then its content, trying
-// Chroma's lexers when no definition matches and returning Default when nothing does
+// Detect identifies a language from the file name, then its shebang, trying Chroma's lexers by
+// name and content when no definition matches and returning Default when nothing does
 func (r *Registry) Detect(args DetectArgs) string {
 	r.mu.Lock()
 	r.ensureLoaded()
